@@ -1,3 +1,9 @@
+dsme (0.71.2) precise; urgency=low
+
+  * [iphb] Prefer timerfd as a way to wake up from suspend. Fixes MER#1433
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 01 Dec 2015 09:27:03 +0200
+
 dsme (0.71.1) precise; urgency=low
 
   * [usbtracker] Do not report unknown usb modes in default verbosity.
