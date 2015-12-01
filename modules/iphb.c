@@ -52,6 +52,7 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <sys/time.h>
+#include <sys/timerfd.h>
 #include <time.h>
 #include <glib.h>
 #include <sys/ioctl.h>
@@ -684,18 +685,159 @@ static void xmce_handle_dbus_disconnect(void)
 }
 
 /* ------------------------------------------------------------------------- *
+ * Linux specific wakeup from suspend via timerfd functionality
+ * ------------------------------------------------------------------------- */
+
+/** Clockid to use for timerfd */
+static const clockid_t linux_alarm_clockid = CLOCK_REALTIME_ALARM;
+
+/** Timerfd file descriptor */
+static int linux_alarm_timerfd = -1;
+
+/** Try to setup a timerfd that is cabable of waking the system from suspend
+ *
+ * @return true on success, false on failure
+ */
+static bool linux_alarm_init(void)
+{
+    int fd = -1;
+
+    if( linux_alarm_timerfd != -1 )
+	goto cleanup;
+
+    fd = timerfd_create(linux_alarm_clockid, TFD_CLOEXEC);
+    if( fd == -1 ) {
+	/* Having alarm via timerfd is just one option - do not
+	 * complain by default if kernel does not support it */
+	dsme_log(LOG_INFO, PFIX"%s: %m", "timerfd_create");
+	goto cleanup;
+    }
+
+    if( !epollfd_add_fd(fd, &linux_alarm_timerfd)) {
+	dsme_log(LOG_WARNING, PFIX"failed to add timer fd to epoll set");
+	goto cleanup;
+    }
+
+    linux_alarm_timerfd = fd, fd = -1;
+
+cleanup:
+    if( fd != -1 )
+	close(fd);
+
+    return linux_alarm_timerfd != -1;
+}
+
+/** Close timerfd
+ */
+static void linux_alarm_quit(void)
+{
+    if( linux_alarm_timerfd == -1 )
+	goto cleanup;
+
+    epollfd_remove_fd(linux_alarm_timerfd);
+
+    close(linux_alarm_timerfd), linux_alarm_timerfd = -1;
+
+cleanup:
+    return;
+}
+
+/** Clear alarm from timerfd
+ */
+static void linux_alarm_clear(void)
+{
+    if( linux_alarm_timerfd == -1 )
+	goto cleanup;
+
+    struct itimerspec it = {{0,0}, {0,0}};
+
+    if( timerfd_settime(linux_alarm_timerfd, TFD_TIMER_ABSTIME, &it, 0) == -1 )
+	dsme_log(LOG_ERR, PFIX"timerfd %s: %m", "timerfd_settime");
+
+cleanup:
+    return;
+}
+
+/** Program alarm to timerfd
+ */
+static void linux_alarm_set(time_t delay)
+{
+
+    if( linux_alarm_timerfd == -1 )
+	goto cleanup;
+
+    char tmp[32];
+
+    struct timespec now = { .tv_sec = 0, .tv_nsec = 0 };
+
+    if( clock_gettime(linux_alarm_clockid, &now) == -1 ) {
+	dsme_log(LOG_ERR, PFIX"timerfd %s: %m", "clock_gettime");
+	goto cleanup;
+    }
+
+    struct itimerspec it = {{0,0}, {0,0}};
+
+    it.it_value = now;
+    it.it_value.tv_sec += delay;
+
+    if( timerfd_settime(linux_alarm_timerfd, TFD_TIMER_ABSTIME, &it, 0) == -1 ) {
+	dsme_log(LOG_ERR, PFIX"timerfd %s: %m", "timerfd_settime");
+	goto cleanup;
+    }
+
+    dsme_log(LOG_DEBUG, PFIX"timerfd time  : %s", t_repr(now.tv_sec, tmp, sizeof tmp));
+    dsme_log(LOG_DEBUG, PFIX"timerfd alarm : %s", t_repr(it.it_value.tv_sec, tmp, sizeof tmp));
+
+cleanup:
+    return;
+}
+
+/** Handle timerfd wakeup input
+ *
+ * @return true if timerfd is still usable, or false if it should be closed
+ */
+static bool linux_alarm_handle_input(void)
+{
+    bool     res = false;
+    uint64_t cnt = 0;
+
+    if( linux_alarm_timerfd == -1 )
+	goto cleanup;
+
+    if( read(linux_alarm_timerfd, &cnt, sizeof cnt) == -1 ) {
+	if( errno == EINTR )
+	    goto cleanup;
+    }
+
+    dsme_log(LOG_DEBUG, PFIX"timerfd alarm: triggered");
+    res = true;
+
+cleanup:
+
+
+    return res;
+}
+
+/* ------------------------------------------------------------------------- *
  * Android alarm management functionality
  * ------------------------------------------------------------------------- */
 
 /** Open android alarm device
  */
-static void android_alarm_init(void)
+static bool android_alarm_init(void)
 {
+    if( android_alarm_fd != -1 )
+	goto cleanup;
+
     if( (android_alarm_fd = open(android_alarm_path, O_RDWR)) == -1 ) {
 	/* Using /dev/alarm is optional; do not complain if it is missing */
 	if( errno != ENOENT )
 	    dsme_log(LOG_WARNING, PFIX"%s: %m", android_alarm_path);
     }
+
+cleanup:
+
+    return android_alarm_fd != -1;
 }
 
 /** Close android alarm device
@@ -738,8 +880,8 @@ static void android_alarm_set(time_t delay)
 
     if( android_alarm_prev != wup.tv_sec ) {
 	android_alarm_prev = wup.tv_sec;
-	dsme_log(LOG_INFO, PFIX"android: %s", t_repr(now.tv_sec, tmp, sizeof tmp));
-	dsme_log(LOG_INFO, PFIX"alarm  : %s", t_repr(wup.tv_sec, tmp, sizeof tmp));
+	dsme_log(LOG_INFO, PFIX"android time:  %s", t_repr(now.tv_sec, tmp, sizeof tmp));
+	dsme_log(LOG_INFO, PFIX"android alarm: %s", t_repr(wup.tv_sec, tmp, sizeof tmp));
     }
 
 cleanup:
@@ -1252,10 +1394,14 @@ static bool rtc_set_alarm_after(time_t delay)
 	enabled = true;
     }
 
-    if( enabled )
+    if( enabled ) {
 	android_alarm_set(delay);
-    else
+	linux_alarm_set(delay);
+    }
+    else {
 	android_alarm_clear();
+	linux_alarm_clear();
+    }
 
     if( !rtc_set_alarm_tm(&tm, enabled) )
 	goto cleanup;
@@ -1308,8 +1454,6 @@ static bool rtc_handle_input(void)
     bool result = false;
     long status = 0;
 
-    wakelock_lock(rtc_input, -1);
-
     dsme_log(LOG_INFO, PFIX"wakeup via RTC alarm");
 
     if( rtc_fd == -1 ) {
@@ -1360,14 +1504,9 @@ static bool rtc_handle_input(void)
 	}
     }
 
-    /* acquire wakelock that is passed to mce via ipc */
-    wakelock_lock(rtc_wakeup, -1);
-
     result = true;
 
 cleanup:
-
-    wakelock_unlock(rtc_input);
 
     return result;
 }
@@ -2673,29 +2812,30 @@ static gboolean epollfd_iowatch_cb(GIOChannel*  source,
 				   GIOCondition condition,
 				   gpointer     data)
 {
+    gboolean           keep_going = FALSE;
     bool               wakeup_mce = false;
 
     struct timeval     tv_now;
     struct epoll_event events[DSME_MAX_EPOLL_EVENTS];
     int                nfds;
 
+    wakelock_lock(rtc_input, -1);
+
     /* Abandon watch if we get abnorman conditions from glib */
     if (condition & ~(G_IO_IN | G_IO_PRI))
     {
 	dsme_log(LOG_ERR, PFIX"epoll waiting I/O error reported");
-	dsme_log(LOG_CRIT, PFIX"epoll waiting disabled");
-	return FALSE;
+	goto cleanup_nak;
     }
 
     nfds = epoll_wait(epollfd, events, DSME_MAX_EPOLL_EVENTS, 0);
 
     if( nfds == -1 ) {
 	if( errno == EINTR || errno == EAGAIN )
-	    return TRUE;
+	    goto cleanup_ack;
 
         dsme_log(LOG_ERR, PFIX"epoll waiting failed (%m)");
-        dsme_log(LOG_CRIT, PFIX"epoll waiting disabled");
-	return FALSE;
+	goto cleanup_nak;
     }
 
     monotime_get_tv(&tv_now);
@@ -2712,8 +2852,17 @@ static gboolean epollfd_iowatch_cb(GIOChannel*  source,
         }
 	else if (events[i].data.ptr == &rtc_fd) {
 	    /* rtc wakeup (and possibly resume from suspend) */
-	    if( !(wakeup_mce = rtc_handle_input()) )
+	    if( !rtc_handle_input() )
 		rtc_detach();
+	    else
+		wakeup_mce = true;
+        }
+	else if (events[i].data.ptr == &linux_alarm_timerfd) {
+	    /* timerfd wakeup (and possibly resume from suspend) */
+	    if( !linux_alarm_handle_input() )
+		linux_alarm_quit();
+	    else
+		wakeup_mce = true;
         }
 	else {
             /* deal with old clients */
@@ -2736,7 +2885,17 @@ static gboolean epollfd_iowatch_cb(GIOChannel*  source,
     if( rtc_fd == -1 )
 	rtc_attach();
 
-    return TRUE;
+cleanup_ack:
+    keep_going = TRUE;
+
+cleanup_nak:
+
+    if( !keep_going )
+	dsme_log(LOG_CRIT, PFIX"epoll waiting disabled");
+
+    wakelock_unlock(rtc_input);
+
+    return keep_going;
 }
 
 /** Stop the epoll io watch */
@@ -3086,8 +3245,26 @@ void module_init(module_t *handle)
     /* if possible, add rtc fd to the epoll set */
     rtc_attach();
 
-    /* if available, open android alarm device */
-    android_alarm_init();
+    /* If the kernel allows using timerfd or android alarm device
+     * for waking up from suspend, it can also mean the interrupt
+     * notifications from rtc device node do not happen as expected.
+     *
+     * To overcome this, we should use (one of) these interfaces
+     * from dsme too if they are available. */
+    if( linux_alarm_init() ) {
+	/* We should get timerfd wakeup even if the device is suspended. */
+        dsme_log(LOG_NOTICE, PFIX"using timerfd alarm to resume");
+    }
+    else if( android_alarm_init() ) {
+	/* On suspend the next to occur alarm device wakeup is programmed
+	 * to rtc. By using the interface from dsme, the wakeup we need
+	 * for iphb purposes should end up considered too. */
+        dsme_log(LOG_NOTICE, PFIX"using android alarm to resume");
+    }
+    else {
+	/* Assume that nothing interferes with rtc ioctl + read. */
+        dsme_log(LOG_NOTICE, PFIX"using rtc alarm to resume");
+    }
 
     success = true;
 
@@ -3138,6 +3315,9 @@ void module_fini(void)
 
     /* save last-known-system-time */
     systemtime_quit();
+
+    /* stop timerfd alarm */
+    linux_alarm_quit();
 
     /* set wakeup alarm before closing the rtc */
     rtc_set_alarm_powerup();
