@@ -1,3 +1,9 @@
+dsme (0.71.3) precise; urgency=low
+
+  * [pwrkeymonitor] Ignore devices that report doubletap as powerkey. Fixes JB#33641
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 03 Dec 2015 19:30:48 +0200
+
 dsme (0.71.2) precise; urgency=low
 
   * [iphb] Prefer timerfd as a way to wake up from suspend. Fixes MER#1433
