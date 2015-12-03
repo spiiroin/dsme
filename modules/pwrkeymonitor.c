@@ -178,19 +178,45 @@ emits_powerkey_events(int fd)
 {
     bool res = false;
 
-    unsigned long keys[EVDEVBITS_LEN(KEY_CNT)];
+    unsigned long mask_eve[EVDEVBITS_LEN(EV_CNT)];
+    unsigned long mask_key[EVDEVBITS_LEN(KEY_CNT)];
+    unsigned long mask_abs[EVDEVBITS_LEN(ABS_CNT)];
 
-    memset(keys, 0, sizeof keys);
+    memset(mask_eve, 0, sizeof mask_eve);
+    memset(mask_key, 0, sizeof mask_key);
+    memset(mask_abs, 0, sizeof mask_abs);
 
-    if( ioctl(fd, EVIOCGBIT(EV_KEY, KEY_CNT), keys) == -1 )
+    /* Get bitmask of supported event types */
+    if( ioctl(fd, EVIOCGBIT(0, EV_CNT), mask_eve) == -1 )
     {
         dsme_log(LOG_DEBUG, PFIX"EVIOCGBIT(%d): %m", fd);
-    }
-    else if( keys[EVDEVBITS_OFFS(KEY_POWER)] & EVDEVBITS_MASK(KEY_POWER) )
-    {
-        res = TRUE;
+        goto EXIT;
     }
 
+    /* Get bitmask of supported key event codes */
+    if( mask_eve[EVDEVBITS_OFFS(EV_KEY)] & EVDEVBITS_MASK(EV_KEY) ) {
+        if( ioctl(fd, EVIOCGBIT(EV_KEY, KEY_CNT), mask_key) == -1 )
+            dsme_log(LOG_DEBUG, PFIX"EVIOCGBIT(%d): %m", fd);
+    }
+
+    /* Get bitmask of supported abs event codes */
+    if( mask_eve[EVDEVBITS_OFFS(EV_ABS)] & EVDEVBITS_MASK(EV_ABS) ) {
+        if( ioctl(fd, EVIOCGBIT(EV_ABS, ABS_CNT), mask_abs) == -1 )
+            dsme_log(LOG_DEBUG, PFIX"EVIOCGBIT(%d): %m", fd);
+    }
+
+    /* Require: KEY_POWER events are emitted */
+    if( !(mask_key[EVDEVBITS_OFFS(KEY_POWER)] & EVDEVBITS_MASK(KEY_POWER)) )
+        goto EXIT;
+
+    /* Assume: KEY_POWER from multitouch device is actually double tap */
+    if( mask_abs[EVDEVBITS_OFFS(ABS_MT_POSITION_X)] &
+        EVDEVBITS_MASK(ABS_MT_POSITION_X) )
+        goto EXIT;
+
+    res = true;
+
+EXIT:
     return res;
 }
 
