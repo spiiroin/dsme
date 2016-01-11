@@ -312,7 +312,9 @@ int main(int argc, char *argv[])
 #endif
   dsme_log(LOG_DEBUG, "Entering main loop");
   dsme_main_loop_run(process_message_queue);
-  dsme_log(LOG_CRIT, "Exited main loop, quitting");
+
+  /* To eaze shutdown analysis, always log when dsme exits */
+  dsme_log(LOG_WARNING, "Exited main loop, quitting");
 
   dsmesock_shutdown();
 

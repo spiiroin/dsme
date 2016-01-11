@@ -1437,7 +1437,7 @@ static void rtc_set_alarm_powerup(void)
 	rtc = 0;
 
     /* always log the state we leave rtc wakeup on dsme exit */
-    log_time_t(LOG_CRIT, PFIX"powerup via RTC", rtc ? sys+rtc : 0, sys);
+    log_time_t(LOG_WARNING, PFIX"powerup via RTC", rtc ? sys+rtc : 0, sys);
 
     rtc_set_alarm_after(rtc);
 }
