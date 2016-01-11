@@ -1,3 +1,9 @@
+dsme (0.71.4) precise; urgency=low
+
+  * [logging] Avoid unnecessary use of LOG_CRIT on exit path. JB#33600
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 11 Jan 2016 12:11:01 +0200
+
 dsme (0.71.3) precise; urgency=low
 
   * [pwrkeymonitor] Ignore devices that report doubletap as powerkey. Fixes JB#33641
