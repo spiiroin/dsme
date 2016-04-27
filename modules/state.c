@@ -69,6 +69,11 @@
  */
 #define CHARGER_DISCONNECT_TIMEOUT 15
 
+/** Timer value for actdead shutdown timer. This is how long we wait before doing a
+ * shutdown when charger is not detected while booting up to act dead state.
+ */
+#define CHARGER_DISCOVERY_TIMEOUT 5
+
 /**
  * Timer value for shutdown timer. This is how long we wait for apps to close.
  */
@@ -158,7 +163,7 @@ static void change_runlevel(dsme_state_t state);
 static void start_overheat_timer(void);
 static int  delayed_overheat_fn(void* unused);
 
-static void start_charger_disconnect_timer(void);
+static void start_charger_disconnect_timer(int delay_s);
 static int  delayed_charger_disconnect_fn(void* unused);
 static void stop_charger_disconnect_timer(void);
 
@@ -692,11 +697,11 @@ static int delayed_overheat_fn(void* unused)
   return 0; /* stop the interval */
 }
 
-static void start_charger_disconnect_timer(void)
+static void start_charger_disconnect_timer(int delay_s)
 {
   if (!charger_disconnect_timer) {
       if (!(charger_disconnect_timer = dsme_create_timer(
-                                           CHARGER_DISCONNECT_TIMEOUT,
+                                           delay_s,
                                            delayed_charger_disconnect_fn,
                                            NULL)))
       {
@@ -706,7 +711,7 @@ static void start_charger_disconnect_timer(void)
       } else {
           dsme_log(LOG_DEBUG,
                    PFIX"Handle charger disconnect in %d seconds",
-                   CHARGER_DISCONNECT_TIMEOUT);
+                   delay_s);
       }
   }
 }
@@ -745,16 +750,22 @@ DSME_HANDLER(DSM_MSGTYPE_SET_CHARGER_STATE, conn, msg)
 
   stop_charger_disconnect_timer();
 
-  if (current_state     == DSME_STATE_ACTDEAD    &&
-      new_charger_state == CHARGER_DISCONNECTED  &&
-      charger_state     != CHARGER_STATE_UNKNOWN)
+  if (current_state     == DSME_STATE_ACTDEAD &&
+      new_charger_state == CHARGER_DISCONNECTED)
   {
-      /*
-       * We are in acting dead, and the charger is disconnected.
-       * Moreover, this is not the first time charger is disconnected;
-       * shutdown after a while if charger is not connected again
-       */
-      start_charger_disconnect_timer();
+      if (charger_state == CHARGER_STATE_UNKNOWN) {
+          /* When booting to act-dead allow usb-moded some time
+           * to figure out whether there is a charger connected
+           * or not before shutting down.
+           */
+          start_charger_disconnect_timer(CHARGER_DISCOVERY_TIMEOUT);
+      } else {
+          /* We are in acting dead, and the charger is disconnected.
+           * Moreover, this is not the first time charger is disconnected;
+           * shutdown after a while if charger is not connected again
+           */
+          start_charger_disconnect_timer(CHARGER_DISCONNECT_TIMEOUT);
+      }
   } else {
       charger_state = new_charger_state;
       change_state_if_necessary();
