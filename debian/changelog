@@ -1,3 +1,9 @@
+dsme (0.71.5) precise; urgency=low
+
+  * [state] Allow more time for initial charger detection. Fixes JB#34547
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 27 Apr 2016 09:56:41 +0300
+
 dsme (0.71.4) precise; urgency=low
 
   * [logging] Avoid unnecessary use of LOG_CRIT on exit path. JB#33600
