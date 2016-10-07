@@ -62,10 +62,11 @@ static bool dbus_signals_bound           = false;
 
 static time_t last_check_time            = 0;
 
-static const int ACTIVE_CHECK_INTERVAL   = 300;   /* When the device is used, this is how often we check the disk space */
+static const int ACTIVE_CHECK_INTERVAL   =   60;  /* When the device is used, this is how often we check the disk space */
 static const int IDLE_CHECK_INTERVAL     = 1800;  /* When the device is not used, this is how often we check the disk space */
-static const int MAXTIME_FROM_LAST_CHECK = 900;   /* After this many seconds from the last check, force a check when the device is actived */
-static const int CHECK_THRESHOLD         = 60;    /* This is how often we allow disk space check to be requested */
+static const int MAXTIME_FROM_LAST_CHECK =   60;  /* After this many seconds from the last check, force a check when the device is actived */
+static const int CHECK_THRESHOLD         =    5;  /* This is how often we allow disk space check to be requested */
+static const int CHECK_MAX_LATENCY       =   12;  /* Should be >= heartbeat interval, which is 12 seconds */
 
 /* ========================================================================= *
  * Helpers
@@ -74,8 +75,8 @@ static const int CHECK_THRESHOLD         = 60;    /* This is how often we allow 
 static void monotime_get(struct timeval *tv)
 {
     struct timespec ts = { 0, 0 };
-    if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1) {
-        dsme_log(LOG_WARNING, LOGPFIX"%s: %s", "CLOCK_MONOTONIC",
+    if (clock_gettime(CLOCK_BOOTTIME, &ts) == -1) {
+        dsme_log(LOG_WARNING, LOGPFIX"%s: %s", "CLOCK_BOOTTIME",
                  strerror(errno));
     }
     TIMESPEC_TO_TIMEVAL(tv, &ts);
@@ -97,9 +98,12 @@ static void schedule_next_wakeup(void)
 {
     DSM_MSGTYPE_WAIT msg = DSME_MSG_INIT(DSM_MSGTYPE_WAIT);
     msg.req.mintime = disk_check_interval();
-    msg.req.maxtime = msg.req.mintime + 60;
+    msg.req.maxtime = msg.req.mintime + CHECK_MAX_LATENCY;
     msg.req.pid     = 0;
     msg.data        = 0;
+
+    dsme_log(LOG_DEBUG, LOGPFIX"schedule next wakeup in: %d ... %d seconds",
+             msg.req.mintime, msg.req.maxtime);
 
     broadcast_internally(&msg);
 }
@@ -171,7 +175,8 @@ static void mce_inactivity_sig(const DsmeDbusMessage* sig)
     monotime_get(&monotime);
     seconds_from_last_check = monotime.tv_sec - last_check_time;
 
-    dsme_log(LOG_DEBUG, LOGPFIX"mce_inactivity_sig received");
+    dsme_log(LOG_DEBUG, LOGPFIX"device %s signal received",
+             new_device_active_state ? "active" : "inactive");
 
     if (new_device_active_state == device_active) {
         /* no change in the inactivity state; don't adjust the schedule */
@@ -180,15 +185,22 @@ static void mce_inactivity_sig(const DsmeDbusMessage* sig)
 
     device_active = new_device_active_state;
 
-    if (device_active && seconds_from_last_check >= MAXTIME_FROM_LAST_CHECK) {
-        dsme_log(LOG_DEBUG, LOGPFIX"more than %i seconds from the last check, checking",
-                 seconds_from_last_check);
+    if(device_active) {
+        /* If the last check has not been done recently enough,
+         * check immediately on activation. */
+        if (seconds_from_last_check >= MAXTIME_FROM_LAST_CHECK) {
+            dsme_log(LOG_DEBUG, LOGPFIX"%d seconds from the last check",
+                     seconds_from_last_check);
+            check_disk_space();
+        }
 
-        check_disk_space();
+        /* Adjust the next wake-up to occur sooner */
+        schedule_next_wakeup();
     }
-
-    /* adjust the wake-up schedule */
-    schedule_next_wakeup();
+    else {
+        /* Leave the previously programmed timer running so that
+         * we do one more check in device-is-active schedule. */
+    }
 }
 
 static const dsme_dbus_signal_binding_t signals[] =
@@ -204,6 +216,7 @@ static const dsme_dbus_signal_binding_t signals[] =
 
 DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
 {
+    dsme_log(LOG_DEBUG, LOGPFIX"iphb timer wakeup");
     check_disk_space();
 
     schedule_next_wakeup();
@@ -215,6 +228,14 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 
     dsme_dbus_bind_methods(&dbus_methods_bound, methods, diskmonitor_service, diskmonitor_req_interface);
     dsme_dbus_bind_signals(&dbus_signals_bound, signals);
+
+    /* If dsme was restarted after bootup is finished, init-done signal
+     * is not going to come again -> check flag file for initial state */
+    if( access("/run/systemd/boot-status/init-done", F_OK) == 0 ) {
+        dsme_log(LOG_DEBUG, LOGPFIX"init_done already passed");
+        init_done_received = true;
+        schedule_next_wakeup();
+    }
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
@@ -227,6 +248,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DISK_SPACE, conn, msg)
 {
+    dsme_log(LOG_DEBUG, LOGPFIX"send low disk space notification");
     const char* mount_path = DSMEMSG_EXTRA(msg);
     DsmeDbusMessage* sig =
         dsme_dbus_signal_new(diskmonitor_sig_path,

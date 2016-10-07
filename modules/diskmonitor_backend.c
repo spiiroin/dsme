@@ -25,6 +25,8 @@
 #define _GNU_SOURCE
 #endif
 
+#define LOGPFIX "diskmonitor: "
+
 #include "diskmonitor_backend.h"
 #include "diskmonitor.h"
 
@@ -75,14 +77,14 @@ static bool check_mount_use_limit(const char* mntpoint, disk_use_limit_t* use_li
     memset(&s, 0, sizeof(s));
 
     if (statfs(mntpoint, &s) != 0 || s.f_blocks <= 0) {
-        dsme_log(LOG_WARNING, "diskmonitor: failed to statfs the mount point (%s).", mntpoint);
+        dsme_log(LOG_WARNING, LOGPFIX"failed to statfs the mount point (%s).", mntpoint);
         return false;
     }
 
     blocks_percent_used = (int)((s.f_blocks - s.f_bfree) * 100.f / s.f_blocks + 0.5f);
 
     if (blocks_percent_used >= use_limit->max_usage_percent) {
-        dsme_log(LOG_WARNING, "diskmonitor: disk space usage (%i percent used) for (%s) exceeded the limit (%i)",
+        dsme_log(LOG_WARNING, LOGPFIX"disk space usage (%i percent used) for (%s) exceeded the limit (%i)",
                  blocks_percent_used, mntpoint, use_limit->max_usage_percent);
 
         DSM_MSGTYPE_DISK_SPACE msg = DSME_MSG_INIT(DSM_MSGTYPE_DISK_SPACE);
@@ -96,6 +98,8 @@ static bool check_mount_use_limit(const char* mntpoint, disk_use_limit_t* use_li
 
 void check_disk_space_usage(void)
 {
+    dsme_log(LOG_DEBUG, LOGPFIX"check disk space usage");
+
     disk_use_limit_t* use_limit;
     FILE* f = setmntent(_PATH_MOUNTED, "r");
     struct mntent m;
