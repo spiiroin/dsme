@@ -1,3 +1,9 @@
+dsme (0.71.6) precise; urgency=low
+
+  * [diskmonitor] Tune low disk space check scheduling. Fixes JB#36472
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 10 Oct 2016 11:08:54 +0300
+
 dsme (0.71.5) precise; urgency=low
 
   * [state] Allow more time for initial charger detection. Fixes JB#34547
