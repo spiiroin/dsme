@@ -58,7 +58,8 @@ chmod a+x configure
     --enable-runlevel \
     --enable-systemd \
     --enable-pwrkeymonitor \
-    --disable-validatorlistener
+    --disable-validatorlistener \
+    --enable-abootsettings
 
 make %{?_smp_mflags}
 

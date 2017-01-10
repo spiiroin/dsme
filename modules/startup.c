@@ -108,6 +108,9 @@ const char *modules[] = {
 #ifdef DSME_WLAN_LOADER
     "wlanloader.so",
 #endif
+#ifdef DSME_ABOOTSETTINGS
+    "abootsettings.so",
+#endif
     NULL
 };
 

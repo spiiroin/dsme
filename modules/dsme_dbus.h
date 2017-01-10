@@ -89,4 +89,8 @@ void dsme_dbus_signal_emit(DsmeDbusMessage* sig);
 
 char* dsme_dbus_endpoint_name(const DsmeDbusMessage* request);
 
+DsmeDbusMessage* dsme_dbus_reply_error(const DsmeDbusMessage*  request,
+                                       const char*             error_name,
+                                       const char*             error_message);
+
 #endif

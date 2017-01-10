@@ -167,6 +167,26 @@ DsmeDbusMessage* dsme_dbus_reply_new(const DsmeDbusMessage* request)
   return m;
 }
 
+DsmeDbusMessage* dsme_dbus_reply_error(const DsmeDbusMessage* request,
+                                       const char* error_name,
+                                       const char* error_message )
+{
+  DsmeDbusMessage* m = 0;
+
+  if (request && error_name && error_message) {
+      m = g_new(DsmeDbusMessage, 1);
+
+      m->connection = dbus_connection_ref(request->connection);
+      m->msg        = dbus_message_new_error(request->msg,
+                                             error_name,
+                                             error_message);
+
+      dbus_message_iter_init_append(m->msg, &m->iter);
+  }
+
+  return m;
+}
+
 static void message_delete(DsmeDbusMessage* reply)
 {
   dbus_message_unref(reply->msg);
