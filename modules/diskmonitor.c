@@ -72,6 +72,19 @@ static const int CHECK_MAX_LATENCY       =   12;  /* Should be >= heartbeat inte
  * Helpers
  * ========================================================================= */
 
+const char *diskspace_state_repr(diskspace_state_t state)
+{
+    const char *repr = "UNKNOWN";
+    switch( state ) {
+    case DISKSPACE_STATE_UNDEF:   repr = "UNDEF";   break;
+    case DISKSPACE_STATE_NORMAL:  repr = "NORMAL";  break;
+    case DISKSPACE_STATE_WARNING: repr = "WARNING"; break;
+    default: break;
+    }
+    return repr;
+}
+
+
 static void monotime_get(struct timeval *tv)
 {
     struct timespec ts = { 0, 0 };
@@ -86,7 +99,10 @@ static int disk_check_interval(void)
 {
     int interval;
 
-    if (device_active) {
+    if (!last_check_time) {
+        interval = ACTIVE_CHECK_INTERVAL;
+    }
+    else if (device_active) {
         interval = ACTIVE_CHECK_INTERVAL;
     } else {
         interval = IDLE_CHECK_INTERVAL;
@@ -129,7 +145,7 @@ static const char diskmonitor_req_path[]              = "/com/nokia/diskmonitor/
 static const char diskmonitor_sig_path[]              = "/com/nokia/diskmonitor/signal";
 
 static const char diskmonitor_req_check[]             = "req_check";
-static const char diskmonitor_disk_space_change_ind[] = "disk_space_change_ind";
+static const char diskmonitor_disk_space_state_ind[]  = "disk_space_state_ind";
 
 static void req_check(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 {
@@ -217,6 +233,7 @@ static const dsme_dbus_signal_binding_t signals[] =
 DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
 {
     dsme_log(LOG_DEBUG, LOGPFIX"iphb timer wakeup");
+
     check_disk_space();
 
     schedule_next_wakeup();
@@ -248,15 +265,18 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DISK_SPACE, conn, msg)
 {
-    dsme_log(LOG_DEBUG, LOGPFIX"send low disk space notification");
     const char* mount_path = DSMEMSG_EXTRA(msg);
+
+    dsme_log(LOG_DEBUG, LOGPFIX"send %s disk space notification for: %s",
+             diskspace_state_repr(msg->diskspace_state), mount_path);
+
     DsmeDbusMessage* sig =
         dsme_dbus_signal_new(diskmonitor_sig_path,
                              diskmonitor_sig_interface,
-                             diskmonitor_disk_space_change_ind);
+                             diskmonitor_disk_space_state_ind);
 
     dsme_dbus_message_append_string(sig, mount_path);
-    dsme_dbus_message_append_int(sig, msg->blocks_percent_used);
+    dsme_dbus_message_append_int(sig, msg->diskspace_state);
     dsme_dbus_signal_emit(sig);
 }
 

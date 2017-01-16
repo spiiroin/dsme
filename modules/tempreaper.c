@@ -155,6 +155,16 @@ static bool disk_space_running_out(const DSM_MSGTYPE_DISK_SPACE* msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DISK_SPACE, conn, msg)
 {
+    /* Only diskspace low conditions should trigger temp reaper */
+    switch( msg->diskspace_state ) {
+    case DISKSPACE_STATE_UNDEF:
+    case DISKSPACE_STATE_NORMAL:
+        return;
+
+    default:
+        break;
+    }
+
     if (reaper_pid != -1) {
         dsme_log(LOG_DEBUG, "tempreaper: reaper process already running (PID %i). Return.",
                  reaper_pid);
