@@ -24,7 +24,18 @@
 #ifndef DSME_DISKMONITOR_H
 #define DSME_DISKMONITOR_H
 
+#include <stdbool.h>
+
 #include <dsme/messages.h>
+
+typedef enum
+{
+    DISKSPACE_STATE_UNDEF   = -1,
+    DISKSPACE_STATE_NORMAL  =  0,
+    DISKSPACE_STATE_WARNING =  1,
+} diskspace_state_t;
+
+const char *diskspace_state_repr(diskspace_state_t state);
 
 typedef struct {
   DSMEMSG_PRIVATE_FIELDS
@@ -32,6 +43,9 @@ typedef struct {
    * percent of disk capacity used (0-100)
    */
   int     blocks_percent_used;
+
+  /* Logical disk use state */
+  diskspace_state_t diskspace_state;
 
   // mount_path is passed in extra.
 } DSM_MSGTYPE_DISK_SPACE;
