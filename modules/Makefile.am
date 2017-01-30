@@ -19,7 +19,6 @@ pkglib_LTLIBRARIES = startup.la              \
                      thermalflagger.la       \
                      malf.la                 \
                      diskmonitor.la          \
-                     tempreaper.la           \
                      dbusautoconnector.la
 
 noinst_HEADERS = dsme_dbus.h \
@@ -163,9 +162,6 @@ diskmonitor_la_SOURCES = diskmonitor.c \
 				diskmonitor_backend.h
 
 diskmonitor_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
-
-tempreaper_la_SOURCES = tempreaper.c
-tempreaper_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 
 dbusautoconnector_la_SOURCES = dbusautoconnector.c
 dbusautoconnector_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)

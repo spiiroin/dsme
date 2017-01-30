@@ -13,8 +13,7 @@ ACLOCAL_AMFLAGS = -I m4
 #
 sbin_PROGRAMS = dsmetool    \
                 bootstate   \
-                waitfordsme \
-                rpdir
+                waitfordsme
 
 sbin_SCRIPTS = dsmetemperature
 
@@ -27,5 +26,3 @@ bootstate_SOURCES = bootstate.c
 waitfordsme_SOURCES = waitfordsme.c
 
 dsmereboot_SOURCES = dsmereboot.c
-
-rpdir_SOURCES = rpdir.c

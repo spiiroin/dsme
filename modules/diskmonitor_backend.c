@@ -94,9 +94,7 @@ check_mount_use_limit(const char* mntpoint, disk_use_limit_t* use_limit)
 
     /* Broadcasting of diskspace low events is repeated - There is
      * no query mechanism and ui processes that listen to resulting
-     * D-Bus signals might miss the first one. Also, if the optional
-     * temp reaper feature is enabled, we want it to get triggered
-     * after each state evaluation.
+     * D-Bus signals might miss the first one.
      *
      * However, return to normal state is broadcast only if diskspace
      * low has been signaled earlier (or once after dsme startup).
