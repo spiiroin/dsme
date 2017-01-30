@@ -29,10 +29,6 @@
 // to request a disk space check:
 // dbus-send --system --print-reply --dest=com.nokia.diskmonitor /com/nokia/diskmonitor/request com.nokia.diskmonitor.request.req_check
 
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE
-#endif
-
 #define LOGPFIX "diskmonitor: "
 
 #include <iphbd/iphb_internal.h>

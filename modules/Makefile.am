@@ -86,7 +86,7 @@ heartbeat_la_SOURCES = heartbeat.c
 heartbeat_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 
 state_la_SOURCES = state.c
-state_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS) -D_GNU_SOURCE
+state_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 state_la_LIBADD =
 if WANT_VIBRA_FEEDBACK
 state_la_SOURCES += vibrafeedback.c vibrafeedback.h
@@ -118,7 +118,7 @@ dbusproxy_la_LIBADD = $(DBUSGLIB_LIBS) -ldsme_dbus_if
 
 alarmtracker_la_SOURCES = alarmtracker.c
 alarmtracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
-alarmtracker_la_CPPFLAGS = $(AM_CPPFLAGS) -D_GNU_SOURCE
+alarmtracker_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 thermalmanager_la_SOURCES = thermalmanager.c thermalobject.c
 thermalmanager_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
@@ -175,23 +175,23 @@ endif
 
 if WANT_BATTERY_TRACKER
 batterytracker_la_SOURCES = batterytracker.c
-batterytracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) -D_GNU_SOURCE
+batterytracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 batterytracker_la_LIBADD = $(GLIB_LIBS)
 endif
 
 if WANT_BOOTREASON_LOGGER 
 bootreasonlogger_la_SOURCES = bootreasonlogger.c
-bootreasonlogger_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) -D_GNU_SOURCE
+bootreasonlogger_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 bootreasonlogger_la_LIBADD = $(GLIB_LIBS)
 endif
 
 if WANT_VIBRA_FEEDBACK
 shutdownfeedback_la_SOURCES = shutdownfeedback.c vibrafeedback.c vibrafeedback.h
-shutdownfeedback_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(LIBNGF_CFLAGS) -D_GNU_SOURCE
+shutdownfeedback_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(LIBNGF_CFLAGS)
 shutdownfeedback_la_LIBADD = $(GLIB_LIBS) $(LIBNGF_LIBS)
 endif
 
 if WANT_WLAN_LOADER
 wlanloader_la_SOURCES = wlanloader.c
-wlanloader_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS) -D_GNU_SOURCE
+wlanloader_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 endif

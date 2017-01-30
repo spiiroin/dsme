@@ -23,8 +23,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define _GNU_SOURCE // TODO: should these be put to makefile?
-
 #include "../include/dsme/logging.h"
 
 #include <unistd.h>

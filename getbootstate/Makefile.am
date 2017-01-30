@@ -1,3 +1,5 @@
+AM_CPPFLAGS = $(CPP_GENFLAGS)
+
 #
 # Build targets
 #

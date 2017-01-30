@@ -24,8 +24,6 @@
 
 // TODO: add D-Bus filtering
 
-#define _BSD_SOURCE
-
 #include "dsme_dbus.h"
 
 #include "../include/dsme/logging.h"

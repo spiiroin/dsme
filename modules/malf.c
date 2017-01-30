@@ -22,10 +22,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
-
 #include "malf.h"
 #include "runlevel.h"
 #include "../include/dsme/modules.h"

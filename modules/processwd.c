@@ -36,8 +36,6 @@
  *
  */
 
-#define _XOPEN_SOURCE
-
 #include <iphbd/iphb_internal.h>
 
 #include "../include/dsme/modules.h"

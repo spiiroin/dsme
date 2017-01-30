@@ -30,8 +30,6 @@
  * where the int32 parameter is either 2 (user) or 5 (actdead).
  */
 
-#define _POSIX_SOURCE
-
 #include "dbusproxy.h"
 #include "dsme_dbus.h"
 

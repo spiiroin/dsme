@@ -23,8 +23,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define _GNU_SOURCE
-
 #include "dsme-wdd-wd.h"
 #include "dsme-wdd.h"
 
