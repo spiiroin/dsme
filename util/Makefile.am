@@ -15,10 +15,6 @@ sbin_PROGRAMS = dsmetool    \
                 bootstate   \
                 waitfordsme
 
-if WANT_TEMPREAPER
-sbin_PROGRAMS += rpdir
-endif
-
 sbin_SCRIPTS = dsmetemperature
 
 noinst_PROGRAMS = dsmereboot
@@ -30,5 +26,3 @@ bootstate_SOURCES = bootstate.c
 waitfordsme_SOURCES = waitfordsme.c
 
 dsmereboot_SOURCES = dsmereboot.c
-
-rpdir_SOURCES = rpdir.c

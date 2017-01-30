@@ -102,9 +102,6 @@ const char *modules[] = {
     "validatorlistener.so",
 #endif
     "diskmonitor.so",
-#ifdef DSME_TEMPREAPER
-    "tempreaper.so",
-#endif
     "dbusautoconnector.so",
 #ifdef DSME_PWRKEY_MONITOR
     "pwrkeymonitor.so",

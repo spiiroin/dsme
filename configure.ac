@@ -103,19 +103,6 @@ AS_IF([test "x$enable_pwrkeymonitor" != xno],
 AM_CONDITIONAL([WANT_PWRKEY_MONITOR], [test x$enable_pwrkeymonitor != xno])
 
 #
-# tempreaper
-#
-AC_ARG_ENABLE([tempreaper],
-  [AS_HELP_STRING([--enable-tempreaper],
-    [enable tempreaper plugin (tempreaper)])],
-  [],
-  [enable_tempreaper=no])
-
-AS_IF([test "x$enable_tempreaper" != xno],
-  [AC_DEFINE([DSME_TEMPREAPER], [1], [Enable tempreaper plugin])])
-AM_CONDITIONAL([WANT_TEMPREAPER], [test x$enable_tempreaper != xno])
-
-#
 # Battery tracker
 #
 AC_ARG_ENABLE([battery-tracker],
