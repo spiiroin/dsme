@@ -19,7 +19,6 @@ pkglib_LTLIBRARIES = startup.la              \
                      thermalflagger.la       \
                      malf.la                 \
                      diskmonitor.la          \
-                     tempreaper.la           \
                      dbusautoconnector.la
 
 noinst_HEADERS = dsme_dbus.h \
@@ -52,6 +51,10 @@ endif
 
 if WANT_VALIDATOR_LISTENER
 pkglib_LTLIBRARIES += validatorlistener.la
+endif
+
+if WANT_TEMPREAPER
+pkglib_LTLIBRARIES += tempreaper.la
 endif
 
 if WANT_PWRKEY_MONITOR
@@ -164,8 +167,10 @@ diskmonitor_la_SOURCES = diskmonitor.c \
 
 diskmonitor_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 
+if WANT_TEMPREAPER
 tempreaper_la_SOURCES = tempreaper.c
 tempreaper_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
+endif
 
 dbusautoconnector_la_SOURCES = dbusautoconnector.c
 dbusautoconnector_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)

@@ -108,6 +108,10 @@ static char** open_files_list_new(char* dirs[])
     char*                  command = make_command_new(dirs);
     FILE*                  f = 0;
 
+#ifdef DEBUG
+    fprintf(stderr, ME"scanning open files ...\n");
+#endif
+
     if (!command) {
         goto out;
     }
@@ -166,7 +170,7 @@ static char** open_files_list_new(char* dirs[])
     files[i] = 0;
     num_files = i;
 
-    if (i > 1) {
+    if (num_files > 1) {
         qsort(files, num_files, sizeof *files, string_cmp);
     }
 
@@ -177,6 +181,11 @@ out:
     if (command) {
         free(command);
     }
+
+#ifdef DEBUG
+    fprintf(stderr, ME"found %zu open files\n", num_files);
+#endif
+
     return files;
 }
 
@@ -190,48 +199,53 @@ static int reaper(const char *file, const struct stat64 *sb, int flag, struct FT
     (void)ftwbuf;
 
     if (flag != FTW_F) {
-        #ifdef DEBUG
-            fprintf(stderr, "file '%s' is not a normal file, skipping\n", file);
-        #endif
+#ifdef DEBUG
+        fprintf(stderr, ME"skipped: %s - not a regular file\n", file);
+#endif
         goto out;
     }
 
-    if (!use_force &&
-        sb->st_size <= LEAVE_SMALL_FILES_ALONE_LIMIT) {
-        #ifdef DEBUG
-            fprintf(stderr, "file '%s' size %ld too small, skipping\n", file, sb->st_size);
-        #endif
+    if( !use_force && sb->st_size <= LEAVE_SMALL_FILES_ALONE_LIMIT ) {
+#ifdef DEBUG
+        fprintf(stderr, ME"skipped: %s - size=%lld is too small\n",
+                file, (long long)sb->st_size);
+#endif
         goto out;
     }
 
-    /*
-     * All regular files which were not changed the last TIMEOUT seconds.
+    /* All regular files which were not changed the last TIMEOUT seconds.
      * instead of finding age of file, we check is mtime/atime
      * older than checkpoint which we already have set to time in the past
      */
-    if (use_force || (sb->st_mtime < checkpoint && sb->st_atime < checkpoint)) {
-        if (is_open(file)) {
-            #ifdef DEBUG
-                fprintf(stderr, "file '%s' size %ld mod_age=%lus acc_age=%lus but still open, not deleting\n",
-                        file, sb->st_size, curt-sb->st_mtime, curt-sb->st_atime);
-            #endif
-            goto out;
-        }
-
-        if (unlink(file) != 0) {
-            fprintf(stderr, ME "failed to unlink file '%s': %m\n", file);
-            goto out;
-        }
-        #ifdef DEBUG
-        else fprintf(stderr, ME "deleted file '%s'\n", file);
-        #endif
-
-    } else {
-        #ifdef DEBUG
-            fprintf(stderr, "file '%s' modified too recently mod_age=%lus acc_age=%lus, skipping\n",
-                    file, curt-sb->st_mtime, curt-sb->st_atime);
-        #endif
+    if( !use_force && (sb->st_mtime >= checkpoint ||
+                       sb->st_atime >= checkpoint) ) {
+#ifdef DEBUG
+        fprintf(stderr, ME"skipped: %s - modified too recently "
+                "mod_age=%ld acc_age=%ld\n",
+                file,
+                (long)(curt - sb->st_mtime),
+                (long)(curt - sb->st_atime));
+#endif
+        goto out;
     }
+
+    if( is_open(file) ) {
+#ifdef DEBUG
+        fprintf(stderr, ME"skipped: %s - file is still open\n", file);
+#endif
+        goto out;
+    }
+
+    if( unlink(file) == -1 ) {
+        fprintf(stderr, ME"failure: %s: could not unlink: %m\n", file);
+        goto out;
+    }
+
+    fprintf(stderr, ME"deleted: %s - size=%lld, mod_age=%ld, acc_age=%ld\n",
+            file,
+            (long long)sb->st_size,
+            (long)(curt - sb->st_mtime),
+            (long)(curt - sb->st_atime));
 
 out:
     return 0;
@@ -246,7 +260,7 @@ static int reap(char* dirs[])
 
     for (i = 0; dirs[i]; i++) {
         if (nftw64(dirs[i], reaper, MAX_FTW_FDS, FTW_PHYS) != 0) {
-            fprintf(stderr,  ME "ERROR traversing '%s': nftw64() failed: %m\n",
+            fprintf(stderr, ME"ERROR traversing '%s': nftw64() failed: %m\n",
                     dirs[i]);
         }
     }
@@ -283,7 +297,7 @@ int main(int argc, char* argv[])
     }
 
     if (!(check_args(argc, argv))) {
-        fprintf(stderr, "Usage: " ME " [OPTION]... DIRECTORY...\n");
+        fprintf(stderr, "Usage: "ME" [OPTION]... DIRECTORY...\n");
         fprintf(stderr, "Reap (remove) files in the given directories\n\n");
         fprintf(stderr, "-f\tremove files regardless of file modification time and date\n");
         return EXIT_FAILURE;
