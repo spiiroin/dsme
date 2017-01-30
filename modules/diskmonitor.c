@@ -37,18 +37,22 @@
 #include "dbusproxy.h"
 
 #include "diskmonitor.h"
-#include "diskmonitor_backend.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "heartbeat.h"
 
 #include <sys/time.h>
+#include <sys/statfs.h>
 
+#include <stdio.h>
 #include <errno.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <mntent.h>
+
+#define ArraySize(a) (sizeof(a)/sizeof*(a))
 
 static bool init_done_received           = false;
 static bool device_active                = false;
@@ -65,6 +69,137 @@ static const int CHECK_THRESHOLD         =    5;  /* This is how often we allow 
 static const int CHECK_MAX_LATENCY       =   12;  /* Should be >= heartbeat interval, which is 12 seconds */
 
 /* ========================================================================= *
+ * Limits
+ * ========================================================================= */
+
+typedef struct
+{
+    const char       *mntpoint;
+    int               max_usage_percent;
+    diskspace_state_t signaled_state;
+    unsigned          check_tag;
+} disk_use_limit_t;
+
+static disk_use_limit_t disk_space_use_limits[] =
+{
+   { "/",     90, DISKSPACE_STATE_UNDEF, 0 },
+   { "/tmp",  70, DISKSPACE_STATE_UNDEF, 0 },
+   { "/run",  70, DISKSPACE_STATE_UNDEF, 0 },
+   { "/home", 90, DISKSPACE_STATE_UNDEF, 0 },
+};
+
+static disk_use_limit_t *
+find_use_limit_for_mount(const char* mntpoint)
+{
+    disk_use_limit_t* use_limit = 0;
+
+    for( size_t i = 0; i < ArraySize(disk_space_use_limits); ++i ) {
+        if( !strcmp(disk_space_use_limits[i].mntpoint, mntpoint) ) {
+            use_limit = &disk_space_use_limits[i];
+            goto out;
+        }
+    }
+out:
+    return use_limit;
+}
+
+static void
+check_mount_use_limit(const char* mntpoint, disk_use_limit_t* use_limit)
+{
+    struct statfs stfs;
+    int used_percent;
+
+    memset(&stfs, 0, sizeof(stfs));
+
+    if( statfs(mntpoint, &stfs) == -1 ) {
+        dsme_log(LOG_WARNING, LOGPFIX"failed to statfs the mount point %s: %m", mntpoint);
+        goto EXIT;
+    }
+
+    if( stfs.f_blocks <= 0 ) {
+        /* Ignore silently */
+        goto EXIT;
+    }
+
+    used_percent = (int)((stfs.f_blocks - stfs.f_bfree) * 100.f /
+                                stfs.f_blocks + 0.5f);
+
+    /* Broadcasting of diskspace low events is repeated - There is
+     * no query mechanism and ui processes that listen to resulting
+     * D-Bus signals might miss the first one.
+     *
+     * However, return to normal state is broadcast only if diskspace
+     * low has been signaled earlier (or once after dsme startup).
+     */
+    if (used_percent >= use_limit->max_usage_percent) {
+        dsme_log(LOG_WARNING, LOGPFIX"disk space usage (%d%%) for (%s) exceeds the limit (%d%%)",
+                 used_percent, mntpoint, use_limit->max_usage_percent);
+
+        use_limit->signaled_state = DISKSPACE_STATE_WARNING;
+    }
+    else if( use_limit->signaled_state != DISKSPACE_STATE_NORMAL ) {
+        if( use_limit->signaled_state != DISKSPACE_STATE_UNDEF )
+            dsme_log(LOG_WARNING, LOGPFIX"disk space usage (%d%%) for (%s) within the limit (%d%%)",
+                     used_percent, mntpoint, use_limit->max_usage_percent);
+
+        use_limit->signaled_state = DISKSPACE_STATE_NORMAL;
+    }
+    else {
+        /* No change - skip broadcast */
+        goto EXIT;
+    }
+
+    DSM_MSGTYPE_DISK_SPACE msg = DSME_MSG_INIT(DSM_MSGTYPE_DISK_SPACE);
+    msg.blocks_percent_used = used_percent;
+    msg.diskspace_state = use_limit->signaled_state;
+    broadcast_internally_with_extra(&msg, strlen(mntpoint) + 1, mntpoint);
+
+EXIT:
+    return;
+}
+
+static void
+check_disk_space_usage(void)
+{
+    static unsigned check_tag = 0;
+
+    FILE *fh = 0;
+
+    dsme_log(LOG_DEBUG, LOGPFIX"check disk space usage");
+
+    if( !(fh = setmntent(_PATH_MOUNTED, "r")) )
+        goto EXIT;
+
+    struct mntent mnt;
+    char          buf[1024];
+
+    ++check_tag;
+
+    while( getmntent_r(fh, &mnt, buf, sizeof buf) ) {
+        disk_use_limit_t *lim = find_use_limit_for_mount(mnt.mnt_dir);
+
+        if( !lim ) {
+            /* No limits configured for this mountpoint */
+            continue;
+        }
+
+        if( lim->check_tag == check_tag ) {
+            /* The same mountpoint was already checked */
+            continue;
+        }
+
+        dsme_log(LOG_DEBUG, LOGPFIX"check mountpoint: %s", mnt.mnt_dir);
+
+        lim->check_tag = check_tag;
+        check_mount_use_limit(mnt.mnt_dir, lim);
+    }
+
+EXIT:
+    if( fh )
+        endmntent(fh);
+}
+
+/* ========================================================================= *
  * Helpers
  * ========================================================================= */
 
@@ -79,7 +214,6 @@ const char *diskspace_state_repr(diskspace_state_t state)
     }
     return repr;
 }
-
 
 static void monotime_get(struct timeval *tv)
 {

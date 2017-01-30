@@ -157,9 +157,7 @@ powerontimer_la_LIBADD = -lcal -lrt
 endif
 
 diskmonitor_la_SOURCES = diskmonitor.c \
-				diskmonitor_backend.c \
-				diskmonitor.h \
-				diskmonitor_backend.h
+				diskmonitor.h
 
 diskmonitor_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 
