@@ -159,7 +159,7 @@ endif
 diskmonitor_la_SOURCES = diskmonitor.c \
 				diskmonitor.h
 
-diskmonitor_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
+diskmonitor_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 
 dbusautoconnector_la_SOURCES = dbusautoconnector.c
 dbusautoconnector_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
