@@ -37,10 +37,6 @@
  * Startup module loads other modules on DSME startup. 
  */
 
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
-
 #include <dsme/messages.h>
 #include "../include/dsme/modulebase.h"
 #include "../include/dsme/logging.h"

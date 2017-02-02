@@ -24,10 +24,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
-
 #include "../include/dsme/dsmesock.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modulebase.h"

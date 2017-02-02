@@ -22,8 +22,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define _GNU_SOURCE
-
 #include "dsme_dbus.h"
 #include "dbusproxy.h"
 #include "../include/dsme/modules.h"

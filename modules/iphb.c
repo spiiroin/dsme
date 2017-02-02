@@ -27,9 +27,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define _ISOC99_SOURCE
-#define _GNU_SOURCE
-
 #include <iphbd/libiphb.h>
 #include <iphbd/iphb_internal.h>
 

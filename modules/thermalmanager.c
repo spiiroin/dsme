@@ -136,8 +136,6 @@
  *
  * ========================================================================= */
 
-#define _GNU_SOURCE
-
 #include "thermalmanager.h"
 
 #include <iphbd/iphb_internal.h>

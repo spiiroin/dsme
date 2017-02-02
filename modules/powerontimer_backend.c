@@ -23,10 +23,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE
-#endif
-
 #include "powerontimer_backend.h"
 
 #include "../include/dsme/logging.h"

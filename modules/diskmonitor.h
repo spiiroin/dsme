@@ -3,8 +3,10 @@
 
    <p>
    Copyright (C) 2011 Nokia Corporation.
+   Copyright (C) 2017 Jolla Ltd
 
    @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -30,6 +32,7 @@
 
 typedef enum
 {
+    DISKSPACE_STATE_UNSET   = -2,
     DISKSPACE_STATE_UNDEF   = -1,
     DISKSPACE_STATE_NORMAL  =  0,
     DISKSPACE_STATE_WARNING =  1,
@@ -39,10 +42,6 @@ const char *diskspace_state_repr(diskspace_state_t state);
 
 typedef struct {
   DSMEMSG_PRIVATE_FIELDS
-  /*
-   * percent of disk capacity used (0-100)
-   */
-  int     blocks_percent_used;
 
   /* Logical disk use state */
   diskspace_state_t diskspace_state;

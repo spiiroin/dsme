@@ -25,8 +25,6 @@
  * License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE
-
 #include "../modules/dbusproxy.h"
 #include "../modules/state-internal.h"
 #include "../include/dsme/logging.h"

@@ -30,10 +30,6 @@
  *         -- plug-ins
  */
 
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
-
 #include "../include/dsme/mainloop.h"
 #include "../include/dsme/modulebase.h"
 #include "../include/dsme/dsmesock.h"

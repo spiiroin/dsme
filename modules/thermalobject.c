@@ -26,8 +26,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#define _GNU_SOURCE
-
 #include "thermalmanager.h"
 
 #include <iphbd/iphb_internal.h>

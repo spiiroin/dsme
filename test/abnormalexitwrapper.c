@@ -21,10 +21,6 @@
    You should have received a copy of the GNU Lesser General Public
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef __cplusplus
-#define _GNU_SOURCE
-#endif
-
 #include <unistd.h>
 #include <dlfcn.h>
 #include <stdio.h>
