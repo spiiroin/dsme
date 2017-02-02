@@ -1,3 +1,12 @@
+dsme (0.74.0) precise; urgency=low
+
+  * [build] Use -D_GNU_SOURCE globally
+  * [build] Use -D_FILE_OFFSET_BITS=64 globally
+  * [diskmonitor] Remove separate diskmonitor_backend source file. JB#37198
+  * [diskmonitor] Support config file and defining absolute limits. JB#37198
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 02 Feb 2017 09:00:29 +0200
+
 dsme (0.73.0) precise; urgency=low
 
   * [tempreaper] Run as "nemo" and other fixes. Contributes to MER#1747
