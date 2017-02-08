@@ -1,3 +1,9 @@
+dsme (0.75.0) precise; urgency=low
+
+  * [dsme] Add device info plug-in for fastboot unlock. JB#36668
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 08 Feb 2017 11:45:27 +0200
+
 dsme (0.74.0) precise; urgency=low
 
   * [build] Use -D_GNU_SOURCE globally
