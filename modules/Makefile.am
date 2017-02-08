@@ -73,6 +73,10 @@ if WANT_WLAN_LOADER
 pkglib_LTLIBRARIES += wlanloader.la
 endif
 
+if WANT_ABOOTSETTINGS
+pkglib_LTLIBRARIES += abootsettings.la
+endif
+
 startup_la_SOURCES = startup.c
 
 # TODO: remove this
@@ -177,7 +181,7 @@ batterytracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 batterytracker_la_LIBADD = $(GLIB_LIBS)
 endif
 
-if WANT_BOOTREASON_LOGGER 
+if WANT_BOOTREASON_LOGGER
 bootreasonlogger_la_SOURCES = bootreasonlogger.c
 bootreasonlogger_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 bootreasonlogger_la_LIBADD = $(GLIB_LIBS)
@@ -192,4 +196,10 @@ endif
 if WANT_WLAN_LOADER
 wlanloader_la_SOURCES = wlanloader.c
 wlanloader_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
+endif
+
+if WANT_ABOOTSETTINGS
+abootsettings_la_SOURCES = abootsettings.c
+abootsettings_la_CFLAGS =  $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
+abootsettings_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
 endif

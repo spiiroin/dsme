@@ -155,6 +155,19 @@ AS_IF([test "x$enable_wlan_loader" != xno],
 AM_CONDITIONAL([WANT_WLAN_LOADER], [test x$enable_wlan_loader != xno])
 
 #
+# Aboot settings
+#
+AC_ARG_ENABLE([abootsettings],
+  [AS_HELP_STRING([--enable-abootsettings],
+    [enable aboot settings plugin (libabootsettings)])])
+
+AS_IF([test "x$enable_abootsettings" != xno],
+  [AC_DEFINE([DSME_ABOOTSETTINGS], [1], [Enable aboot settings plugin]) ])
+
+AM_CONDITIONAL([WANT_ABOOTSETTINGS], [test x$enable_abootsettings != xno])
+
+
+#
 # Compiler and linker flags
 #
 AC_DEFINE_UNQUOTED([PRG_VERSION],[$VERSION],[Version for DSME])
