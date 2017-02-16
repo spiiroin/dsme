@@ -4,8 +4,15 @@
    D-Bus C binding for DSME
    <p>
    Copyright (C) 2009-2010 Nokia Corporation.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Kalle Jokiniemi <kalle.jokiniemi@jolla.com>
+   @author Slava Monich <slava.monich@jolla.com>
+   @author marko lemmetty <marko.lemmetty@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -28,27 +35,27 @@
 #include <stdbool.h>
 #include <dbus/dbus.h>
 
-
 #define DBUS_FAILED_FILE "/run/systemd/boot-status/dbus-failed"
 
 typedef struct DsmeDbusMessage DsmeDbusMessage;
 
-typedef void DsmeDbusMethod(const DsmeDbusMessage* request,
-                            DsmeDbusMessage**      reply);
+typedef void (*DsmeDbusMethod)(const DsmeDbusMessage* request,
+                               DsmeDbusMessage**      reply);
 
-typedef void DsmeDbusHandler(const DsmeDbusMessage* ind);
+typedef void (*DsmeDbusHandler)(const DsmeDbusMessage* ind);
 
-typedef struct dsme_dbus_binding_t {
-  DsmeDbusMethod* method;
-  const char*     name;
+typedef struct dsme_dbus_binding_t
+{
+    DsmeDbusMethod  method;
+    const char     *name; // = member
 } dsme_dbus_binding_t;
 
-typedef struct dsme_dbus_signal_binding_t {
-  DsmeDbusHandler* handler;
-  const char*      interface;
-  const char*      name;
+typedef struct dsme_dbus_signal_binding_t
+{
+    DsmeDbusHandler  handler;
+    const char      *interface;
+    const char      *name; // = member
 } dsme_dbus_signal_binding_t;
-
 
 bool dsme_dbus_is_available(void);
 DBusConnection *dsme_dbus_get_connection(DBusError *err);
@@ -93,4 +100,6 @@ DsmeDbusMessage* dsme_dbus_reply_error(const DsmeDbusMessage*  request,
                                        const char*             error_name,
                                        const char*             error_message);
 
+void dsme_dbus_startup(void);
+void dsme_dbus_cleanup(void);
 #endif

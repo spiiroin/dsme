@@ -5,8 +5,10 @@
    queue and D-Bus.
    <p>
    Copyright (C) 2009-2010 Nokia Corporation.
+   Copyright (C) 2015-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -33,7 +35,6 @@
 #include "dbusproxy.h"
 #include "dsme_dbus.h"
 
-
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 
@@ -43,12 +44,10 @@
 #include <glib.h>
 #include <stdlib.h>
 
-
 static const char* const service       = dsme_service;
 static const char* const req_interface = dsme_req_interface;
 static const char* const sig_interface = dsme_sig_interface;
 static const char* const sig_path      = dsme_sig_path;
-
 
 static char* dsme_version = 0;
 
@@ -119,9 +118,7 @@ static const dsme_dbus_binding_t methods[] = {
   { 0, 0 }
 };
 
-
 static bool bound = false;
-
 
 static const char* shutdown_action_name(dsme_state_t state)
 {
@@ -216,6 +213,12 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_REQ_DENIED_IND, server, msg)
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECT");
+
+  /* In case dbusautoconnector plugin is not used, then we need
+   * on enable dbus functionality upon receiving CONNECT event.
+   */
+  dsme_dbus_startup();
+
   dsme_dbus_bind_methods(&bound, methods, service, req_interface);
 }
 
@@ -232,7 +235,6 @@ DSME_HANDLER(DSM_MSGTYPE_DSME_VERSION, server, msg)
   }
 }
 
-
 module_fn_info_t message_handlers[] = {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_CHANGE_IND),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_BATTERY_EMPTY_IND),
@@ -243,7 +245,6 @@ module_fn_info_t message_handlers[] = {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_DSME_VERSION),
   { 0 }
 };
-
 
 void module_init(module_t* handle)
 {
@@ -261,6 +262,8 @@ void module_init(module_t* handle)
 void module_fini(void)
 {
   dsme_dbus_unbind_methods(&bound, methods, service, req_interface);
+
+  dsme_dbus_cleanup();
 
   g_free(dsme_version);
   dsme_version = 0;

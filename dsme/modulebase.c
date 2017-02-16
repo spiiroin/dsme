@@ -4,9 +4,12 @@
    Implements DSME plugin framework.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Ari Saastamoinen
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -37,6 +40,52 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+/** Message type id to human readable string debug helper
+ */
+static const char *msg_type_repr(int type)
+{
+#define X(name,value) if( type == value ) return #name
+    X(CLOSE,                        0x00000001);
+    X(DBUS_CONNECT,                 0x00000100);
+    X(DBUS_DISCONNECT,              0x00000101);
+    X(STATE_CHANGE_IND,             0x00000301);
+    X(STATE_QUERY,                  0x00000302);
+    X(SAVE_DATA_IND,                0x00000304);
+    X(POWERUP_REQ,                  0x00000305);
+    X(SHUTDOWN_REQ,                 0x00000306);
+    X(SET_ALARM_STATE,              0x00000307);
+    X(REBOOT_REQ,                   0x00000308);
+    X(STATE_REQ_DENIED_IND,         0x00000309);
+    X(THERMAL_SHUTDOWN_IND,         0x00000310);
+    X(SET_CHARGER_STATE,            0x00000311);
+    X(SET_THERMAL_STATE,            0x00000312);
+    X(SET_EMERGENCY_CALL_STATE,     0x00000313);
+    X(SET_BATTERY_STATE,            0x00000314);
+    X(BATTERY_EMPTY_IND,            0x00000315);
+    X(SHUTDOWN,                     0x00000316);
+    X(SET_USB_STATE,                0x00000317);
+    X(TELINIT,                      0x00000318);
+    X(CHANGE_RUNLEVEL,              0x00000319);
+    X(PROCESSWD_CREATE,             0x00000500);
+    X(PROCESSWD_DELETE,             0x00000501);
+    X(PROCESSWD_CLEAR,              0x00000502);
+    X(PROCESSWD_SET_INTERVAL,       0x00000503);
+    X(PROCESSWD_PING,               0x00000504);
+    X(PROCESSWD_PONG,               0x00000504);
+    X(PROCESSWD_MANUAL_PING,        0x00000505);
+    X(WAIT,                         0x00000600);
+    X(WAKEUP,                       0x00000601);
+    X(HEARTBEAT,                    0x00000702);
+    X(ENTER_MALF,                   0x00000900);
+    X(GET_VERSION,                  0x00001100);
+    X(DSME_VERSION,                 0x00001101);
+    X(SET_TA_TEST_MODE,             0x00001102);
+    X(SET_LOGGING_VERBOSITY,        0x00001103);
+    X(IDLE,                         0x00001337);
+    X(DISK_SPACE,                   0x00002000);
+#undef X
+    return "UNKNOWN";
+}
 
 /**
    Loaded module information.
@@ -154,11 +203,15 @@ static int msg_comparator(gconstpointer a, gconstpointer b)
 
 static gint sort_comparator(gconstpointer a, gconstpointer b)
 {
-    const msg_handler_info_t* handler  = (msg_handler_info_t*)a;
-    const msg_handler_info_t* existing = (msg_handler_info_t*)b;
+    const msg_handler_info_t *add = a;
+    const msg_handler_info_t *old = b;
 
-    return compare(handler->msg_type, existing->msg_type) ?:
-	   compare(handler->owner->priority, existing->owner->priority);
+    /* Note: In case of equal type and priority, we need to
+     *       return >0 value in order to dispatch events to
+     *       plugins in load order.
+     */
+    return compare(add->msg_type,        old->msg_type) ?:
+           compare(add->owner->priority, old->owner->priority) ?: 1;
 }
 
 
@@ -568,6 +621,10 @@ static int handle_message(endpoint_t*              from,
               if (msg->line_size_ >= handler->msg_size &&
                   msg->size_      == handler->msg_size)
               {
+                  dsme_log(LOG_DEBUG, "EVENT %s@%s",
+                           msg_type_repr(msg->type_),
+                           handler->owner->name);
+
                   currently_handling_module = handler->owner;
                   handler->callback(from, msg);
                   currently_handling_module = 0;
