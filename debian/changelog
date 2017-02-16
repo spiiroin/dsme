@@ -1,3 +1,10 @@
+dsme (0.75.1) precise; urgency=low
+
+  * [dbus] Refactor dsme dbus module. Fixes JB#37688
+  * [modulebase] Fix event dispatch ordering. JB#37688
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 16 Feb 2017 13:18:59 +0200
+
 dsme (0.75.0) precise; urgency=low
 
   * [dsme] Add device info plug-in for fastboot unlock. JB#36668
