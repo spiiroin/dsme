@@ -4,8 +4,11 @@
    Automatically connect Dsme to D-Bus System Bus when it is available.
    <p>
    Copyright (C) 2010 Nokia Corporation.
+   Copyright (C) 2015-2017 Jolla Ltd.
+
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -187,6 +190,11 @@ static void stop_dbus_watch(void)
 void module_init(module_t* handle)
 {
     dsme_log(LOG_DEBUG, "dbusautoconnector.so loaded");
+
+    /* Allow use of dbus functionality so that we can commence
+     * system bus connection attempts.
+     */
+    dsme_dbus_startup();
 
     if (dsme_dbus_is_available()) {
         connect_to_dbus();

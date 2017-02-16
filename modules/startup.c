@@ -5,10 +5,18 @@
    all other policies and do startup tasks for DSME.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2012-2017 Jolla Ltd.
 
    @author Ari Saastamoinen
    @author Ismo Laitinen <ismo.laitinen@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@nokia.com>
+   @author Markus Lehtonen <markus.lehtonen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Kalle Jokiniemi <kalle.jokiniemi@jolla.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author marko lemmetty <marko.lemmetty@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -98,7 +106,6 @@ const char *modules[] = {
     "validatorlistener.so",
 #endif
     "diskmonitor.so",
-    "dbusautoconnector.so",
 #ifdef DSME_PWRKEY_MONITOR
     "pwrkeymonitor.so",
 #endif
@@ -111,6 +118,8 @@ const char *modules[] = {
 #ifdef DSME_ABOOTSETTINGS
     "abootsettings.so",
 #endif
+    /* autoconnector plugin must be the last one to load */
+    "dbusautoconnector.so",
     NULL
 };
 
