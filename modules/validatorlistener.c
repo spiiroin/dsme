@@ -7,8 +7,12 @@
    launch 3rd party daemons.
    <p>
    Copyright (C) 2011 Nokia Corporation.
+   Copyright (C) 2015-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Antti Virtanen <antti.i.virtanen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -64,8 +68,7 @@ static bool is_in_list(const char* file, GSList* list);
 static bool is_basename_in_list(const char* file, GSList* list);
 
 
-static int         validator_fd = -1; // TODO: make local in start_listening
-static GIOChannel* channel      = 0;
+static guint       validator_id = 0;
 
 static bool        got_mandatory_files = false;
 static GSList*     mandatory_files     = 0;
@@ -217,7 +220,8 @@ static gboolean handle_validator_message(GIOChannel*  source,
         msg.msg_iovlen  = 1;
 
 
-        int r = TEMP_FAILURE_RETRY(recvmsg(validator_fd, &msg, 0));
+        int fd = g_io_channel_unix_get_fd(source);
+        int r = TEMP_FAILURE_RETRY(recvmsg(fd, &msg, 0));
 
         if (r == 0 || r == -1) {
             dsme_log(LOG_ERR, "Error receiving Validator message");
@@ -258,6 +262,7 @@ static gboolean handle_validator_message(GIOChannel*  source,
     }
 
     if (!keep_listening) {
+        validator_id = 0;
         stop_listening_to_validator();
     }
 
@@ -267,57 +272,52 @@ static gboolean handle_validator_message(GIOChannel*  source,
 
 static bool start_listening_to_validator(void)
 {
-    validator_fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_VALIDATOR);
-    if (validator_fd == -1) {
-        dsme_log(LOG_ERR, "Validator socket: %s", strerror(errno));
-        goto fail;
+    int         fd  = -1;
+    GIOChannel *chn = 0;
+
+    if( validator_id )
+        goto cleanup;
+
+    if( (fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_VALIDATOR)) == -1 ) {
+        dsme_log(LOG_ERR, "Validator socket: %m");
+        goto cleanup;
     }
 
     struct sockaddr_nl addr;
-    memset(&addr, 0, sizeof(addr));
+    memset(&addr, 0, sizeof addr);
     addr.nl_family = AF_NETLINK;
     addr.nl_pid    = getpid();
     addr.nl_groups = 1; // TODO: magic number: group mask for Validator
 
-    if (bind(validator_fd, (struct sockaddr*)&addr, sizeof(addr)) == -1) {
-        dsme_log(LOG_ERR, "Validator socket bind: %s", strerror(errno));
-        goto close_and_fail;
+    if( bind(fd, (struct sockaddr*)&addr, sizeof addr) == -1) {
+        dsme_log(LOG_ERR, "Validator socket bind: %m");
+        goto cleanup;
     }
 
-    guint watch = 0;
+    if( !(chn = g_io_channel_unix_new(fd)) )
+        goto cleanup;
 
-    if (!(channel = g_io_channel_unix_new(validator_fd))) {
-        goto close_and_fail;
-    }
-    g_io_channel_set_encoding(channel, 0, 0);
-    g_io_channel_set_buffered(channel, FALSE);
-    g_io_channel_set_close_on_unref(channel, TRUE);
+    g_io_channel_set_encoding(chn, 0, 0);
+    g_io_channel_set_buffered(chn, FALSE);
+    g_io_channel_set_close_on_unref(chn, TRUE), fd = -1;
 
-    watch = g_io_add_watch(channel,
-                           (G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL),
-                           handle_validator_message,
-                           0);
-    g_io_channel_unref(channel);
-    if (!watch) {
-        goto fail;
-    }
+    validator_id = g_io_add_watch(chn,
+                                  G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+                                  handle_validator_message, 0);
+cleanup:
+    if( chn )
+        g_io_channel_unref(chn);
 
-    return true;
+    if( fd != -1 )
+        close(fd);
 
-
-close_and_fail:
-    close(validator_fd);
-    validator_fd = -1;
-
-fail:
-    return false;
+    return validator_id != 0;
 }
 
 static void stop_listening_to_validator(void)
 {
-    if (channel) {
-        g_io_channel_shutdown(channel, FALSE, 0);
-        channel = 0;
+    if( validator_id ) {
+        g_source_remove(validator_id), validator_id = 0;
     }
 }
 
