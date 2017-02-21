@@ -4,11 +4,18 @@
    This file implements the main() of the DSME HW watchdog daemon.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2012-2017 Jolla Ltd.
 
    @author Ari Saastamoinen
    @author Ismo Laitinen <ismo.laitinen@nokia.com>
    @author Yuri Zaporogets
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Markus Lehtonen <markus.lehtonen@nokia.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
+   @author Carsten Munk <carsten.munk@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -198,12 +205,12 @@ static void parse_options(int   argc,   /* in  */
     const char*  short_options = "dhsp:l:v:";
     const struct option long_options[] = {
         { "help",           0, NULL, 'h' },
-        { "verbosity",      0, NULL, 'v' },
+        { "verbosity",      1, NULL, 'v' },
 #ifdef DSME_SYSTEMD_ENABLE
         { "systemd",        0, NULL, 's' },
 #endif
 #ifdef DSME_LOG_ENABLE  
-        { "logging",        0, NULL, 'l' },
+        { "logging",        1, NULL, 'l' },
 #endif
         { "daemon",         0, NULL, 'd' },
         { 0, 0, 0, 0 }

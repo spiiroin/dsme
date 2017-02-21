@@ -131,12 +131,12 @@ static void parse_options(int      argc,           /* in  */
   const struct option long_options[] = {
         { "startup-module", 1, NULL, 'p' },
         { "help",           0, NULL, 'h' },
-        { "verbosity",      0, NULL, 'v' },
+        { "verbosity",      1, NULL, 'v' },
 #ifdef DSME_SYSTEMD_ENABLE
         { "systemd",        0, NULL, 's' },
 #endif
 #ifdef DSME_LOG_ENABLE  
-        { "logging",        0, NULL, 'l' },
+        { "logging",        1, NULL, 'l' },
 #endif
         { "valgrind",       0, NULL, 901  },
         { 0, 0, 0, 0 }
