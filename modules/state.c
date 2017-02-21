@@ -4,10 +4,15 @@
    This file implements device state policy in DSME.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Ismo Laitinen <ismo.laitinen@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Antti Virtanen <antti.i.virtanen@nokia.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Marko Saukko <marko.saukko@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -131,6 +136,7 @@ static dsme_state_t current_state = DSME_STATE_NOT_SET;
 /* timers for delayed setting of state bits */
 static dsme_timer_t overheat_timer           = 0;
 static dsme_timer_t charger_disconnect_timer = 0;
+static dsme_timer_t battery_empty_timer      = 0;
 
 /* timers for giving other programs a bit of time before shutting down */
 static dsme_timer_t delayed_shutdown_timer   = 0;
@@ -581,6 +587,7 @@ static int delayed_shutdown_fn(void* unused)
   msg.runlevel = state2runlevel(current_state);
   broadcast_internally(&msg);
 
+  delayed_shutdown_timer = 0;
   return 0; /* stop the interval */
 }
 
@@ -669,6 +676,13 @@ static void stop_delayed_runlevel_timers(void)
     }
 }
 
+static void stop_overheat_timer(void)
+{
+  if (overheat_timer) {
+    dsme_destroy_timer(overheat_timer);
+    overheat_timer = 0;
+  }
+}
 
 static void start_overheat_timer(void)
 {
@@ -692,6 +706,7 @@ static int delayed_overheat_fn(void* unused)
   device_overheated = true;
   change_state_if_necessary();
 
+  overheat_timer = 0;
   return 0; /* stop the interval */
 }
 
@@ -720,6 +735,7 @@ static int delayed_charger_disconnect_fn(void* unused)
   charger_state = CHARGER_DISCONNECTED;
   change_state_if_necessary();
 
+  charger_disconnect_timer = 0;
   return 0; /* stop the interval */
 }
 
@@ -974,7 +990,37 @@ static int delayed_battery_empty_fn(void* unused)
     battery_empty = true;
     change_state_if_necessary();
 
+    battery_empty_timer = 0;
     return 0; /* stop the interval */
+}
+
+static void stop_battery_empty_timer(void)
+{
+  if (battery_empty_timer) {
+    dsme_destroy_timer(battery_empty_timer);
+    battery_empty_timer = 0;
+  }
+}
+
+static void start_battery_empty_timer(void)
+{
+  if (!battery_empty_timer) {
+    battery_empty_timer = dsme_create_timer(DSME_BATTERY_EMPTY_SHUTDOWN_TIMER,
+                                            delayed_battery_empty_fn,
+                                            NULL);
+    if (!battery_empty_timer)
+    {
+      dsme_log(LOG_ERR,
+               PFIX"Cannot create timer; battery empty shutdown immediately!");
+      delayed_battery_empty_fn(0);
+    }
+    else
+    {
+      dsme_log(LOG_CRIT,
+               PFIX"Battery empty shutdown in %d seconds",
+               DSME_BATTERY_EMPTY_SHUTDOWN_TIMER);
+    }
+  }
 }
 
 DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
@@ -991,18 +1037,7 @@ DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
       broadcast(&battery_empty_ind);
 
       /* then set up a delayed shutdown */
-      if (!dsme_create_timer(DSME_BATTERY_EMPTY_SHUTDOWN_TIMER,
-                             delayed_battery_empty_fn,
-                             NULL))
-      {
-          dsme_log(LOG_ERR,
-                   PFIX"Cannot create timer; battery empty shutdown immediately!");
-          delayed_battery_empty_fn(0);
-      } else {
-          dsme_log(LOG_CRIT,
-                   PFIX"Battery empty shutdown in %d seconds",
-                   DSME_BATTERY_EMPTY_SHUTDOWN_TIMER);
-      }
+      start_battery_empty_timer();
   }
 }
 
@@ -1300,5 +1335,9 @@ void module_fini(void)
 #ifdef DSME_VIBRA_FEEDBACK
   dsme_fini_vibrafeedback();
 #endif  // DSME_VIBRA_FEEDBACK
+  stop_delayed_runlevel_timers();
+  stop_charger_disconnect_timer();
+  stop_overheat_timer();
+  stop_battery_empty_timer();
   dsme_log(LOG_DEBUG, "state.so unloaded");
 }
