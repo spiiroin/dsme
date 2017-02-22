@@ -300,6 +300,8 @@ static bool               dsme_dbus_connection_is_open      (DBusConnection *con
 static bool               dsme_dbus_bus_get_unix_process_id (DBusConnection *conn, const char *name, pid_t *pid);
 static const char        *dsme_dbus_get_type_name           (int type);
 static bool               dsme_dbus_check_arg_type          (DBusMessageIter *iter, int want_type);
+static const char        *dsme_dbus_name_request_reply_repr (int reply);
+static const char        *dsme_dbus_name_release_reply_repr (int reply);
 static DBusHandlerResult  dsme_dbus_connection_filter_cb    (DBusConnection *con, DBusMessage *msg, void *aptr);
 static DBusConnection    *dsme_dbus_try_to_connect          (DBusError *err);
 static void               dsme_dbus_disconnect              (void);
@@ -1010,11 +1012,18 @@ static bool service_reserve_name(Service *self)
     if( !dsme_dbus_connection_is_open(self->filter->connection) )
         goto EXIT;
 
-    int rc = dbus_bus_request_name(self->filter->connection, self->name, 0, &err);
+    int rc = dbus_bus_request_name(self->filter->connection,
+                                   self->name,
+                                   DBUS_NAME_FLAG_DO_NOT_QUEUE,
+                                   &err);
 
     if( rc != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ) {
-        dsme_log(LOG_DEBUG, "request_name(%s): %s: %s\n",
-                 self->name, err.name, err.message);
+        if( dbus_error_is_set(&err) )
+            dsme_log(LOG_ERR, "request_name(%s): %s: %s",
+                     self->name, err.name, err.message);
+        else
+            dsme_log(LOG_ERR, "request_name(%s): %s",
+                     self->name, dsme_dbus_name_request_reply_repr(rc));
         goto EXIT;
     }
 
@@ -1046,8 +1055,12 @@ static void service_release_name(Service *self)
                                    self->name, &err);
 
     if( rc != DBUS_RELEASE_NAME_REPLY_RELEASED ) {
-        dsme_log(LOG_DEBUG, "release_name(%s): %s: %s\n",
-                 self->name, err.name, err.message);
+        if( dbus_error_is_set(&err) )
+            dsme_log(LOG_ERR, "release_name(%s): %s: %s",
+                     self->name, err.name, err.message);
+        else
+            dsme_log(LOG_ERR, "release_name(%s): %s",
+                     self->name, dsme_dbus_name_release_reply_repr(rc));
     }
 
     dsme_log(LOG_DEBUG, "name %s released", self->name);
@@ -1395,7 +1408,7 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
                                        "org.freedesktop.DBus",
                                        "GetConnectionUnixProcessID");
     if( !req ) {
-        dsme_log(LOG_DEBUG, "Unable to allocate new message");
+        dsme_log(LOG_ERR, "Unable to allocate new message");
         goto EXIT;
     }
 
@@ -1404,7 +1417,7 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
                                   &name,
                                   DBUS_TYPE_INVALID) )
     {
-        dsme_log(LOG_DEBUG, "Unable to append arguments to message");
+        dsme_log(LOG_ERR, "Unable to append arguments to message");
         goto EXIT;
     }
 
@@ -1481,6 +1494,53 @@ dsme_dbus_check_arg_type(DBusMessageIter *iter, int want_type)
              dsme_dbus_get_type_name(want_type),
              dsme_dbus_get_type_name(have_type));
     return false;
+}
+
+static const char *
+dsme_dbus_name_request_reply_repr(int reply)
+{
+    const char *repr = "UNKNOWN";
+
+    switch( reply ) {
+    case DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER:
+        repr = "PRIMARY_OWNER";
+        break;
+    case DBUS_REQUEST_NAME_REPLY_IN_QUEUE:
+        repr = "IN_QUEUE";
+        break;
+    case DBUS_REQUEST_NAME_REPLY_EXISTS:
+        repr = "EXISTS";
+        break;
+    case DBUS_REQUEST_NAME_REPLY_ALREADY_OWNER:
+        repr = "ALREADY_OWNER";
+        break;
+    default:
+        break;
+    }
+
+    return repr;
+}
+
+static const char *
+dsme_dbus_name_release_reply_repr(int reply)
+{
+    const char *repr = "UNKNOWN";
+
+    switch( reply ) {
+    case DBUS_RELEASE_NAME_REPLY_RELEASED:
+        repr = "RELEASED";
+        break;
+    case DBUS_RELEASE_NAME_REPLY_NON_EXISTENT:
+        repr = "NON_EXISTENT";
+        break;
+    case DBUS_RELEASE_NAME_REPLY_NOT_OWNER:
+        repr = "NOT_OWNER";
+        break;
+    default:
+        break;
+    }
+
+    return repr;
 }
 
 /* ------------------------------------------------------------------------- *
