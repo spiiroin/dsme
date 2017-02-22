@@ -1592,7 +1592,7 @@ dsme_dbus_get_connection(DBusError *err)
         if( err )
             dbus_move_error(&tmp, err);
         else
-            dsme_log(LOG_DEBUG, "dbus_bus_get(): %s\n", tmp.message);
+            dsme_log(LOG_DEBUG, "dbus_bus_get(): %s", tmp.message);
     }
 
 EXIT:
