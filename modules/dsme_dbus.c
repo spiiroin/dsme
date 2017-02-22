@@ -35,6 +35,7 @@
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/modulebase.h"
+#include "../dsme/dsme-server.h"
 #include <dsme/state.h>
 
 #include <glib.h>
@@ -1776,4 +1777,13 @@ dsme_dbus_cleanup(void)
 
     /* Let go of the system bus connection ref */
     dsme_dbus_disconnect();
+
+    if( dsme_in_valgrind_mode() ) {
+        /* Exchaust dbus message recycling cache */
+        DBusMessage *msg[32];
+        for( size_t i = 0; i < 32; ++i )
+            msg[i] = dbus_message_new_signal("/", "foo.bar", "baf");
+        for( size_t i = 0; i < 32; ++i )
+            dbus_message_unref(msg[i]);
+    }
 }

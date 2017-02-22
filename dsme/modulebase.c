@@ -31,6 +31,7 @@
 #include <dsme/protocol.h>
 #include "../include/dsme/logging.h"
 #include "../include/dsme/mainloop.h"
+#include "dsme-server.h"
 
 #include <glib.h>
 #include <stdio.h>
@@ -659,7 +660,15 @@ bool unload_module(module_t* module)
                 currently_handling_module = 0;
             }
 
-            dlclose(module->handle);
+            if( dsme_in_valgrind_mode() ) {
+                /* As valgrind resolves symbols on process exit, it will
+                 * fail if we actually unmap plugins ... */
+                dsme_log(LOG_WARNING, "valgrind mode: skip %s unload",
+                         module->name);
+            }
+            else {
+                dlclose(module->handle);
+            }
         }
 
         if (module->name) {

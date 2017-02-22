@@ -7,10 +7,14 @@
 
    <p>
    Copyright (C) 2010 Nokia. All rights reserved.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Raimo Vuonnala <raimo.vuonnala@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Antti Virtanen <antti.i.virtanen@nokia.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Petri M. Gerdt <petri.gerdt@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -38,6 +42,7 @@
 #include "../include/dsme/logging.h"
 #include "../include/dsme/timers.h"
 #include "../dsme/dsme-wdd-wd.h"
+#include "../dsme/dsme-server.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -320,9 +325,19 @@ cleanup:
 /** Tell hwwd kicker process that we're still alive */
 static void hwwd_feeder_sync(void)
 {
-    /* The parent process is hwwd kicker, and the SIGHUP will interrupt
-     * the nanosleep() it is most likely at */
-    kill(getppid(), SIGHUP);
+    if( dsme_in_valgrind_mode() ) {
+        /* Assume parent process is valgrind and SIGHUP would kill it */
+      static bool already_logged = false;
+      if( !already_logged ) {
+        already_logged = true;
+        dsme_log(LOG_WARNING, "valgrind mode: parent SIGHUP skipped");
+      }
+    }
+    else {
+        /* The parent process is hwwd kicker, and the SIGHUP will interrupt
+         * the nanosleep() it is most likely at */
+        kill(getppid(), SIGHUP);
+    }
 }
 
 /* ------------------------------------------------------------------------- *

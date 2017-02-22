@@ -4,8 +4,11 @@
    A simple test driver and test cases for DSME
    <p>
    Copyright (C) 2011 Nokia Corporation
+   Copyright (C) 2014-2017 Jolla Ltd.
 
    @author Jyrki Hämäläinen <ext-jyrki.hamalainen@nokia.com>
+   @author Marko Saukko <marko.saukko@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -66,6 +69,11 @@
 /* TIME_STUB */
 #include <time.h>
 #include <dlfcn.h>
+
+bool dsme_in_valgrind_mode(void)
+{
+  return false;
+}
 
 static time_t faketime = 0;
 static unsigned char use_realtime = 0;
