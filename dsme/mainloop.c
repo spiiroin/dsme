@@ -4,8 +4,11 @@
    Implements DSME mainloop functionality.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2014-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -36,76 +39,90 @@ typedef enum { NOT_STARTED, RUNNING, STOPPED } main_loop_state_t;
 
 static volatile main_loop_state_t state    = NOT_STARTED;
 static GMainLoop*                 the_loop = 0;
-static int                        signal_pipe[2];
-static int                        main_loop_exit_code = EXIT_SUCCESS;
 
-static gboolean handle_signal(GIOChannel*  source,
-                              GIOCondition condition,
-                              gpointer     data);
+static int                        mainloop_wakeup_fd[2] = { -1, -1 };
+static guint                      mainloop_wakeup_id    = 0;
+static int                        mainloop_exit_code    = EXIT_SUCCESS;
 
-static bool set_up_signal_pipe(void)
-{
-    /* create a non-blocking pipe for waking up the main thread */
-    if (pipe(signal_pipe) == -1) {
-        dsme_log(LOG_CRIT, "error creating wake up pipe: %s", strerror(errno));
-        goto fail;
-    }
-
-    /* set writing end of the pipe to non-blocking mode */
-    int flags;
-    errno = 0;
-    if ((flags = fcntl(signal_pipe[1], F_GETFL)) == -1 && errno != 0) {
-        dsme_log(LOG_CRIT,
-                 "error getting flags for wake up pipe: %s",
-                 strerror(errno));
-        goto close_and_fail;
-    }
-    if (fcntl(signal_pipe[1], F_SETFL, flags | O_NONBLOCK) == -1) {
-        dsme_log(LOG_CRIT,
-                 "error setting wake up pipe to non-blocking: %s",
-                 strerror(errno));
-        goto close_and_fail;
-    }
-
-    /* set up an I/O watch for the wake up pipe */
-    GIOChannel* chan  = 0;
-    guint       watch = 0;
-
-    if (!(chan = g_io_channel_unix_new(signal_pipe[0]))) {
-        goto close_and_fail;
-    }
-    watch = g_io_add_watch(chan, G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
-			   handle_signal, 0);
-    g_io_channel_unref(chan);
-    if (!watch) {
-        goto close_and_fail;
-    }
-
-    return true;
-
-
-close_and_fail:
-    (void)close(signal_pipe[1]);
-    (void)close(signal_pipe[0]);
-
-fail:
-    return false;
-}
-
-static gboolean handle_signal(GIOChannel*  source,
-                              GIOCondition condition,
-                              gpointer     data)
+static gboolean
+mainloop_wakeup_cb(GIOChannel* src, GIOCondition cnd, gpointer dta)
 {
     g_main_loop_quit(the_loop);
+
+    mainloop_wakeup_id = 0;
     return FALSE;
 }
 
+static void
+mainloop_wakeup_quit(void)
+{
+    if( mainloop_wakeup_id ) {
+        g_source_remove(mainloop_wakeup_id), mainloop_wakeup_id = 0;
+    }
 
-void dsme_main_loop_run(void (*iteration)(void))
+    if( mainloop_wakeup_fd[0] != -1 ) {
+        close(mainloop_wakeup_fd[0]), mainloop_wakeup_fd[0] = -1;
+    }
+
+    if( mainloop_wakeup_fd[1] != -1 ) {
+        close(mainloop_wakeup_fd[1]), mainloop_wakeup_fd[1] = -1;
+    }
+}
+
+static bool
+mainloop_wakeup_init(void)
+{
+    GIOChannel *chn = 0;
+
+    if( mainloop_wakeup_id )
+        goto cleanup;
+
+    /* create a pipe for waking up the main thread */
+    if( pipe(mainloop_wakeup_fd) == - 1) {
+        dsme_log(LOG_CRIT, "error creating wake up pipe: %m");
+        goto cleanup;
+    }
+
+    /* set writing end of the pipe to non-blocking mode */
+    errno = 0;
+    int flags = fcntl(mainloop_wakeup_fd[1], F_GETFL);
+    if( flags == -1 && errno != 0 ) {
+        dsme_log(LOG_CRIT, "error getting flags for wake up pipe: %m");
+        goto cleanup;
+    }
+
+    if( fcntl(mainloop_wakeup_fd[1], F_SETFL, flags | O_NONBLOCK) == -1 ) {
+        dsme_log(LOG_CRIT, "error setting wake up pipe to non-blocking: %m");
+        goto cleanup;
+    }
+
+    /* set up an I/O watch for the wake up pipe */
+    if( !(chn = g_io_channel_unix_new(mainloop_wakeup_fd[0])) ) {
+        goto cleanup;
+    }
+
+    mainloop_wakeup_id = g_io_add_watch(chn,
+                                        G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+                                        mainloop_wakeup_cb, 0);
+cleanup:
+
+    if( chn )
+        g_io_channel_unref(chn);
+
+    if( !mainloop_wakeup_id )
+        mainloop_wakeup_quit();
+
+    return mainloop_wakeup_id != 0;
+}
+
+void
+dsme_main_loop_run(void (*iteration)(void))
 {
     if (state == NOT_STARTED) {
+        state = RUNNING;
+
         if (!(the_loop = g_main_loop_new(0, FALSE)) ||
-            !set_up_signal_pipe())
+            !mainloop_wakeup_init())
         {
             // TODO: crash and burn
             exit(EXIT_FAILURE);
@@ -113,7 +130,6 @@ void dsme_main_loop_run(void (*iteration)(void))
 
         GMainContext* ctx = g_main_loop_get_context(the_loop);
 
-        state = RUNNING;
         while (state == RUNNING) {
             if (iteration) {
                 iteration();
@@ -123,33 +139,38 @@ void dsme_main_loop_run(void (*iteration)(void))
             }
         }
 
-        g_main_loop_unref(the_loop);
-        the_loop = 0;
+        mainloop_wakeup_quit();
+
+        g_main_loop_unref(the_loop), the_loop = 0;
     }
 }
 
-void dsme_main_loop_quit(int exit_code)
+void
+dsme_main_loop_quit(int exit_code)
 {
+    /* This function is used from signal handlers and
+     * thus must remain Async-signal-safe. */
+
     if (state == RUNNING) {
         state = STOPPED;
 
         dsme_log_stop();
 
-        if (main_loop_exit_code < exit_code) {
-            main_loop_exit_code = exit_code;
+        if (mainloop_exit_code < exit_code) {
+            mainloop_exit_code = exit_code;
         }
 
-        ssize_t bytes_written;
-        while ((bytes_written = write(signal_pipe[1], "*", 1)) == -1 &&
-               (errno == EINTR))
-        {
-            /* EMPTY LOOP */
+        while( write(mainloop_wakeup_fd[1], "*", 1) == -1) {
+            if( errno == EINTR )
+                continue;
+            _exit(EXIT_FAILURE);
         }
     }
 }
 
-int dsme_main_loop_exit_code(void)
+int
+dsme_main_loop_exit_code(void)
 {
-    return main_loop_exit_code;
+    return mainloop_exit_code;
 }
 
