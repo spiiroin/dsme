@@ -1,3 +1,18 @@
+dsme (0.75.2) precise; urgency=low
+
+  * [debug] Add special mode for running dsme-server with valgrind. JB#37757
+  * [dsme] Fix incorrectly configured long options
+  * [mainloop] Fix iowatch resource leak. JB#37757
+  * [dsmesock] Fix io watch resource leaks. JB#37757
+  * [validatorlistener] Fix io watch resource leaks. JB#37757
+  * [dbusautoconnector] Fix io watch resource leaks. JB#37757
+  * [heartbeat] Fix io watch resource leaks. JB#37757
+  * [state] Fix timer id leaks. Fixes JB#37757
+  * [logging] Remove excess newlines in diagnostic messages
+  * [dbus] Adjust diagnostic logging
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 06 Mar 2017 10:01:15 +0200
+
 dsme (0.75.1) precise; urgency=low
 
   * [dbus] Refactor dsme dbus module. Fixes JB#37688
