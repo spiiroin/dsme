@@ -4,11 +4,14 @@
    This file implements the main function and main loop of DSME component.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2012-2017 Jolla Ltd.
 
    @author Ari Saastamoinen
    @author Ismo Laitinen <ismo.laitinen@nokia.com>
    @author Yuri Zaporogets
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -29,6 +32,8 @@
  * TODO: - things to glibify:
  *         -- plug-ins
  */
+
+#include "dsme-server.h"
 
 #include "../include/dsme/mainloop.h"
 #include "../include/dsme/modulebase.h"
@@ -81,6 +86,7 @@ static void usage(const char *  progname)
   fprintf(stderr, " -s  --systemd     "
                     "Signal systemd when initialization is done\n");
 #endif
+  fprintf(stderr, "     --valgrind    Enable running with valgrind\n");
   fprintf(stderr, " -h  --help        Help\n");
 }
 
@@ -90,7 +96,7 @@ static void usage(const char *  progname)
  *
  * @param sig signal_type
  */
-void signal_handler(int sig)
+static void signal_handler(int sig)
 {
   switch (sig) {
     case SIGINT:
@@ -108,6 +114,13 @@ static log_method logging_method    = LOG_METHOD_SYSLOG;
 static int signal_systemd = 0;
 #endif
 
+static bool valgrind_mode_enabled = false;
+
+bool dsme_in_valgrind_mode(void)
+{
+    return valgrind_mode_enabled;
+}
+
 static void parse_options(int      argc,           /* in  */
                           char*    argv[],         /* in  */
                           GSList** module_names)   /* out */
@@ -118,13 +131,14 @@ static void parse_options(int      argc,           /* in  */
   const struct option long_options[] = {
         { "startup-module", 1, NULL, 'p' },
         { "help",           0, NULL, 'h' },
-        { "verbosity",      0, NULL, 'v' },
+        { "verbosity",      1, NULL, 'v' },
 #ifdef DSME_SYSTEMD_ENABLE
         { "systemd",        0, NULL, 's' },
 #endif
 #ifdef DSME_LOG_ENABLE  
-        { "logging",        0, NULL, 'l' },
+        { "logging",        1, NULL, 'l' },
 #endif
+        { "valgrind",       0, NULL, 901  },
         { 0, 0, 0, 0 }
   };
 
@@ -132,6 +146,11 @@ static void parse_options(int      argc,           /* in  */
           getopt_long(argc, argv, short_options, long_options,0)) != -1)
     {
       switch (next_option) {
+        case 901:
+          fprintf(stderr, ME"enabling valgrind mode");
+          valgrind_mode_enabled = true;
+          break;
+
         case 'p': /* -p or --startup-module, allow only once */
         {
           if (module_names) {

@@ -169,7 +169,7 @@ static int get_cmd_line_value(char* get_value, int max_len, const char* key)
 
     cmdline_file = fopen("/proc/cmdline", "r");
     if(!cmdline_file) {
-        dsme_log(LOG_ERR, PFIX"Could not open /proc/cmdline\n");
+        dsme_log(LOG_ERR, PFIX"Could not open /proc/cmdline");
         return -1;
     }
 

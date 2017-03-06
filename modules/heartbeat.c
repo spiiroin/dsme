@@ -4,8 +4,11 @@
    Implements DSME server periodic wake up functionality.
    <p>
    Copyright (C) 2009-2010 Nokia Corporation.
+   Copyright (C) 2014-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -35,76 +38,87 @@
 
 #include <glib.h>
 
-
+static guint watch_id = 0;
 
 static gboolean emit_heartbeat_message(GIOChannel*  source,
                                        GIOCondition condition,
                                        gpointer     data)
 {
+    bool keep_going = false;
+
     // handle errors
     if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
         // the wd process has probably died; remove the watch & quit
         dsme_log(LOG_CRIT, "heartbeat: I/O error or HUP, terminating");
+        goto cleanup;
+    }
+
+    char    c = 0;
+    ssize_t n = read(STDIN_FILENO, &c, 1);
+
+    if( n == 0 ) {
+        dsme_log(LOG_CRIT, "heartbeat: unexpected EOF, terminating");
+        goto cleanup;
+    }
+
+    if( n == -1 ) {
+        if( errno == EINTR || errno == EAGAIN )
+            keep_going = true;
+        else
+            dsme_log(LOG_CRIT, "heartbeat: read error: %m, terminating");
+        goto cleanup;
+    }
+
+    // got a ping from the wd process; respond with a pong
+    do {
+        n = write(STDOUT_FILENO, "*", 1);
+    } while( n == -1 && errno == EINTR );
+
+    // send the heartbeat message
+    const DSM_MSGTYPE_HEARTBEAT beat = DSME_MSG_INIT(DSM_MSGTYPE_HEARTBEAT);
+    broadcast_internally(&beat);
+
+    keep_going = true;
+
+cleanup:
+
+    if( !keep_going ) {
+        watch_id = 0;
         dsme_main_loop_quit(EXIT_FAILURE);
-        return false;
     }
 
-    // first read the byte that woke us up
-    ssize_t bytes_read;
-    char    c;
-    while ((bytes_read = read(STDIN_FILENO, &c, 1)) == -1 &&
-           errno == EINTR)
-    {
-        // EMPTY LOOP
-    }
-
-    if (bytes_read == 1) {
-        // got a ping from the wd process; respond with a pong
-        ssize_t bytes_written;
-        while ((bytes_written = write(STDOUT_FILENO, "*", 1)) == -1 &&
-               (errno == EINTR))
-        {
-            // EMPTY LOOP
-        }
-
-        // send the heartbeat message
-        const DSM_MSGTYPE_HEARTBEAT beat = DSME_MSG_INIT(DSM_MSGTYPE_HEARTBEAT);
-        broadcast_internally(&beat);
-        //dsme_log(LOG_DEBUG, "heartbeat");
-        return true;
-    } else {
-        // got an EOF (or a read error); remove the watch
-        dsme_log(LOG_DEBUG, "heartbeat: read() EOF or failure");
-        return false;
-    }
+    return keep_going;
 }
 
 static bool start_heartbeat(void)
 {
-    // set up an I/O watch for the wake up pipe
-    GIOChannel* chan  = 0;
-    guint       watch = 0;
+    // set up an I/O watch for the wake up pipe (stdin/stdout)
+    GIOChannel *chn = 0;
 
-    if (!(chan = g_io_channel_unix_new(STDIN_FILENO))) {
-        goto fail;
-    }
-    if (!(watch = g_io_add_watch(chan,
-                                 G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
-                                 emit_heartbeat_message,
-                                 0)))
-    {
-        g_io_channel_unref(chan);
-        goto fail;
-    }
-    g_io_channel_unref(chan);
+    if( watch_id )
+        goto cleanup;
 
-    return true;
+    if( !(chn = g_io_channel_unix_new(STDIN_FILENO)) )
+        goto cleanup;
 
+    watch_id = g_io_add_watch(chn,
+                              G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+                              emit_heartbeat_message,
+                              0);
+cleanup:
 
-fail:
-    return false;
+    if( chn )
+        g_io_channel_unref(chn);
+
+    return watch_id != 0;
 }
 
+static void stop_heatbeat(void)
+{
+    if( watch_id ) {
+        g_source_remove(watch_id), watch_id = 0;
+    }
+}
 
 void module_init(module_t* handle)
 {
@@ -116,4 +130,6 @@ void module_init(module_t* handle)
 void module_fini(void)
 {
     dsme_log(LOG_DEBUG, "heartbeat.so unloaded");
+
+    stop_heatbeat();
 }

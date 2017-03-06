@@ -224,7 +224,7 @@ DSME_HANDLER(DSM_MSGTYPE_PROCESSWD_CREATE, client, msg)
 
   if (g_slist_find_custom(processes, GINT_TO_POINTER(msg->pid), compare_pids)) {
       /* Already there - just ignore and return */
-      dsme_log(LOG_DEBUG, "Process WD requested for existing pid\n");
+      dsme_log(LOG_DEBUG, "Process WD requested for existing pid");
       return;
   }
 

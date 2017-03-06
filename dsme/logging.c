@@ -461,7 +461,7 @@ out:
 
 void dsme_log_set_verbosity(int verbosity)
 {
-    dsme_log(LOG_DEBUG, "setting logging verbosity to %d\n", verbosity);
+    dsme_log(LOG_DEBUG, "setting logging verbosity to %d", verbosity);
     logopt.verbosity = verbosity;
 }
 

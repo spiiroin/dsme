@@ -4,8 +4,11 @@
    A test driver for the emergencycalltracker module
    <p>
    Copyright (C) 2011 Nokia Corporation
+   Copyright (C) 2014-2017 Jolla Ltd.
 
    @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Marko Saukko <marko.saukko@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -63,6 +66,11 @@
 
 /* TEST DRIVER */
 #include "testdriver.h"
+
+bool dsme_in_valgrind_mode(void)
+{
+  return false;
+}
 
 static void initialize(void)
 {

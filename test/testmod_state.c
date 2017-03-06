@@ -4,9 +4,13 @@
    A simple test driver and test cases for DSME
    <p>
    Copyright (C) 2009-2011 Nokia Corporation
+   Copyright (C) 2014-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Jyrki Hämäläinen <ext-jyrki.hamalainen@nokia.com>
+   @author Marko Saukko <marko.saukko@jollamobile.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -57,6 +61,11 @@
 
 /* TEST DRIVER */
 #include "testdriver.h"
+
+bool dsme_in_valgrind_mode(void)
+{
+  return false;
+}
 
 static void initialize(void)
 {

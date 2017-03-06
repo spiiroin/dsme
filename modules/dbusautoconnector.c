@@ -49,8 +49,8 @@ static void stop_dbus_watch(void);
 
 
 static int          inotify_fd    = -1;
+static guint        inotify_id    =  0;
 static int          watch_fd      = -1;
-static GIOChannel*  channel       =  0;
 static dsme_timer_t connect_timer = 0;
 
 
@@ -63,13 +63,17 @@ static void connect_to_dbus(void)
 
 static int connect_to_dbus_if_available(void* dummy)
 {
-    if (dsme_dbus_is_available()) {
-        connect_to_dbus();
+    bool keep_trying = true;
 
-        return 0; // connected; stop trying
-    } else {
-        return 1; // not connected; keep trying
+    if( dsme_dbus_is_available() ) {
+        keep_trying = false;
+        connect_to_dbus();
     }
+
+    if( !keep_trying )
+        connect_timer = 0;
+
+    return keep_trying;
 }
 
 static void try_connecting_to_dbus_until_successful(void)
@@ -116,6 +120,7 @@ static gboolean handle_inotify_event(GIOChannel*  source,
     }
 
     if(!keep_watching) {
+        inotify_id = 0;
         stop_dbus_watch();
     }
 
@@ -124,11 +129,16 @@ static gboolean handle_inotify_event(GIOChannel*  source,
 
 static bool set_up_watch_for_dbus(void)
 {
+    GIOChannel *chn =  0;
+
+    if( inotify_id )
+        goto cleanup;
+
     dsme_log(LOG_DEBUG, "setting up a watch for D-Bus System bus socket dir");
 
     if ((inotify_fd = inotify_init()) == -1) {
         dsme_log(LOG_ERR, "Error initializing inotify for D-Bus: %m");
-        goto fail;
+        goto cleanup;
     }
     if ((watch_fd = inotify_add_watch(inotify_fd,
                                       DSME_SYSTEM_BUS_DIR,
@@ -136,44 +146,34 @@ static bool set_up_watch_for_dbus(void)
                   == -1)
     {
         dsme_log(LOG_ERR, "Error adding inotify watch for D-Bus: %m");
-        goto close_inotify_and_fail;
+        goto cleanup;
     }
 
-    if ((channel = g_io_channel_unix_new(inotify_fd)) == 0) {
+    if ((chn = g_io_channel_unix_new(inotify_fd)) == 0) {
         dsme_log(LOG_ERR, "Error creating channel to watch for D-Bus");
-        goto close_fds_and_fail;
+        goto cleanup;
     }
-    g_io_channel_set_close_on_unref(channel, FALSE);
+    g_io_channel_set_close_on_unref(chn, FALSE);
 
-    guint watch = 0;
-    watch = g_io_add_watch(channel,
-                           (G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL),
-                           handle_inotify_event,
-                           0);
-    g_io_channel_unref(channel);
-    if (!watch) {
+    inotify_id = g_io_add_watch(chn,
+                                G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+                                handle_inotify_event,
+                                0);
+cleanup:
+
+    if( !inotify_id ) {
         dsme_log(LOG_ERR, "Error adding watch for D-Bus");
-        goto close_inotify_and_fail;
+        stop_dbus_watch();
     }
 
-    return true;
-
-
-close_fds_and_fail:
-    inotify_rm_watch(inotify_fd, watch_fd);
-close_inotify_and_fail:
-    close(inotify_fd);
-fail:
-    return false;
+    return inotify_id != 0;
 }
 
 static void stop_dbus_watch(void)
 {
-    dsme_log(LOG_DEBUG, "stopping D-Bus System bus dir watching");
-
-    if (channel) {
-        g_io_channel_shutdown(channel, FALSE, 0);
-        channel = 0;
+    if( inotify_id ) {
+        dsme_log(LOG_DEBUG, "stopping D-Bus System bus dir watching");
+        g_source_remove(inotify_id), inotify_id = 0;
     }
 
     if (inotify_fd != -1) {
@@ -212,7 +212,7 @@ void module_fini(void)
     stop_dbus_watch();
 
     if (connect_timer) {
-        dsme_destroy_timer(connect_timer);
+        dsme_destroy_timer(connect_timer), connect_timer = 0;
     }
 
     dsme_log(LOG_DEBUG, "dbusautoconnector.so unloaded");
