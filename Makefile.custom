@@ -105,9 +105,8 @@ install_main::
 	install -d -m 755 $(DESTDIR)$(DSME_PLUGIN_PATH)
 	install -m 644 $(TARGETS_PLUGIN) $(DESTDIR)$(DSME_PLUGIN_PATH)
 
-	# lifeguard config
+	# config directory
 	install -d -m 755 $(DESTDIR)/etc/dsme/
-	install -m 644 dsme/lifeguard.uids $(DESTDIR)/etc/dsme/
 
 	# dbus config
 	install -d -m 755 $(DESTDIR)/etc/dbus-1/system.d

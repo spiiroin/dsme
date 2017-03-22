@@ -62,4 +62,3 @@ noinst_HEADERS = dsme-rd-mode.h \
 # Data
 #
 dist_dbus_DATA = dsme.conf
-dist_pkgsysconf_DATA = lifeguard.uids

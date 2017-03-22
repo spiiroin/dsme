@@ -6,5 +6,4 @@ debian/tmp/sbin/dsmetool
 debian/tmp/sbin/getbootstate
 debian/tmp/sbin/waitfordsme
 debian/tmp/lib/dsme/*.so*
-debian/tmp/etc/dsme/lifeguard.uids
 debian/tmp/etc/dbus-1/system.d/dsme.conf
