@@ -718,9 +718,9 @@ static const dsme_dbus_signal_binding_t dbus_signals_array[] =
 
 static bool dbus_signals_bound = false;
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
 
@@ -733,7 +733,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 }
 
 module_fn_info_t message_handlers[] = {
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };
@@ -741,7 +741,7 @@ module_fn_info_t message_handlers[] = {
 void module_init(module_t* handle)
 {
     /* Do not connect to D-Bus; it is probably not started yet.
-     * Instead, wait for DSM_MSGTYPE_DBUS_CONNECT.
+     * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
      */
 
     /* If usb_moded does not show up at SystemBus in reasonale

@@ -3055,9 +3055,9 @@ DSME_HANDLER(DSM_MSGTYPE_WAIT, conn, msg)
 }
 
 /** Handle connected to system bus */
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_INFO, PFIX"DBUS_CONNECT");
+    dsme_log(LOG_INFO, PFIX"DBUS_CONNECTED");
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
 }
@@ -3074,7 +3074,7 @@ module_fn_info_t message_handlers[] =
     DSME_HANDLER_BINDING(DSM_MSGTYPE_HEARTBEAT),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_WAIT),
 
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };

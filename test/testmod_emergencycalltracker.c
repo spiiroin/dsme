@@ -93,7 +93,7 @@ static void load_emergencycalltracker(void)
   gchar* module_name_tmp = g_strconcat(dsme_module_path, "emergencycalltracker.so", NULL);
   emergencycalltracker_module = load_module_under_test(module_name_tmp);
 
-  DSM_MSGTYPE_DBUS_CONNECT msg = TEST_MSG_INIT(DSM_MSGTYPE_DBUS_CONNECT);
+  DSM_MSGTYPE_DBUS_CONNECTED msg = TEST_MSG_INIT(DSM_MSGTYPE_DBUS_CONNECTED);
   send_message(emergencycalltracker_module, &msg);
   g_free(module_name_tmp);
 }

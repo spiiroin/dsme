@@ -1127,9 +1127,9 @@ EXIT:
 
 /** Handler for connected to D-Bus system bus event
  */
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
 
     /* Add dbus method call handlers */
     dsme_dbus_bind_methods(&dbus_methods_bound,
@@ -1150,7 +1150,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 module_fn_info_t message_handlers[] =
 {
     DSME_HANDLER_BINDING(DSM_MSGTYPE_WAKEUP),
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };

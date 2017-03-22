@@ -4,7 +4,7 @@
    This file implements a thermal object for tracking HW temperatures.
    Battery and SOC core temperatures
    <p>
-   Copyright (C) 2015 Jolla ltd
+   Copyright (C) 2015-2017 Jolla ltd
 
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
@@ -1488,9 +1488,9 @@ static GSList *objects_list = 0;
  * dsme startup has progressed far enough to allow registering
  * of thermal objects.
  */
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
     tsg_objects_init(&objects_list);
 }
 
@@ -1509,7 +1509,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 /** Array of DSME event handlers implemented by this plugin */
 module_fn_info_t message_handlers[] =
 {
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };

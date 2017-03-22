@@ -31,6 +31,7 @@
 */
 
 #include "dsme_dbus.h"
+#include "dbusproxy.h"
 
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modules.h"
@@ -2171,7 +2172,7 @@ EXIT:
 /** Connect to SystemBus
  *
  * Should be called only from dbusautoconnector plugin, or from dbusproxy
- * plugin as a response to DSM_MSGTYPE_DBUS_CONNECT request.
+ * plugin as a response to DSM_MSGTYPE_DBUS_CONNECTED request.
  *
  * @return true if successfully connected, false otherwise
  */
@@ -2186,7 +2187,10 @@ dsme_dbus_connect(void)
         goto EXIT;
     }
 
-    connected = manager_connect(the_manager);
+    if( (connected = manager_connect(the_manager)) ) {
+        DSM_MSGTYPE_DBUS_CONNECTED msg = DSME_MSG_INIT(DSM_MSGTYPE_DBUS_CONNECTED);
+        broadcast_internally(&msg);
+    }
 
 EXIT:
     return connected;

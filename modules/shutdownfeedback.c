@@ -4,9 +4,10 @@
    Play vibra when shutting down
 
    <p>
-   Copyright (C) 2013 Jolla Oy.
+   Copyright (C) 2014-2017 Jolla Oy.
 
    @author Pekka Lundstrom <pekka.lundstrom@jolla.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -57,9 +58,9 @@ DSME_HANDLER(DSM_MSGTYPE_SHUTDOWN_REQ, conn, msg)
     dsme_play_vibra(pwroff_event_name);
 }
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, conn, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, conn, msg)
 {
-    dsme_log(LOG_INFO, PFIX"DBUS_CONNECT");
+    dsme_log(LOG_INFO, PFIX"DBUS_CONNECTED");
     dsme_ini_vibrafeedback();
 }
 
@@ -72,7 +73,7 @@ module_fn_info_t message_handlers[] = {
     DSME_HANDLER_BINDING(DSM_MSGTYPE_SHUTDOWN_REQ),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_REBOOT_REQ),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_CHANGE_IND),
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     {0}
 };

@@ -1127,9 +1127,9 @@ static const dsme_dbus_signal_binding_t dbus_signals_array[] = {
     { 0, 0 }
 };
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-  dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
+  dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
   dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
 #ifdef DSME_VIBRA_FEEDBACK
   dsme_ini_vibrafeedback();
@@ -1153,7 +1153,7 @@ module_fn_info_t message_handlers[] = {
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_THERMAL_STATUS),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_EMERGENCY_CALL_STATE),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_BATTERY_STATE),
-      DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+      DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
       {0}
 };
@@ -1309,7 +1309,7 @@ static int  get_battery_level(void)
 void module_init(module_t* handle)
 {
   /* Do not connect to D-Bus; it is probably not started yet.
-   * Instead, wait for DSM_MSGTYPE_DBUS_CONNECT.
+   * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
    */
 
   dsme_log(LOG_DEBUG, "state.so started");

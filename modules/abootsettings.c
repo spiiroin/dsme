@@ -222,9 +222,9 @@ static const dsme_dbus_binding_t dbus_methods_array[] =
  * Internal DSME event handling
  * ========================================================================= */
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DSM_MSGTYPE_DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, PFIX"DSM_MSGTYPE_DBUS_CONNECTED");
 
     // Check that plug-in is initialized.
     if( abootsettings_init )
@@ -245,7 +245,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 
 module_fn_info_t message_handlers[] =
 {
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };

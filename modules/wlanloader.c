@@ -189,9 +189,9 @@ cleanup:
     dbus_error_free(&err);
 }
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, "wlanloader: DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, "wlanloader: DBUS_CONNECTED");
 
     check_loader_needed();
 }
@@ -202,7 +202,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 }
 
 module_fn_info_t message_handlers[] = {
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };

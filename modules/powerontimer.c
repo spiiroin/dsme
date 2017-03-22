@@ -118,7 +118,7 @@ DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
   poweron_update_cb();
 }
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
   dsme_dbus_bind_methods(&dbus_methods_bound,
                          poweron_service,
@@ -160,7 +160,7 @@ module_fn_info_t message_handlers[] =
 {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_CHANGE_IND),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_WAKEUP),
-  DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+  DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
   { 0 }
 };

@@ -821,9 +821,9 @@ DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
 
 /** Callback for handling connected to SystemBus events
  */
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, LOGPFIX"DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, LOGPFIX"DBUS_CONNECTED");
 
     dsme_dbus_bind_methods(&dbus_broadcast_bound,
                            diskmonitor_service,
@@ -880,7 +880,7 @@ DSME_HANDLER(DSM_MSGTYPE_DISK_SPACE, conn, msg)
 module_fn_info_t message_handlers[] =
 {
     DSME_HANDLER_BINDING(DSM_MSGTYPE_WAKEUP),
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DISK_SPACE),
     { 0 }

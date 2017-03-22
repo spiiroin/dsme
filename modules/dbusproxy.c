@@ -322,23 +322,29 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_REQ_DENIED_IND, server, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
-  dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECT");
 
-  dsme_dbus_bind_methods(&dbus_broadcast_bound,
-                         dsme_service,
-                         dsme_sig_path,
-                         dsme_sig_interface,
-                         dbus_broadcast_array);
+    dsme_dbus_connect();
+}
 
-  dsme_dbus_bind_methods(&dbus_methods_bound,
-                         dsme_service,
-                         dsme_req_path,
-                         dsme_req_interface,
-                         dbus_methods_array);
-  dsme_dbus_connect();
-  dbus_connected = true;
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
+{
+    dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECTED");
 
-  emit_dsme_state_signals();
+    dsme_dbus_bind_methods(&dbus_broadcast_bound,
+                           dsme_service,
+                           dsme_sig_path,
+                           dsme_sig_interface,
+                           dbus_broadcast_array);
+
+    dsme_dbus_bind_methods(&dbus_methods_bound,
+                           dsme_service,
+                           dsme_req_path,
+                           dsme_req_interface,
+                           dbus_methods_array);
+    dbus_connected = true;
+
+    emit_dsme_state_signals();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
@@ -362,6 +368,7 @@ module_fn_info_t message_handlers[] = {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_SAVE_DATA_IND),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_REQ_DENIED_IND),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+  DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_DSME_VERSION),
   { 0 }
@@ -381,7 +388,7 @@ void module_init(module_t* handle)
   dsme_dbus_startup();
 
   /* Do not connect to D-Bus; it is probably not started yet.
-   * Instead, wait for DSM_MSGTYPE_DBUS_CONNECT.
+   * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
    */
 
   dsme_log(LOG_DEBUG, "dbusproxy.so loaded");
