@@ -4,10 +4,12 @@
    The getbootstate tool
    <p>
    Copyright (C) 2007-2010 Nokia Corporation.
+   Copyright (C) 2017 Jolla Ltd.
 
    @author Peter De Schrijver <peter.de-schrijver@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -72,7 +74,7 @@
 
 static bool forcemode = false;
 
-static void log_msg(char* format, ...) __attribute__ ((format (printf, 1, 2)));
+static void log_msg(const char* format, ...) __attribute__ ((format (printf, 1, 2)));
 
 /**
  * get value from /proc/cmdline
@@ -81,7 +83,7 @@ static void log_msg(char* format, ...) __attribute__ ((format (printf, 1, 2)));
  *       key-value pairs separated by space or comma.
  *       value after key separated with equal sign '='
  **/
-static int get_cmd_line_value(char* get_value, int max_len, char* key)
+static int get_cmd_line_value(char* get_value, int max_len, const char* key)
 {
     const char* cmdline_path;
     FILE*       cmdline_file;
@@ -130,7 +132,7 @@ static int get_bootreason(char* bootreason, int max_len)
     return get_cmd_line_value(bootreason, max_len, "bootreason=");
 }
 
-static void log_msg(char* format, ...)
+static void log_msg(const char* format, ...)
 {
     int     saved = errno; // preserve errno
     va_list ap;
@@ -186,33 +188,29 @@ static int save_state(const char* state)
 
 static char* get_saved_state(void)
 {
-    FILE* saved_state_file;
-    char  saved_state[MAX_SAVED_STATE_LEN];
-    char* ret;
+    char *ret = 0;
+    FILE *fh  = 0;
 
-    saved_state_file = fopen(SAVED_STATE_PATH, "r");
-    if(!saved_state_file) {
-        log_msg("Could not open " SAVED_STATE_PATH " - %s\n",
-                strerror(errno));
-        return "USER";
+    char  buf[MAX_SAVED_STATE_LEN];
+
+    if( !(fh = fopen(SAVED_STATE_PATH, "r")) ) {
+        log_msg("Could not open " SAVED_STATE_PATH " - %m\n");
+        goto EXIT;
     }
 
-    if(!fgets(saved_state, MAX_SAVED_STATE_LEN, saved_state_file)) {
-        log_msg("Reading " SAVED_STATE_PATH " failed" " - %s\n",
-                strerror(errno));
-        fclose(saved_state_file);
-        return "USER";
+    if( !fgets(buf, MAX_SAVED_STATE_LEN, fh) ) {
+        log_msg("Reading " SAVED_STATE_PATH " failed" " - %m\n");
+        goto EXIT;
     }
 
-    fclose(saved_state_file);
+    if( (ret = strdup(buf)) )
+        ret[strcspn(buf, "\r\n")] = 0;
 
-    ret = strdup(saved_state);
+EXIT:
+    if( fh )
+        fclose(fh);
 
-    if(!ret) {
-        return "USER";
-    } else {
-        return ret;
-    }
+    return ret ?: strdup("USER");
 }
 
 
@@ -434,13 +432,11 @@ int main(int argc, char** argv)
         !strcmp(bootreason, BOOT_REASON_SWDG_TIMEOUT)   ||
         !strcmp(bootreason, BOOT_REASON_32K_WDG_TIMEOUT))
     {
-        char* saved_state;
-        char* new_state;
-
-        saved_state = get_saved_state();
-
         // We decided to select "USER" to prevent ACT_DEAD reboot loop
-        new_state = "USER";
+        const char *new_state = "USER";
+
+        char *saved_state = get_saved_state();
+
 
         log_msg("Unexpected reset occured (%s). "
                   "Previous bootstate=%s - selecting %s\n",
@@ -448,17 +444,16 @@ int main(int argc, char** argv)
                 saved_state,
                 new_state);
 
-        LOOP_COUNTING_TYPE count;
+        LOOP_COUNTING_TYPE count = COUNT_ALL;
         if (!strcmp(bootreason, BOOT_REASON_POWER_ON_RESET)) {
             count = RESET_COUNTS; // zero loop counters on power on reset
-        } else {
-            count = COUNT_ALL;
         }
         return_bootstate(new_state, 0, count);
+        free(saved_state);
     }
 
     if(!strcmp(bootreason,BOOT_REASON_SW_RESET))   {
-        char* saved_state;
+        char* saved_state = get_saved_state();
 
         /* User requested reboot.
          * Boot back to state where we were (saved_state).
@@ -466,7 +461,6 @@ int main(int argc, char** argv)
          * special mode (like LOCAL or TEST),
          * then boot to USER mode
          */
-        saved_state = get_saved_state();
         log_msg("User requested reboot (saved_state=%s, bootreason=%s)\n",
                 saved_state,
                 bootreason);
@@ -479,6 +473,7 @@ int main(int argc, char** argv)
         } else {
             return_bootstate(saved_state, 0, COUNT_BOOTS);
         }
+        free(saved_state);
     }
 
     if(!strcmp(bootreason, BOOT_REASON_POWER_KEY)) {
