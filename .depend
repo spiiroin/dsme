@@ -1,0 +1,858 @@
+dsme/dsme-rd-mode.o:\
+	dsme/dsme-rd-mode.c\
+	dsme/dsme-rd-mode.h\
+
+dsme/dsme-rd-mode.pic.o:\
+	dsme/dsme-rd-mode.c\
+	dsme/dsme-rd-mode.h\
+
+dsme/dsme-server.o:\
+	dsme/dsme-server.c\
+	include/dsme/dsmesock.h\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/oom.h\
+	dsme/dsme-server.h\
+
+dsme/dsme-server.pic.o:\
+	dsme/dsme-server.c\
+	include/dsme/dsmesock.h\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/oom.h\
+	dsme/dsme-server.h\
+
+dsme/dsme-wdd-wd.o:\
+	dsme/dsme-wdd-wd.c\
+	dsme/dsme-rd-mode.h\
+	dsme/dsme-wdd-wd.h\
+	dsme/dsme-wdd.h\
+
+dsme/dsme-wdd-wd.pic.o:\
+	dsme/dsme-wdd-wd.c\
+	dsme/dsme-rd-mode.h\
+	dsme/dsme-wdd-wd.h\
+	dsme/dsme-wdd.h\
+
+dsme/dsme-wdd.o:\
+	dsme/dsme-wdd.c\
+	include/dsme/oom.h\
+	dsme/dsme-wdd-wd.h\
+	dsme/dsme-wdd.h\
+
+dsme/dsme-wdd.pic.o:\
+	dsme/dsme-wdd.c\
+	include/dsme/oom.h\
+	dsme/dsme-wdd-wd.h\
+	dsme/dsme-wdd.h\
+
+dsme/dsmesock.o:\
+	dsme/dsmesock.c\
+	include/dsme/dsmesock.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+
+dsme/dsmesock.pic.o:\
+	dsme/dsmesock.c\
+	include/dsme/dsmesock.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+
+dsme/logging.o:\
+	dsme/logging.c\
+	include/dsme/logging.h\
+
+dsme/logging.pic.o:\
+	dsme/logging.c\
+	include/dsme/logging.h\
+
+dsme/mainloop.o:\
+	dsme/mainloop.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+
+dsme/mainloop.pic.o:\
+	dsme/mainloop.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+
+dsme/modulebase.o:\
+	dsme/modulebase.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+
+dsme/modulebase.pic.o:\
+	dsme/modulebase.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+
+dsme/oom.o:\
+	dsme/oom.c\
+	include/dsme/logging.h\
+	include/dsme/oom.h\
+
+dsme/oom.pic.o:\
+	dsme/oom.c\
+	include/dsme/logging.h\
+	include/dsme/oom.h\
+
+dsme/timers.o:\
+	dsme/timers.c\
+	include/dsme/timers.h\
+
+dsme/timers.pic.o:\
+	dsme/timers.c\
+	include/dsme/timers.h\
+
+getbootstate/getbootstate.o:\
+	getbootstate/getbootstate.c\
+
+getbootstate/getbootstate.pic.o:\
+	getbootstate/getbootstate.c\
+
+modules/abootsettings.o:\
+	modules/abootsettings.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/abootsettings.pic.o:\
+	modules/abootsettings.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/alarmtracker.o:\
+	modules/alarmtracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/alarmtracker.pic.o:\
+	modules/alarmtracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/batterytracker.o:\
+	modules/batterytracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/batterytracker.pic.o:\
+	modules/batterytracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/bootreasonlogger.o:\
+	modules/bootreasonlogger.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/bootreasonlogger.pic.o:\
+	modules/bootreasonlogger.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/dbusautoconnector.o:\
+	modules/dbusautoconnector.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/dbusautoconnector.pic.o:\
+	modules/dbusautoconnector.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/dbusproxy.o:\
+	modules/dbusproxy.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/dbusproxy.pic.o:\
+	modules/dbusproxy.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/diskmonitor.o:\
+	modules/diskmonitor.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/diskmonitor.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+
+modules/diskmonitor.pic.o:\
+	modules/diskmonitor.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/diskmonitor.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+
+modules/dsme_dbus.o:\
+	modules/dsme_dbus.c\
+	dsme/dsme-server.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dsme_dbus.h\
+
+modules/dsme_dbus.pic.o:\
+	modules/dsme_dbus.c\
+	dsme/dsme-server.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dsme_dbus.h\
+
+modules/emergencycalltracker.o:\
+	modules/emergencycalltracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/emergencycalltracker.pic.o:\
+	modules/emergencycalltracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/heartbeat.o:\
+	modules/heartbeat.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modules.h\
+	modules/heartbeat.h\
+
+modules/heartbeat.pic.o:\
+	modules/heartbeat.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modules.h\
+	modules/heartbeat.h\
+
+modules/iphb.o:\
+	modules/iphb.c\
+	dsme/dsme-server.h\
+	dsme/dsme-wdd-wd.h\
+	include/android/android_alarm.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+
+modules/iphb.pic.o:\
+	modules/iphb.c\
+	dsme/dsme-server.h\
+	dsme/dsme-wdd-wd.h\
+	include/android/android_alarm.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+
+modules/malf.o:\
+	modules/malf.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/malf.h\
+	modules/runlevel.h\
+
+modules/malf.pic.o:\
+	modules/malf.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/malf.h\
+	modules/runlevel.h\
+
+modules/powerontimer.o:\
+	modules/powerontimer.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+	modules/powerontimer.h\
+	modules/powerontimer_backend.h\
+
+modules/powerontimer.pic.o:\
+	modules/powerontimer.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+	modules/powerontimer.h\
+	modules/powerontimer_backend.h\
+
+modules/powerontimer_backend.o:\
+	modules/powerontimer_backend.c\
+	include/dsme/logging.h\
+	modules/powerontimer_backend.h\
+
+modules/powerontimer_backend.pic.o:\
+	modules/powerontimer_backend.c\
+	include/dsme/logging.h\
+	modules/powerontimer_backend.h\
+
+modules/processwd.o:\
+	modules/processwd.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+
+modules/processwd.pic.o:\
+	modules/processwd.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+
+modules/pwrkeymonitor.o:\
+	modules/pwrkeymonitor.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/runlevel.h\
+	modules/state-internal.h\
+
+modules/pwrkeymonitor.pic.o:\
+	modules/pwrkeymonitor.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/runlevel.h\
+	modules/state-internal.h\
+
+modules/runlevel.o:\
+	modules/runlevel.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/runlevel.h\
+
+modules/runlevel.pic.o:\
+	modules/runlevel.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/runlevel.h\
+
+modules/shutdownfeedback.o:\
+	modules/shutdownfeedback.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/vibrafeedback.h\
+
+modules/shutdownfeedback.pic.o:\
+	modules/shutdownfeedback.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/vibrafeedback.h\
+
+modules/startup.o:\
+	modules/startup.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+
+modules/startup.pic.o:\
+	modules/startup.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+
+modules/state.o:\
+	modules/state.c\
+	dsme/dsme-rd-mode.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/malf.h\
+	modules/runlevel.h\
+	modules/state-internal.h\
+	modules/vibrafeedback.h\
+
+modules/state.pic.o:\
+	modules/state.c\
+	dsme/dsme-rd-mode.h\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/malf.h\
+	modules/runlevel.h\
+	modules/state-internal.h\
+	modules/vibrafeedback.h\
+
+modules/thermalflagger.o:\
+	modules/thermalflagger.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+
+modules/thermalflagger.pic.o:\
+	modules/thermalflagger.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+
+modules/thermalmanager.o:\
+	modules/thermalmanager.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+	modules/thermalmanager.h\
+
+modules/thermalmanager.pic.o:\
+	modules/thermalmanager.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+	modules/thermalmanager.h\
+
+modules/thermalobject.o:\
+	modules/thermalobject.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+	modules/thermalmanager.h\
+
+modules/thermalobject.pic.o:\
+	modules/thermalobject.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/heartbeat.h\
+	modules/thermalmanager.h\
+
+modules/thermalsensor_generic.o:\
+	modules/thermalsensor_generic.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/thermalmanager.h\
+
+modules/thermalsensor_generic.pic.o:\
+	modules/thermalsensor_generic.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/thermalmanager.h\
+
+modules/upstart.o:\
+	modules/upstart.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/runlevel.h\
+
+modules/upstart.pic.o:\
+	modules/upstart.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/runlevel.h\
+
+modules/usbtracker.o:\
+	modules/usbtracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/state-internal.h\
+
+modules/usbtracker.pic.o:\
+	modules/usbtracker.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/state-internal.h\
+
+modules/validatorlistener.o:\
+	modules/validatorlistener.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/malf.h\
+
+modules/validatorlistener.pic.o:\
+	modules/validatorlistener.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/malf.h\
+
+modules/vibrafeedback.o:\
+	modules/vibrafeedback.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/vibrafeedback.h\
+
+modules/vibrafeedback.pic.o:\
+	modules/vibrafeedback.c\
+	include/dsme/logging.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/vibrafeedback.h\
+
+modules/wlanloader.o:\
+	modules/wlanloader.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+modules/wlanloader.pic.o:\
+	modules/wlanloader.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/modules.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+
+test/abnormalexitwrapper.o:\
+	test/abnormalexitwrapper.c\
+
+test/abnormalexitwrapper.pic.o:\
+	test/abnormalexitwrapper.c\
+
+test/abnormalexitwrapper_tester.o:\
+	test/abnormalexitwrapper_tester.c\
+
+test/abnormalexitwrapper_tester.pic.o:\
+	test/abnormalexitwrapper_tester.c\
+
+test/batttest.o:\
+	test/batttest.c\
+
+test/batttest.pic.o:\
+	test/batttest.c\
+
+test/dsmetest.o:\
+	test/dsmetest.c\
+	modules/malf.h\
+
+test/dsmetest.pic.o:\
+	test/dsmetest.c\
+	modules/malf.h\
+
+test/dummy_bme.o:\
+	test/dummy_bme.c\
+
+test/dummy_bme.pic.o:\
+	test/dummy_bme.c\
+
+test/processwdtest.o:\
+	test/processwdtest.c\
+
+test/processwdtest.pic.o:\
+	test/processwdtest.c\
+
+test/testmod_alarmtracker.o:\
+	test/testmod_alarmtracker.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/malf.h\
+	test/stub_dbus.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+test/testmod_alarmtracker.pic.o:\
+	test/testmod_alarmtracker.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/malf.h\
+	test/stub_dbus.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+test/testmod_emergencycalltracker.o:\
+	test/testmod_emergencycalltracker.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/state-internal.h\
+	test/stub_dbus.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+test/testmod_emergencycalltracker.pic.o:\
+	test/testmod_emergencycalltracker.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/state-internal.h\
+	test/stub_dbus.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+test/testmod_state.o:\
+	test/testmod_state.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dsme_dbus.h\
+	modules/malf.h\
+	modules/runlevel.h\
+	test/stub_cal.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+test/testmod_state.pic.o:\
+	test/testmod_state.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dsme_dbus.h\
+	modules/malf.h\
+	modules/runlevel.h\
+	test/stub_cal.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+test/testmod_usbtracker.o:\
+	test/testmod_usbtracker.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/state-internal.h\
+	test/stub_dbus.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+test/testmod_usbtracker.pic.o:\
+	test/testmod_usbtracker.c\
+	include/dsme/logging.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	dsme/dsme-server.h\
+	dsme/modulebase.c\
+	include/dsme/dsmesock.h\
+	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
+	modules/dbusproxy.h\
+	modules/dsme_dbus.h\
+	modules/state-internal.h\
+	test/stub_dbus.h\
+	test/stub_dsme_dbus.h\
+	test/stub_timers.h\
+	test/testdriver.h\
+	test/utils_misc.h\
+
+util/bootstate.o:\
+	util/bootstate.c\
+
+util/bootstate.pic.o:\
+	util/bootstate.c\
+
+util/dsmereboot.o:\
+	util/dsmereboot.c\
+
+util/dsmereboot.pic.o:\
+	util/dsmereboot.c\
+
+util/dsmetool.o:\
+	util/dsmetool.c\
+	include/dsme/logging.h\
+	modules/dbusproxy.h\
+	modules/state-internal.h\
+
+util/dsmetool.pic.o:\
+	util/dsmetool.c\
+	include/dsme/logging.h\
+	modules/dbusproxy.h\
+	modules/state-internal.h\
+
+util/waitfordsme.o:\
+	util/waitfordsme.c\
+
+util/waitfordsme.pic.o:\
+	util/waitfordsme.c\
+

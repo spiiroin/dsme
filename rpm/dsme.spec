@@ -48,18 +48,15 @@ Test cases and xml test description for DSME
 %build
 unset LD_AS_NEEDED
 ./verify_version.sh
-chmod a+x autogen.sh
-./autogen.sh
-chmod a+x configure
-
-%configure --disable-static \
+test -e Makefile || ./autogen.sh
+test -e Makefile || (%configure --disable-static \
     --disable-poweron-timer \
     --disable-upstart \
     --enable-runlevel \
     --enable-systemd \
     --enable-pwrkeymonitor \
     --disable-validatorlistener \
-    --enable-abootsettings
+    --enable-abootsettings)
 
 make %{?_smp_mflags}
 

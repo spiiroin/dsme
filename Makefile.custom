@@ -1,0 +1,466 @@
+# Package version
+VERSION   := 0.75.2
+
+# Dummy default install dir - override from packaging scripts
+DESTDIR ?= /tmp/dsme-test-install
+
+# ----------------------------------------------------------------------------
+# Standard directories
+# ----------------------------------------------------------------------------
+
+_PREFIX         ?= /usr#                         # /usr
+_INCLUDEDIR     ?= $(_PREFIX)/include#           # /usr/include
+_EXEC_PREFIX    ?= $(_PREFIX)#                   # /usr
+_BINDIR         ?= $(_EXEC_PREFIX)/bin#          # /usr/bin
+_SBINDIR        ?= $(_EXEC_PREFIX)/sbin#         # /usr/sbin
+_LIBEXECDIR     ?= $(_EXEC_PREFIX)/libexec#      # /usr/libexec
+_LIBDIR         ?= $(_EXEC_PREFIX)/lib#          # /usr/lib
+_SYSCONFDIR     ?= /etc#                         # /etc
+_DATADIR        ?= $(_PREFIX)/share#             # /usr/share
+_MANDIR         ?= $(_DATADIR)/man#              # /usr/share/man
+_INFODIR        ?= $(_DATADIR)/info#             # /usr/share/info
+_DEFAULTDOCDIR  ?= $(_DATADIR)/doc#              # /usr/share/doc
+_LOCALSTATEDIR  ?= /var#                         # /var
+_UNITDIR        ?= /lib/systemd/system#
+_TESTSDIR       ?= /opt/tests#                   # /opt/tests
+
+# ----------------------------------------------------------------------------
+# Install directories
+# ----------------------------------------------------------------------------
+
+DSME_SBIN_PATH   ?= $(_SBINDIR)
+DSME_PLUGIN_PATH ?= $(_LIBDIR)/dsme
+
+# ----------------------------------------------------------------------------
+# Files to build / install
+# ----------------------------------------------------------------------------
+
+TARGETS_SBIN += dsme/dsme
+TARGETS_SBIN += dsme/dsme-server
+
+TARGETS_PLUGIN += modules/abootsettings.so
+TARGETS_PLUGIN += modules/alarmtracker.so
+TARGETS_PLUGIN += modules/batterytracker.so
+TARGETS_PLUGIN += modules/bootreasonlogger.so
+TARGETS_PLUGIN += modules/dbusautoconnector.so
+TARGETS_PLUGIN += modules/dbusproxy.so
+TARGETS_PLUGIN += modules/diskmonitor.so
+TARGETS_PLUGIN += modules/emergencycalltracker.so
+TARGETS_PLUGIN += modules/heartbeat.so
+TARGETS_PLUGIN += modules/iphb.so
+TARGETS_PLUGIN += modules/malf.so
+# TARGETS_PLUGIN += modules/powerontimer.so#does not compile
+TARGETS_PLUGIN += modules/processwd.so
+TARGETS_PLUGIN += modules/pwrkeymonitor.so
+TARGETS_PLUGIN += modules/runlevel.so
+TARGETS_PLUGIN += modules/shutdownfeedback.so
+TARGETS_PLUGIN += modules/startup.so
+TARGETS_PLUGIN += modules/state.so
+TARGETS_PLUGIN += modules/thermalflagger.so
+TARGETS_PLUGIN += modules/thermalmanager.so
+TARGETS_PLUGIN += modules/thermalsensor_generic.so
+# TARGETS_PLUGIN += modules/upstart.so
+TARGETS_PLUGIN += modules/usbtracker.so
+# TARGETS_PLUGIN += modules/validatorlistener.so
+TARGETS_PLUGIN += modules/wlanloader.so
+
+TARGETS_SBIN += util/bootstate
+# TARGETS_SBIN += util/dsmereboot
+TARGETS_SBIN += util/dsmetool
+# TARGETS_SBIN += util/kicker
+# TARGETS_SBIN += util/kick_wd
+TARGETS_SBIN += util/waitfordsme
+TARGETS_SBIN += getbootstate/getbootstate
+
+TARGETS_ALL += $(TARGETS_PLUGIN) $(TARGETS_SBIN) $(TARGETS_BIN)
+
+# ----------------------------------------------------------------------------
+# Top level targets
+# ----------------------------------------------------------------------------
+
+.PHONY: build install clean distclean mostlyclean
+
+build:: $(TARGETS_ALL)
+
+install:: build
+
+clean:: mostlyclean
+	$(RM) $(TARGETS_ALL)
+
+distclean:: clean
+
+mostlyclean::
+	$(RM) *.o *~ *.bak */*.o */*~ */*.bak
+
+install :: install_main
+
+install_main::
+	# sbin executables
+	install -d -m 755 $(DESTDIR)$(DSME_SBIN_PATH)
+	install -m 755 $(TARGETS_SBIN) $(DESTDIR)$(DSME_SBIN_PATH)
+	# sbin scripts
+	install -m 755 util/dsmetemperature $(DESTDIR)$(DSME_SBIN_PATH)
+
+	# plugin libraries
+	install -d -m 755 $(DESTDIR)$(DSME_PLUGIN_PATH)
+	install -m 644 $(TARGETS_PLUGIN) $(DESTDIR)$(DSME_PLUGIN_PATH)
+
+	# lifeguard config
+	install -d -m 755 $(DESTDIR)/etc/dsme/
+	install -m 644 dsme/lifeguard.uids $(DESTDIR)/etc/dsme/
+
+	# dbus config
+	install -d -m 755 $(DESTDIR)/etc/dbus-1/system.d
+	install -m 644 dsme/dsme.conf $(DESTDIR)/etc/dbus-1/system.d/
+
+	# tests
+	install -d -m 755 $(DESTDIR)/opt/tests/dsme-tests
+	install -m 644 tests/tests.xml $(DESTDIR)/opt/tests/dsme-tests
+
+# ----------------------------------------------------------------------------
+# Build rules
+# ----------------------------------------------------------------------------
+
+%.pic.o     : %.c     ; $(CC) -o $@ -c $< -fPIC $(CPPFLAGS) $(CFLAGS)
+%.so        : %.pic.o ; $(CC) -shared -o $@ $^ $(LDFLAGS) $(LDLIBS)
+%.o         : %.c     ; $(CC) -o $@ -c $< $(CPPFLAGS) $(CFLAGS)
+%           : %.o     ; $(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+%.a         :         ; $(AR) ru $@ $^
+
+# ----------------------------------------------------------------------------
+# Preprocessor options
+# ----------------------------------------------------------------------------
+
+# Preprocessor Defaults
+CPPFLAGS += -D_GNU_SOURCE
+CPPFLAGS += -D_FILE_OFFSET_BITS=64
+CPPFLAGS += -D_FORTIFY_SOURCE=2
+
+# Enable core feature: logging
+CPPFLAGS += -DDSME_LOG_ENABLE
+
+# Configuration: can do USER <-> ACTDEAD without reboot
+#CPPFLAGS += -DDSME_SUPPORT_DIRECT_USER_ACTDEAD
+
+# Configuration: can support systemd start notification
+CPPFLAGS += -DDSME_SYSTEMD_ENABLE
+
+# Configuration: where dsme sbin binaries are installed
+CPPFLAGS += -DDSME_SBIN_PATH='"$(DSME_SBIN_PATH)"'
+
+# Enable plugin: abootsettings
+CPPFLAGS += -DDSME_ABOOTSETTINGS
+
+# Enable plugin: batterytracker
+CPPFLAGS += -DDSME_BATTERY_TRACKER
+
+# Enable plugin: bootreasonlogger
+CPPFLAGS += -DDSME_BOOTREASON_LOGGER
+
+# Enable plugin: thermalsensor_generic
+CPPFLAGS += -DDSME_GENERIC_THERMAL_MGMT
+
+# Enable plugin: powerontimer
+#CPPFLAGS += -DDSME_POWERON_TIMER
+
+# Enable plugin: pwrkeymonitor
+CPPFLAGS += -DDSME_PWRKEY_MONITOR
+
+# Enable plugin: validatorlistener
+#CPPFLAGS += -DDSME_VALIDATOR_LISTENER
+
+# Enable option: shutdown/reboot vibrate feedback
+CPPFLAGS += -DDSME_VIBRA_FEEDBACK
+
+# Enable plugin: runlevel
+CPPFLAGS += -DDSME_WANT_LIBRUNLEVEL
+
+# Enable plugin: upstart
+#CPPFLAGS += -DDSME_WANT_LIBUPSTART
+
+# Enable plugin: wlanloader
+CPPFLAGS += -DDSME_WLAN_LOADER
+
+# AutoXXX compatibility
+CPPFLAGS += -DPRG_VERSION=$(VERSION)
+
+# ----------------------------------------------------------------------------
+# Compiler options
+# ----------------------------------------------------------------------------
+
+CFLAGS   += -std=c99
+CFLAGS   += -O2
+CFLAGS   += -g
+CFLAGS   += -Wall
+CFLAGS   += -Wwrite-strings
+CFLAGS   += -Wmissing-prototypes
+#CFLAGS   += -Wextra
+#CFLAGS   += -Werror
+
+# ----------------------------------------------------------------------------
+# Linker options
+# ----------------------------------------------------------------------------
+
+LDFLAGS  += -pthread
+LDFLAGS  += -g
+LDFLAGS  += -pthread
+LDFLAGS  += -Wl,--as-needed
+
+LDLIBS   += -ldl
+
+# ----------------------------------------------------------------------------
+# Flags from pkg-config
+# ----------------------------------------------------------------------------
+
+PKG_NAMES += glib-2.0
+PKG_NAMES += dbus-1
+PKG_NAMES += dbus-glib-1
+PKG_NAMES += dsme
+PKG_NAMES += dsme_dbus_if
+PKG_NAMES += thermalmanager_dbus_if
+PKG_NAMES += libiphb
+PKG_NAMES += systemd
+PKG_NAMES += libsystemd-daemon
+PKG_NAMES += libngf0
+
+maintenance  = normalize clean distclean mostlyclean
+intersection = $(strip $(foreach w,$1, $(filter $w,$2)))
+ifneq ($(call intersection,$(maintenance),$(MAKECMDGOALS)),)
+PKG_CONFIG   ?= true
+endif
+
+ifneq ($(strip $(PKG_NAMES)),)
+PKG_CONFIG   ?= pkg-config
+PKG_CFLAGS   := $(shell $(PKG_CONFIG) --cflags $(PKG_NAMES))
+PKG_LDLIBS   := $(shell $(PKG_CONFIG) --libs   $(PKG_NAMES))
+PKG_CPPFLAGS := $(filter -D%,$(PKG_CFLAGS)) $(filter -I%,$(PKG_CFLAGS))
+PKG_CFLAGS   := $(filter-out -I%, $(filter-out -D%, $(PKG_CFLAGS)))
+endif
+
+CPPFLAGS += $(PKG_CPPFLAGS)
+CFLAGS   += $(PKG_CFLAGS)
+LDLIBS   += $(PKG_LDLIBS)
+
+# ----------------------------------------------------------------------------
+# dsme-wdd
+# ----------------------------------------------------------------------------
+
+dsme-OBJS += dsme/dsme-rd-mode.o
+dsme-OBJS += dsme/dsme-wdd-wd.o
+dsme-OBJS += dsme/dsme-wdd.o
+#dsme-OBJS += dsme/logging.o
+dsme-OBJS += dsme/oom.o
+
+dsme/dsme : CPPFLAGS += -UDSME_LOG_ENABLE
+
+dsme/dsme : $(dsme-OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+
+# ----------------------------------------------------------------------------
+# dsme-server
+# ----------------------------------------------------------------------------
+
+dsme-server-OBJS += dsme/dsme-rd-mode.o
+dsme-server-OBJS += dsme/dsme-server.o
+dsme-server-OBJS += dsme/dsmesock.o
+dsme-server-OBJS += dsme/logging.o
+dsme-server-OBJS += dsme/mainloop.o
+dsme-server-OBJS += dsme/modulebase.o
+dsme-server-OBJS += dsme/oom.o
+dsme-server-OBJS += dsme/timers.o
+
+dsme/dsme-server : LDFLAGS += -rdynamic
+
+dsme/dsme-server : $(dsme-server-OBJS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+
+# ----------------------------------------------------------------------------
+# plugins
+# ----------------------------------------------------------------------------
+
+modules/abootsettings.so         : modules/abootsettings.pic.o
+modules/alarmtracker.so          : modules/alarmtracker.pic.o
+modules/batterytracker.so        : modules/batterytracker.pic.o
+modules/bootreasonlogger.so      : modules/bootreasonlogger.pic.o
+modules/dbusautoconnector.so     : modules/dbusautoconnector.pic.o
+modules/dbusproxy.so             : modules/dbusproxy.pic.o modules/dsme_dbus.pic.o
+modules/diskmonitor.so           : modules/diskmonitor.pic.o
+modules/emergencycalltracker.so  : modules/emergencycalltracker.pic.o
+modules/heartbeat.so             : modules/heartbeat.pic.o
+modules/iphb.so                  : modules/iphb.pic.o
+modules/malf.so                  : modules/malf.pic.o
+modules/powerontimer.so          : modules/powerontimer.pic.o modules/powerontimer_backend.pic.o
+modules/processwd.so             : modules/processwd.pic.o
+modules/pwrkeymonitor.so         : modules/pwrkeymonitor.pic.o
+modules/runlevel.so              : modules/runlevel.pic.o
+modules/shutdownfeedback.so      : modules/shutdownfeedback.pic.o modules/vibrafeedback.pic.o
+modules/startup.so               : modules/startup.pic.o
+modules/state.so                 : modules/state.pic.o modules/vibrafeedback.pic.o
+modules/thermalflagger.so        : modules/thermalflagger.pic.o
+modules/thermalmanager.so        : modules/thermalmanager.pic.o modules/thermalobject.pic.o
+modules/thermalsensor_generic.so : modules/thermalsensor_generic.pic.o
+modules/upstart.so               : modules/upstart.pic.o
+modules/usbtracker.so            : modules/usbtracker.pic.o
+modules/wlanloader.so            : modules/wlanloader.pic.o
+
+modules/validatorlistener.so     : modules/validatorlistener.pic.o
+
+# FIXME: vibrafeedback code is included in two plugins - why?
+
+# ----------------------------------------------------------------------------
+# utility binaries
+# ----------------------------------------------------------------------------
+
+util/bootstate:   util/bootstate.o
+util/dsmereboot:  util/dsmereboot.o
+util/dsmetool:    util/dsmetool.o
+util/kicker:      util/kicker.o
+util/kick_wd:     util/kick_wd.o
+util/waitfordsme: util/waitfordsme.o
+
+getbootstate/getbootstate: getbootstate/getbootstate.o
+
+# ----------------------------------------------------------------------------
+# SOURCE FILES
+# ----------------------------------------------------------------------------
+
+# Files without whitespace issues
+
+CLEAN_SOURCES += dsme/dsme-rd-mode.c
+CLEAN_SOURCES += dsme/dsmesock.c
+CLEAN_SOURCES += modules/abootsettings.c
+CLEAN_SOURCES += modules/dbusautoconnector.c
+CLEAN_SOURCES += modules/dbusproxy.c
+CLEAN_SOURCES += modules/diskmonitor.c
+CLEAN_SOURCES += modules/dsme_dbus.c
+CLEAN_SOURCES += modules/heartbeat.c
+CLEAN_SOURCES += modules/powerontimer.c
+CLEAN_SOURCES += modules/powerontimer_backend.c
+CLEAN_SOURCES += modules/thermalmanager.c
+CLEAN_SOURCES += modules/thermalobject.c
+CLEAN_SOURCES += modules/thermalsensor_generic.c
+CLEAN_SOURCES += modules/usbtracker.c
+CLEAN_SOURCES += modules/vibrafeedback.c
+CLEAN_SOURCES += test/batttest.c
+CLEAN_SOURCES += util/dsmereboot.c
+CLEAN_SOURCES += util/dsmetool.c
+
+CLEAN_HEADERS += dsme/dsme-wdd-wd.h
+CLEAN_HEADERS += dsme/dsme-wdd.h
+CLEAN_HEADERS += dsme/dsme-server.h
+CLEAN_HEADERS += dsme/dsme-rd-mode.h
+CLEAN_HEADERS += modules/powerontimer_backend.h
+CLEAN_HEADERS += modules/thermalmanager.h
+CLEAN_HEADERS += modules/powerontimer.h
+CLEAN_HEADERS += modules/diskmonitor.h
+CLEAN_HEADERS += modules/vibrafeedback.h
+CLEAN_HEADERS += modules/dsme_dbus.h
+CLEAN_HEADERS += modules/dbusproxy.h
+CLEAN_HEADERS += modules/heartbeat.h
+CLEAN_HEADERS += modules/runlevel.h
+CLEAN_HEADERS += modules/isi_conf.h
+CLEAN_HEADERS += include/dsme/oom.h
+CLEAN_HEADERS += include/dsme/mainloop.h
+
+# Files with whitespace issues
+
+DIRTY_SOURCES += dsme/dsme-server.c
+DIRTY_SOURCES += dsme/dsme-wdd-wd.c
+DIRTY_SOURCES += dsme/dsme-wdd.c
+DIRTY_SOURCES += dsme/logging.c
+DIRTY_SOURCES += dsme/mainloop.c
+DIRTY_SOURCES += dsme/modulebase.c
+DIRTY_SOURCES += dsme/oom.c
+DIRTY_SOURCES += dsme/timers.c
+DIRTY_SOURCES += getbootstate/getbootstate.c
+DIRTY_SOURCES += modules/alarmtracker.c
+DIRTY_SOURCES += modules/batterytracker.c
+DIRTY_SOURCES += modules/bootreasonlogger.c
+DIRTY_SOURCES += modules/emergencycalltracker.c
+DIRTY_SOURCES += modules/iphb.c
+DIRTY_SOURCES += modules/malf.c
+DIRTY_SOURCES += modules/processwd.c
+DIRTY_SOURCES += modules/pwrkeymonitor.c
+DIRTY_SOURCES += modules/runlevel.c
+DIRTY_SOURCES += modules/shutdownfeedback.c
+DIRTY_SOURCES += modules/startup.c
+DIRTY_SOURCES += modules/state.c
+DIRTY_SOURCES += modules/thermalflagger.c
+DIRTY_SOURCES += modules/upstart.c
+DIRTY_SOURCES += modules/validatorlistener.c
+DIRTY_SOURCES += modules/wlanloader.c
+DIRTY_SOURCES += test/abnormalexitwrapper.c
+DIRTY_SOURCES += test/abnormalexitwrapper_tester.c
+DIRTY_SOURCES += test/dsmetest.c
+DIRTY_SOURCES += test/dummy_bme.c
+DIRTY_SOURCES += test/processwdtest.c
+DIRTY_SOURCES += test/testmod_alarmtracker.c
+DIRTY_SOURCES += test/testmod_emergencycalltracker.c
+DIRTY_SOURCES += test/testmod_state.c
+DIRTY_SOURCES += test/testmod_usbtracker.c
+DIRTY_SOURCES += util/bootstate.c
+DIRTY_SOURCES += util/waitfordsme.c
+
+DIRTY_HEADERS += include/android/android_alarm.h
+DIRTY_HEADERS += include/dsme/dsmesock.h
+DIRTY_HEADERS += include/dsme/logging.h
+DIRTY_HEADERS += include/dsme/modulebase.h
+DIRTY_HEADERS += include/dsme/modules.h
+DIRTY_HEADERS += include/dsme/timers.h
+DIRTY_HEADERS += modules/malf.h
+DIRTY_HEADERS += modules/state-internal.h
+DIRTY_HEADERS += test/stub_cal.h
+DIRTY_HEADERS += test/stub_dbus.h
+DIRTY_HEADERS += test/stub_dsme_dbus.h
+DIRTY_HEADERS += test/stub_timers.h
+DIRTY_HEADERS += test/testdriver.h
+DIRTY_HEADERS += test/utils_misc.h
+
+# Files that will not pass preprocessor / compiler ...
+
+BROKEN_SOURCES += util/kicker.c
+BROKEN_SOURCES += util/kick_wd.c
+
+# ----------------------------------------------------------------------------
+# Source code normalization
+# ----------------------------------------------------------------------------
+
+.PHONY: normalize
+normalize::
+	normalize_whitespace -M Makefile.custom
+	normalize_whitespace -a $(CLEAN_SOURCES) $(CLEAN_HEADERS)
+
+# ----------------------------------------------------------------------------
+# AUTOMATIC HEADER DEPENDENCIES
+# ----------------------------------------------------------------------------
+
+.PHONY: depend
+depend::
+	@echo "Updating .depend"
+	$(CC) -MM $(CPPFLAGS) $(CLEAN_SOURCES) $(DIRTY_SOURCES) |\
+	./depend_filter.py > .depend
+
+ifneq ($(MAKECMDGOALS),depend) # not while: make depend
+ifneq (,$(wildcard .depend))   # not if .depend does not exist
+include .depend
+endif
+endif
+
+# ----------------------------------------------------------------------------
+# AUTOMATIC PROTOTYPE GENERFATION
+# ----------------------------------------------------------------------------
+
+.SUFFIXES: .q .p
+
+%.q : %.c ; $(CC) -o $@ -E $< $(CPPFLAGS) $(MCE_CFLAGS)
+%.p : %.q ; cproto -s < $< | prettyproto.py # sed -e 's/_Bool/bool/g'
+
+clean::
+	$(RM) *.[qp] modules/*.[qp] tools/*.[qp]
+
+# ----------------------------------------------------------------------------
+# REMOVE FLUFF LEFT BY MB2 BUILDS
+# ----------------------------------------------------------------------------
+
+distclean::
+	$(RM) -r RPMS installroot
