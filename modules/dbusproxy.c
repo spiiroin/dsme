@@ -290,6 +290,13 @@ DSME_HANDLER(DSM_MSGTYPE_BATTERY_EMPTY_IND, server, msg)
   emit_dsme_dbus_signal(dsme_battery_empty_ind);
 }
 
+DSME_HANDLER(DSM_MSGTYPE_SET_THERMAL_STATUS, server, msg)
+{
+  if( msg->status == DSM_THERMAL_STATUS_OVERHEATED ) {
+    emit_dsme_dbus_signal(dsme_thermal_shutdown_ind);
+  }
+}
+
 DSME_HANDLER(DSM_MSGTYPE_SAVE_DATA_IND, server, msg)
 {
   emit_dsme_dbus_signal(dsme_save_unsaved_data_ind);
@@ -351,6 +358,7 @@ DSME_HANDLER(DSM_MSGTYPE_DSME_VERSION, server, msg)
 module_fn_info_t message_handlers[] = {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_CHANGE_IND),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_BATTERY_EMPTY_IND),
+  DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_THERMAL_STATUS),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_SAVE_DATA_IND),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_REQ_DENIED_IND),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
