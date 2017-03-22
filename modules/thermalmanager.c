@@ -5,9 +5,11 @@
    by providing the current thermal state for interested sw components.
    <p>
    Copyright (C) 2009-2010 Nokia Corporation
-   Copyright (C) 2013-2015 Jolla Oy.
+   Copyright (C) 2013-2017 Jolla Oy.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
    @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
@@ -830,7 +832,8 @@ thermal_manager_broadcast_status_dbus(THERMAL_STATUS status)
              thermalmanager_state_change_ind, arg);
 
     DsmeDbusMessage *sig =
-        dsme_dbus_signal_new(thermalmanager_path,
+        dsme_dbus_signal_new(thermalmanager_service,
+                             thermalmanager_path,
                              thermalmanager_interface,
                              thermalmanager_state_change_ind);
 
@@ -1057,15 +1060,50 @@ thermal_manager_get_sensor_temperature_cb(const DsmeDbusMessage *req,
 }
 
 /** Array of D-Bus method calls supported by this plugin */
-static const dsme_dbus_binding_t dbus_methods_lut[] =
+static const dsme_dbus_binding_t dbus_methods_array[] =
 {
-    { thermal_manager_get_thermal_state_cb,       thermalmanager_get_thermal_state },
-    { thermal_manager_get_surface_temperature_cb, thermalmanager_estimate_surface_temperature },
-    { thermal_manager_get_core_temperature_cb,    thermalmanager_core_temperature  },
-    { thermal_manager_get_battery_temperature_cb, thermalmanager_battery_temperature },
-    { thermal_manager_get_sensor_temperature_cb,  thermalmanager_sensor_temperature },
-
-    { 0, 0 }
+    // method calls
+    {
+        .method = thermal_manager_get_thermal_state_cb,
+        .name   = thermalmanager_get_thermal_state,
+        .args   =
+            "    <arg direction=\"out\" name=\"status\" type=\"s\"/>\n"
+    },
+    {
+        .method = thermal_manager_get_surface_temperature_cb,
+        .name   = thermalmanager_estimate_surface_temperature,
+        .args   =
+            "    <arg direction=\"out\" name=\"temperature\" type=\"i\"/>\n"
+    },
+    {
+        .method = thermal_manager_get_core_temperature_cb,
+        .name   = thermalmanager_core_temperature,
+        .args   =
+            "    <arg direction=\"out\" name=\"temperature\" type=\"i\"/>\n"
+    },
+    {
+        .method = thermal_manager_get_battery_temperature_cb,
+        .name   = thermalmanager_battery_temperature,
+        .args   =
+            "    <arg direction=\"out\" name=\"temperature\" type=\"i\"/>\n"
+    },
+    {
+        .method = thermal_manager_get_sensor_temperature_cb,
+        .name   = thermalmanager_sensor_temperature,
+        .args   =
+            "    <arg direction=\"in\" name=\"sensor\" type=\"s\"/>\n"
+            "    <arg direction=\"out\" name=\"temperature\" type=\"i\"/>\n"
+    },
+    // outbound signals
+    {
+        .name   = thermalmanager_state_change_ind,
+        .args   =
+            "    <arg name=\"state\" type=\"s\"/>\n"
+    },
+    // sentinel
+    {
+        .name   = 0,
+    }
 };
 
 /* ========================================================================= *
@@ -1094,8 +1132,11 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
     dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
 
     /* Add dbus method call handlers */
-    dsme_dbus_bind_methods(&dbus_methods_bound, dbus_methods_lut,
-                           thermalmanager_service, thermalmanager_interface);
+    dsme_dbus_bind_methods(&dbus_methods_bound,
+                           thermalmanager_service,
+                           thermalmanager_path,
+                           thermalmanager_interface,
+                           dbus_methods_array);
 }
 
 /** Handler for disconnected to D-Bus system bus event
@@ -1103,10 +1144,6 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
     dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
-
-    /* Remove dbus method call handlers */
-    dsme_dbus_unbind_methods(&dbus_methods_bound, dbus_methods_lut,
-                             thermalmanager_service, thermalmanager_interface);
 }
 
 /** Array of DSME event handlers implemented by this plugin */
@@ -1150,8 +1187,11 @@ module_fini(void)
     }
 
     /* Remove dbus method call handlers */
-    dsme_dbus_unbind_methods(&dbus_methods_bound, dbus_methods_lut,
-                             thermalmanager_service, thermalmanager_interface);
+    dsme_dbus_unbind_methods(&dbus_methods_bound,
+                             thermalmanager_service,
+                             thermalmanager_path,
+                             thermalmanager_interface,
+                             dbus_methods_array);
 
     dsme_log(LOG_DEBUG, PFIX"unloaded");
 }

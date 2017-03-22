@@ -7,10 +7,14 @@
    mounted to a host PC over USB.
    <p>
    Copyright (C) 2010 Nokia Corporation.
-   Copyright (C) 2014 Jolla Ltd
+   Copyright (C) 2013-2017 Jolla Ltd
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Philippe De Swert <philippe.deswert@jollamobile.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Marko Saukko <marko.saukko@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -706,18 +710,18 @@ systembus_disconnect(void)
  * Module loading and unloading
  * ========================================================================= */
 
-static const dsme_dbus_signal_binding_t signals[] =
+static const dsme_dbus_signal_binding_t dbus_signals_array[] =
 {
     { xusbmoded_mode_changed_cb, USB_MODED_DBUS_INTERFACE, USB_MODED_MODE_CHANGED_SIG },
     { 0, }
 };
 
-static bool bound = false;
+static bool dbus_signals_bound = false;
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
     dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
-    dsme_dbus_bind_signals(&bound, signals);
+    dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
 
 }
@@ -725,7 +729,6 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
     dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
-    dsme_dbus_unbind_signals(&bound, signals);
     systembus_disconnect();
 }
 
@@ -750,7 +753,7 @@ void module_init(module_t* handle)
 
 void module_fini(void)
 {
-    dsme_dbus_unbind_signals(&bound, signals);
+    dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
 
     /* Remove timers */
     wait_for_usb_moded_cancel();

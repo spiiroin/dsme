@@ -44,11 +44,6 @@
 #include <glib.h>
 #include <stdlib.h>
 
-static const char* const service       = dsme_service;
-static const char* const req_interface = dsme_req_interface;
-static const char* const sig_interface = dsme_sig_interface;
-static const char* const sig_path      = dsme_sig_path;
-
 static char* dsme_version = 0;
 
 static void get_version(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
@@ -69,6 +64,9 @@ static void get_state(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
     // then proxy the query to the internal message queue
     DSM_MSGTYPE_STATE_QUERY query = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
     broadcast_internally(&query);
+
+    // tell handler code that there is no immediate reply
+    *reply = DSME_DBUS_MESSAGE_DUMMY;
 }
 
 static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
@@ -109,16 +107,85 @@ static void req_shutdown(const DsmeDbusMessage* request,
   broadcast_internally(&req);
 }
 
-static const dsme_dbus_binding_t methods[] = {
-  { get_version,  dsme_get_version  },
-  { get_state,    dsme_get_state    },
-  { req_powerup,  dsme_req_powerup  },
-  { req_reboot,   dsme_req_reboot   },
-  { req_shutdown, dsme_req_shutdown },
-  { 0, 0 }
+/** Flag for: dbus broadcast info has been installed */
+static bool dbus_broadcast_bound           = false;
+
+/** Array of signals that can be broadcast */
+static const dsme_dbus_binding_t dbus_broadcast_array[] =
+{
+    // outbound signals
+    {
+        .name   = dsme_state_change_ind,
+        .args   =
+            "    <arg name=\"state\" type=\"s\"/>\n"
+    },
+    {
+        .name   = dsme_save_unsaved_data_ind,
+        .args   = ""
+    },
+    {
+        .name   = dsme_battery_empty_ind,
+        .args   = ""
+    },
+    {
+        .name   = dsme_thermal_shutdown_ind,
+        .args   = ""
+    },
+    {
+        .name   = dsme_shutdown_ind,
+        .args   = ""
+    },
+    {
+        .name   = dsme_state_req_denied_ind,
+        .args   =
+            "    <arg name=\"denied_state\" type=\"s\"/>\n"
+            "    <arg name=\"reason\" type=\"s\"/>\n"
+    },
+    // sentinel
+    {
+        .name   = 0,
+    },
 };
 
-static bool bound = false;
+/** Array of dsme method call handlers */
+static const dsme_dbus_binding_t dbus_methods_array[] =
+{
+    // method calls
+    {
+        .method = get_version,
+        .name   = dsme_get_version,
+        .args   =
+            "    <arg direction=\"out\" name=\"version\" type=\"s\"/>\n"
+    },
+    {
+        .method = get_state,
+        .name   = dsme_get_state,
+        .args   =
+            "    <arg direction=\"out\" name=\"state\" type=\"s\"/>\n"
+    },
+    {
+        .method = req_powerup,
+        .name   = dsme_req_powerup,
+        .args   = ""
+    },
+    {
+        .method = req_reboot,
+        .name   = dsme_req_reboot,
+        .args   = ""
+    },
+    {
+        .method = req_shutdown,
+        .name   = dsme_req_shutdown,
+        .args   = ""
+    },
+    // sentinel
+    {
+        .name   = 0,
+    }
+};
+
+/** Flag for: dbus method call handlers have been installed */
+static bool dbus_methods_bound = false;
 
 static const char* shutdown_action_name(dsme_state_t state)
 {
@@ -151,7 +218,7 @@ static const char* state_name(dsme_state_t state)
 
 static void emit_dsme_dbus_signal(const char* name)
 {
-  DsmeDbusMessage* sig = dsme_dbus_signal_new(sig_path, sig_interface, name);
+  DsmeDbusMessage* sig = dsme_dbus_signal_new(dsme_service, dsme_sig_path, dsme_sig_interface, name);
   dsme_dbus_signal_emit(sig);
 }
 
@@ -174,8 +241,8 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_CHANGE_IND, server, msg)
             emit_dsme_dbus_signal(dsme_shutdown_ind);
         }
 
-        DsmeDbusMessage* sig = dsme_dbus_signal_new(sig_path,
-                                                    sig_interface,
+        DsmeDbusMessage* sig = dsme_dbus_signal_new(dsme_service, dsme_sig_path,
+                                                    dsme_sig_interface,
                                                     dsme_state_change_ind);
         dsme_dbus_message_append_string(sig, state_name(msg->state));
         dsme_dbus_signal_emit(sig);
@@ -201,8 +268,8 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_REQ_DENIED_IND, server, msg)
              denied_request,
              (const char*)DSMEMSG_EXTRA(msg));
 
-    DsmeDbusMessage* sig = dsme_dbus_signal_new(sig_path,
-                                                sig_interface,
+    DsmeDbusMessage* sig = dsme_dbus_signal_new(dsme_service, dsme_sig_path,
+                                                dsme_sig_interface,
                                                 dsme_state_req_denied_ind);
     dsme_dbus_message_append_string(sig, denied_request);
     dsme_dbus_message_append_string(sig, DSMEMSG_EXTRA(msg));
@@ -214,18 +281,24 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECT");
 
-  /* In case dbusautoconnector plugin is not used, then we need
-   * on enable dbus functionality upon receiving CONNECT event.
-   */
-  dsme_dbus_startup();
+  dsme_dbus_bind_methods(&dbus_broadcast_bound,
+                         dsme_service,
+                         dsme_sig_path,
+                         dsme_sig_interface,
+                         dbus_broadcast_array);
 
-  dsme_dbus_bind_methods(&bound, methods, service, req_interface);
+  dsme_dbus_bind_methods(&dbus_methods_bound,
+                         dsme_service,
+                         dsme_req_path,
+                         dsme_req_interface,
+                         dbus_methods_array);
+  dsme_dbus_connect();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, "dbusproxy: DBUS_DISCONNECT");
-  dsme_dbus_unbind_methods(&bound, methods, service, req_interface);
+  dsme_dbus_disconnect();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DSME_VERSION, server, msg)
@@ -252,6 +325,9 @@ void module_init(module_t* handle)
   DSM_MSGTYPE_GET_VERSION req = DSME_MSG_INIT(DSM_MSGTYPE_GET_VERSION);
   broadcast_internally(&req);
 
+  /* Enable dbus functionality */
+  dsme_dbus_startup();
+
   /* Do not connect to D-Bus; it is probably not started yet.
    * Instead, wait for DSM_MSGTYPE_DBUS_CONNECT.
    */
@@ -261,12 +337,22 @@ void module_init(module_t* handle)
 
 void module_fini(void)
 {
-  dsme_dbus_unbind_methods(&bound, methods, service, req_interface);
+    dsme_dbus_unbind_methods(&dbus_broadcast_bound,
+                             dsme_service,
+                             dsme_sig_path,
+                             dsme_sig_interface,
+                             dbus_broadcast_array);
 
-  dsme_dbus_cleanup();
+    dsme_dbus_unbind_methods(&dbus_methods_bound,
+                             dsme_service,
+                             dsme_req_path,
+                             dsme_req_interface,
+                             dbus_methods_array);
 
-  g_free(dsme_version);
-  dsme_version = 0;
+    dsme_dbus_shutdown();
 
-  dsme_log(LOG_DEBUG, "dbusproxy.so unloaded");
+    g_free(dsme_version);
+    dsme_version = 0;
+
+    dsme_log(LOG_DEBUG, "dbusproxy.so unloaded");
 }

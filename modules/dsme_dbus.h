@@ -39,6 +39,8 @@
 
 typedef struct DsmeDbusMessage DsmeDbusMessage;
 
+#define DSME_DBUS_MESSAGE_DUMMY ((DsmeDbusMessage *)(0xaffe0000))
+
 typedef void (*DsmeDbusMethod)(const DsmeDbusMessage* request,
                                DsmeDbusMessage**      reply);
 
@@ -48,6 +50,7 @@ typedef struct dsme_dbus_binding_t
 {
     DsmeDbusMethod  method;
     const char     *name; // = member
+    const char     *args; // = xml desc
 } dsme_dbus_binding_t;
 
 typedef struct dsme_dbus_signal_binding_t
@@ -57,30 +60,16 @@ typedef struct dsme_dbus_signal_binding_t
     const char      *name; // = member
 } dsme_dbus_signal_binding_t;
 
-bool dsme_dbus_is_available(void);
 DBusConnection *dsme_dbus_get_connection(DBusError *err);
 
-void dsme_dbus_bind_methods(bool*                      bound_already,
-                            const dsme_dbus_binding_t* bindings,
-                            const char*                service,
-                            const char*                interface);
-
-void dsme_dbus_unbind_methods(bool*                      really_bound,
-                              const dsme_dbus_binding_t* bindings,
-                              const char*                service,
-                              const char*                interface);
-
-void dsme_dbus_bind_signals(bool*                             bound_already,
-                            const dsme_dbus_signal_binding_t* bindings);
-
-void dsme_dbus_unbind_signals(bool*                             really_bound,
-                              const dsme_dbus_signal_binding_t* bindings);
+void dsme_dbus_bind_methods  (bool *bound, const char *service_name, const char *object_path, const char *interface_name, const dsme_dbus_binding_t *bindings);
+void dsme_dbus_unbind_methods(bool *bound, const char *service_name, const char *object_path, const char *interface_name, const dsme_dbus_binding_t *bindings);
+void dsme_dbus_bind_signals  (bool *bound, const dsme_dbus_signal_binding_t *bindings);
+void dsme_dbus_unbind_signals(bool *bound, const dsme_dbus_signal_binding_t *bindings);
 
 DsmeDbusMessage* dsme_dbus_reply_new(const DsmeDbusMessage* request);
 
-DsmeDbusMessage* dsme_dbus_signal_new(const char* path,
-                                      const char* interface,
-                                      const char* name);
+DsmeDbusMessage* dsme_dbus_signal_new(const char *sender, const char *path, const char *interface, const char *name);
 
 void dsme_dbus_message_append_string(DsmeDbusMessage* msg, const char* s);
 void dsme_dbus_message_append_int(DsmeDbusMessage* msg, int i);
@@ -100,6 +89,9 @@ DsmeDbusMessage* dsme_dbus_reply_error(const DsmeDbusMessage*  request,
                                        const char*             error_name,
                                        const char*             error_message);
 
+bool dsme_dbus_connect(void);
+void dsme_dbus_disconnect(void);
+
 void dsme_dbus_startup(void);
-void dsme_dbus_cleanup(void);
+void dsme_dbus_shutdown(void);
 #endif

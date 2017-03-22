@@ -5,8 +5,12 @@
    provides the current value for interested sw components.
    <p>
    Copyright (C) 2010 Nokia Corporation
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Simo Piiroinen <simo.piiroinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -50,9 +54,10 @@
 // prefix for log messages from this module
 #define LOGPFIX "poweron-timer: "
 
-// QUARANTINE static module_t* this_module  = 0;
 static bool      in_user_mode = false;
-static bool      dbus_bound   = false;
+
+/** Flag for: dbus method call handlers have been installed */
+static bool      dbus_methods_bound   = false;
 
 /* ========================================================================= *
  * D-Bus Query API
@@ -65,15 +70,24 @@ static void get_poweron_time(const DsmeDbusMessage* request,
   dsme_dbus_message_append_int(*reply, (int)pot_get_poweron_secs());
 }
 
-//TODO: should we use dsme style dbus interface defs ???
-static const char service[]   = "com.nokia.powerontimer";
-static const char interface[] = "com.nokia.powerontimer";
-static const char path[]      = "/com/nokia/powerontimer";
+static const char poweron_service[]   = "com.nokia.powerontimer";
+static const char poweron_interface[] = "com.nokia.powerontimer";
+static const char poweron_path[]      = "/com/nokia/powerontimer";
 
-static const dsme_dbus_binding_t methods[] =
+/** Array of power on timer method call handlers */
+static const dsme_dbus_binding_t dbus_methods_array[] =
 {
-  { get_poweron_time, "get_poweron_time" },
-  { 0, 0 }
+    // method calls
+    {
+        .method = get_poweron_time,
+        .name   = "get_poweron_time",
+        .args   =
+            "    <arg direction=\"out\" name=\"seconds\" type=\"i\"/>\n"
+    },
+    // sentinel
+    {
+        .name   = 0,
+    }
 };
 
 /* ========================================================================= *
@@ -106,12 +120,15 @@ DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
-  dsme_dbus_bind_methods(&dbus_bound, methods, service, interface);
+  dsme_dbus_bind_methods(&dbus_methods_bound,
+                         poweron_service,
+                         poweron_path,
+                         poweron_interface,
+                         dbus_methods_array);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-  dsme_dbus_unbind_methods(&dbus_bound, methods, service, interface);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_STATE_CHANGE_IND, server, msg)
@@ -155,13 +172,15 @@ module_fn_info_t message_handlers[] =
 void module_init(module_t* handle)
 {
   poweron_update_cb();
-
-// QUARANTINE   this_module = handle;
 }
 
 void module_fini(void)
 {
   pot_update_cal(in_user_mode, true);
 
-  dsme_dbus_unbind_methods(&dbus_bound, methods, service, interface);
+  dsme_dbus_unbind_methods(&dbus_methods_bound,
+                           poweron_service,
+                           poweron_path,
+                           poweron_interface,
+                           dbus_methods_array);
 }

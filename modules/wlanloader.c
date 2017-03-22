@@ -15,9 +15,11 @@
    modprobes the wlan kernel module, and at ExecStop rmmods the module.
 
    <p>
-   Copyright (C) 2014 Jolla Ltd.
+   Copyright (C) 2014-2017 Jolla Ltd.
 
    @author Kalle Jokiniemi <kalle.jokiniemi@jolla.com>
+   @author Slava Monich <slava.monich@jolla.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -41,8 +43,11 @@
 #include "dsme_dbus.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
+#include "../include/dsme/modulebase.h"
 
 #define WLAN_SYSTEMD_UNIT   "wlan-module-load.service"
+
+static module_t *this_module = 0;
 
 static void reset_wlan_module(void)
 {
@@ -103,12 +108,12 @@ static void connman_tethering_changed(const DsmeDbusMessage* sig)
     }
 }
 
-static const dsme_dbus_signal_binding_t signals[] = {
+static const dsme_dbus_signal_binding_t dbus_signals_array[] = {
   { connman_tethering_changed , "net.connman.Technology", "PropertyChanged" },
   { 0, 0 }
 };
 
-static bool bound = false;
+static bool dbus_signals_bound = false;
 
 static void loader_needed_cb(DBusPendingCall *pending, void *user_data)
 {
@@ -125,7 +130,9 @@ static void loader_needed_cb(DBusPendingCall *pending, void *user_data)
                                                     err.name, err.message);
     } else {
         /* We got the reply without error, so the service exists */
-        dsme_dbus_bind_signals(&bound, signals);
+        const module_t *restore = enter_module(this_module);
+        dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
+        enter_module(restore);
         dsme_log(LOG_DEBUG, "wlanloader: activated");
     }
 
@@ -192,7 +199,6 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
     dsme_log(LOG_DEBUG, "wlanloader: DBUS_DISCONNECT");
-    dsme_dbus_unbind_signals(&bound, signals);
 }
 
 module_fn_info_t message_handlers[] = {
@@ -204,13 +210,14 @@ module_fn_info_t message_handlers[] = {
 void
 module_init(module_t * handle)
 {
+    this_module = handle;
     dsme_log(LOG_DEBUG, "wlanloader.so loaded");
 }
 
 void
 module_fini(void)
 {
-    dsme_dbus_unbind_signals(&bound, signals);
+    dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
     dsme_log(LOG_DEBUG, "libwlanloader.so unloaded");
 }
 

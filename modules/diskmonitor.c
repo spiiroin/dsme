@@ -210,8 +210,35 @@ static bool dbus_methods_bound           = false;
 /** Array of diskmonitor method call handlers */
 static const dsme_dbus_binding_t dbus_methods_array[] =
 {
-    { handle_check_req_cb, diskmonitor_req_check },
-    { 0, 0 }
+    // method calls
+    {
+        .method = handle_check_req_cb,
+        .name   = diskmonitor_req_check,
+        .args   = ""
+    },
+    // sentinel
+    {
+        .name   = 0,
+    },
+};
+
+/** Flag for: dbus broadcast info has been installed */
+static bool dbus_broadcast_bound           = false;
+
+/** Array of signals that can be broadcast */
+static const dsme_dbus_binding_t dbus_broadcast_array[] =
+{
+    // outbound signals
+    {
+        .name   = diskmonitor_sig_disk_space_state,
+        .args   =
+            "    <arg name=\"mount_point\" type=\"s\"/>\n"
+            "    <arg name=\"diskspace_state\" type=\"i\"/>\n"
+   },
+    // sentinel
+    {
+        .name   = 0,
+    },
 };
 
 /** Flag for: dbus signal handlers have been installed */
@@ -798,9 +825,17 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
     dsme_log(LOG_DEBUG, LOGPFIX"DBUS_CONNECT");
 
-    dsme_dbus_bind_methods(&dbus_methods_bound, dbus_methods_array,
+    dsme_dbus_bind_methods(&dbus_broadcast_bound,
                            diskmonitor_service,
-                           diskmonitor_interface_req);
+                           diskmonitor_object_sig,
+                           diskmonitor_interface_sig,
+                           dbus_broadcast_array);
+
+    dsme_dbus_bind_methods(&dbus_methods_bound,
+                           diskmonitor_service,
+                           diskmonitor_object_req,
+                           diskmonitor_interface_req,
+                           dbus_methods_array);
 
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
 
@@ -817,13 +852,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
  */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-   dsme_log(LOG_DEBUG, LOGPFIX"DBUS_DISCONNECT");
-
-   dsme_dbus_unbind_methods(&dbus_methods_bound, dbus_methods_array,
-                            diskmonitor_service,
-                            diskmonitor_interface_req);
-
-   dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
+    dsme_log(LOG_DEBUG, LOGPFIX"DBUS_DISCONNECT");
 }
 
 /** Callback for handling logical disk use state change events
@@ -836,7 +865,8 @@ DSME_HANDLER(DSM_MSGTYPE_DISK_SPACE, conn, msg)
              diskspace_state_repr(msg->diskspace_state), mount_path);
 
     DsmeDbusMessage* sig =
-        dsme_dbus_signal_new(diskmonitor_object_sig,
+        dsme_dbus_signal_new(diskmonitor_service,
+                             diskmonitor_object_sig,
                              diskmonitor_interface_sig,
                              diskmonitor_sig_disk_space_state);
 
@@ -878,6 +908,20 @@ module_init(module_t* module)
 void
 module_fini(void)
 {
+    dsme_dbus_unbind_methods(&dbus_broadcast_bound,
+                             diskmonitor_service,
+                             diskmonitor_object_sig,
+                             diskmonitor_interface_sig,
+                             dbus_broadcast_array);
+
+    dsme_dbus_unbind_methods(&dbus_methods_bound,
+                             diskmonitor_service,
+                             diskmonitor_object_req,
+                             diskmonitor_interface_req,
+                             dbus_methods_array);
+
+    dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
+
     diskmon_free_config();
 
     dsme_log(LOG_DEBUG, "diskmonitor.so unloaded");

@@ -4,8 +4,11 @@
    DSME plugin framework types and functions.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -82,7 +85,7 @@ bool unload_module(module_t* module);
 void process_message_queue(void);
 
 const module_t* current_module(void);
-void enter_module(const module_t* module);
+const module_t* enter_module(const module_t* module);
 void leave_module(void);
 
 /**

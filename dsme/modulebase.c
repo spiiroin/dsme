@@ -328,9 +328,11 @@ const module_t* current_module(void)
     return currently_handling_module;
 }
 
-void enter_module(const module_t* module)
+const module_t* enter_module(const module_t* module)
 {
+    const module_t *previous = currently_handling_module;
     currently_handling_module = module;
+    return previous;
 }
 
 void leave_module()

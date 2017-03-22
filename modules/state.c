@@ -1120,9 +1120,9 @@ static void runlevel_switch_ind(const DsmeDbusMessage* ind)
     }
 }
 
-static bool bound = false;
+static bool dbus_signals_bound = false;
 
-static const dsme_dbus_signal_binding_t signals[] = {
+static const dsme_dbus_signal_binding_t dbus_signals_array[] = {
     { runlevel_switch_ind, "com.nokia.startup.signal", "runlevel_switch_done" },
     { 0, 0 }
 };
@@ -1130,7 +1130,7 @@ static const dsme_dbus_signal_binding_t signals[] = {
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
-  dsme_dbus_bind_signals(&bound, signals);
+  dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
 #ifdef DSME_VIBRA_FEEDBACK
   dsme_ini_vibrafeedback();
 #endif // DSME_VIBRA_FEEDBACK
@@ -1139,7 +1139,6 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
-  dsme_dbus_unbind_signals(&bound, signals);
 }
 
 module_fn_info_t message_handlers[] = {
@@ -1333,7 +1332,7 @@ void module_init(module_t* handle)
 
 void module_fini(void)
 {
-  dsme_dbus_unbind_signals(&bound, signals);
+  dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
 #ifdef DSME_VIBRA_FEEDBACK
   dsme_fini_vibrafeedback();
 #endif  // DSME_VIBRA_FEEDBACK

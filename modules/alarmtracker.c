@@ -8,8 +8,12 @@
 
    <p>
    Copyright (C) 2009-2010 Nokia Corporation.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -269,23 +273,22 @@ static void alarm_queue_status_ind(const DsmeDbusMessage* ind)
 }
 
 
-static const dsme_dbus_signal_binding_t signals[] = {
+static const dsme_dbus_signal_binding_t dbus_signals_array[] = {
   { alarm_queue_status_ind, "com.nokia.time", "next_bootup_event" },
   { 0, 0 }
 };
 
-static bool bound = false;
+static bool dbus_signals_bound = false;
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, "alarmtracker: DBUS_CONNECT");
-  dsme_dbus_bind_signals(&bound, signals);
+  dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, "alarmtracker: DBUS_DISCONNECT");
-  dsme_dbus_unbind_signals(&bound, signals);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_STATE_QUERY, client, req)
@@ -322,7 +325,7 @@ void module_init(module_t* handle)
 
 void module_fini(void)
 {
-  dsme_dbus_unbind_signals(&bound, signals);
+  dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
 
   save_alarm_queue_status();
 

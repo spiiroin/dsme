@@ -54,7 +54,7 @@ static int          watch_fd      = -1;
 static dsme_timer_t connect_timer = 0;
 
 
-static void connect_to_dbus(void)
+static void broadcast_connected(void)
 {
     DSM_MSGTYPE_DBUS_CONNECT msg = DSME_MSG_INIT(DSM_MSGTYPE_DBUS_CONNECT);
 
@@ -65,9 +65,9 @@ static int connect_to_dbus_if_available(void* dummy)
 {
     bool keep_trying = true;
 
-    if( dsme_dbus_is_available() ) {
+    if( dsme_dbus_connect() ) {
         keep_trying = false;
-        connect_to_dbus();
+        broadcast_connected();
     }
 
     if( !keep_trying )
@@ -191,20 +191,10 @@ void module_init(module_t* handle)
 {
     dsme_log(LOG_DEBUG, "dbusautoconnector.so loaded");
 
-    /* Allow use of dbus functionality so that we can commence
-     * system bus connection attempts.
-     */
-    dsme_dbus_startup();
-
-    if (dsme_dbus_is_available()) {
-        connect_to_dbus();
-    } else {
+    if( dsme_dbus_connect() )
+	broadcast_connected();
+    else
         set_up_watch_for_dbus();
-        if (dsme_dbus_is_available()) {
-            connect_to_dbus();
-            stop_dbus_watch();
-        }
-    }
 }
 
 void module_fini(void)
