@@ -44,7 +44,38 @@
 #include <glib.h>
 #include <stdlib.h>
 
+/* ========================================================================= *
+ * PROTOTYPES
+ * ========================================================================= */
+
+static const char *shutdown_action_name    (dsme_state_t state);
+static const char *state_name              (dsme_state_t state);
+static void        get_version             (const DsmeDbusMessage *request, DsmeDbusMessage* *reply);
+static void        get_state               (const DsmeDbusMessage *request, DsmeDbusMessage* *reply);
+static void        req_powerup             (const DsmeDbusMessage *request, DsmeDbusMessage* *reply);
+static void        req_reboot              (const DsmeDbusMessage *request, DsmeDbusMessage* *reply);
+static void        req_shutdown            (const DsmeDbusMessage *request, DsmeDbusMessage* *reply);
+static void        emit_dsme_dbus_signal   (const char *name);
+static void        emit_dsme_state_signals (void);
+void               module_init             (module_t *handle);
+void               module_fini             (void);
+
+/* ========================================================================= *
+ * DATA
+ * ========================================================================= */
+
+/** Cached dsme version string */
 static char* dsme_version = 0;
+
+/** Cache dsme state */
+static int dsme_state = DSME_STATE_NOT_SET;
+
+/** Cached dbus connection state */
+static bool dbus_connected = false;
+
+/* ========================================================================= *
+ * FUNCTIONS
+ * ========================================================================= */
 
 static void get_version(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 {
@@ -53,20 +84,10 @@ static void get_version(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
                                   dsme_version ? dsme_version : "unknown");
 }
 
-// list of unanswered state query replies from D-Bus
-static GSList* state_replies = 0;
-
 static void get_state(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 {
-    // first create a reply and append it to the list of yet unsent replies
-    state_replies = g_slist_append(state_replies, dsme_dbus_reply_new(request));
-
-    // then proxy the query to the internal message queue
-    DSM_MSGTYPE_STATE_QUERY query = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
-    broadcast_internally(&query);
-
-    // tell handler code that there is no immediate reply
-    *reply = DSME_DBUS_MESSAGE_DUMMY;
+    *reply = dsme_dbus_reply_new(request);
+    dsme_dbus_message_append_string(*reply, state_name(dsme_state));
 }
 
 static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
@@ -222,31 +243,46 @@ static void emit_dsme_dbus_signal(const char* name)
   dsme_dbus_signal_emit(sig);
 }
 
+static void emit_dsme_state_signals(void)
+{
+    if( dsme_state == DSME_STATE_NOT_SET )
+        goto EXIT;
+
+    if( !dbus_connected )
+        goto EXIT;
+
+    switch( dsme_state ) {
+    case DSME_STATE_SHUTDOWN:
+    case DSME_STATE_ACTDEAD:
+    case DSME_STATE_REBOOT:
+        emit_dsme_dbus_signal(dsme_shutdown_ind);
+        break;
+
+    default:
+        break;
+    }
+
+    DsmeDbusMessage* sig = dsme_dbus_signal_new(dsme_service, dsme_sig_path,
+                                                dsme_sig_interface,
+                                                dsme_state_change_ind);
+    dsme_dbus_message_append_string(sig, state_name(dsme_state));
+    dsme_dbus_signal_emit(sig);
+
+EXIT:
+    return;
+}
+
 DSME_HANDLER(DSM_MSGTYPE_STATE_CHANGE_IND, server, msg)
 {
-    if (state_replies) {
-        // there are yet unsent replies to state queries; sent the first one
-        GSList* first_node = state_replies;
-        DsmeDbusMessage* first_reply = (DsmeDbusMessage*)(first_node->data);
-        dsme_dbus_message_append_string(first_reply, state_name(msg->state));
-        dsme_dbus_signal_emit(first_reply); // deletes the reply
-        first_node->data = 0;
-        state_replies = g_slist_delete_link(state_replies, first_node);
-    } else {
-        // this is a broadcast state change
-        if (msg->state == DSME_STATE_SHUTDOWN ||
-            msg->state == DSME_STATE_ACTDEAD  ||
-            msg->state == DSME_STATE_REBOOT)
-        {
-            emit_dsme_dbus_signal(dsme_shutdown_ind);
-        }
+    if( dsme_state == msg->state )
+        goto EXIT;
 
-        DsmeDbusMessage* sig = dsme_dbus_signal_new(dsme_service, dsme_sig_path,
-                                                    dsme_sig_interface,
-                                                    dsme_state_change_ind);
-        dsme_dbus_message_append_string(sig, state_name(msg->state));
-        dsme_dbus_signal_emit(sig);
-    }
+    dsme_state = msg->state;
+
+    emit_dsme_state_signals();
+
+EXIT:
+    return;
 }
 
 DSME_HANDLER(DSM_MSGTYPE_BATTERY_EMPTY_IND, server, msg)
@@ -293,12 +329,16 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
                          dsme_req_interface,
                          dbus_methods_array);
   dsme_dbus_connect();
+  dbus_connected = true;
+
+  emit_dsme_state_signals();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, "dbusproxy: DBUS_DISCONNECT");
   dsme_dbus_disconnect();
+  dbus_connected = false;
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DSME_VERSION, server, msg)
@@ -322,8 +362,12 @@ module_fn_info_t message_handlers[] = {
 void module_init(module_t* handle)
 {
   /* get dsme version so that we can report it over D-Bus if asked to */
-  DSM_MSGTYPE_GET_VERSION req = DSME_MSG_INIT(DSM_MSGTYPE_GET_VERSION);
-  broadcast_internally(&req);
+  DSM_MSGTYPE_GET_VERSION req_version = DSME_MSG_INIT(DSM_MSGTYPE_GET_VERSION);
+  broadcast_internally(&req_version);
+
+  /* get dsme state so that we can report it over D-Bus if asked to */
+  DSM_MSGTYPE_STATE_QUERY req_state = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
+  broadcast_internally(&req_state);
 
   /* Enable dbus functionality */
   dsme_dbus_startup();
