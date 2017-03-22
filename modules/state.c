@@ -235,6 +235,7 @@ static dsme_runlevel_t state2runlevel(dsme_state_t state)
   return runlevel;
 }
 
+#ifndef DSME_SUPPORT_DIRECT_USER_ACTDEAD
 static bool need_to_use_reboot(dsme_state_t target_state)
 {
     static const char output_path[] = "/run/systemd/reboot-param";
@@ -331,6 +332,7 @@ EXIT:
 
     return use_reboot;
 }
+#endif
 
 static dsme_state_t select_state(void)
 {
