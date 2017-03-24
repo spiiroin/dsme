@@ -1,5 +1,5 @@
 # Package version
-VERSION   := 0.75.2
+VERSION   := 0.76.0
 
 # Dummy default install dir - override from packaging scripts
 DESTDIR ?= /tmp/dsme-test-install

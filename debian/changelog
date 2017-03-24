@@ -1,3 +1,20 @@
+dsme (0.76.0) precise; urgency=low
+
+  * [makefile] Optionally build without autoxxx tools
+  * [cleanup] Remove remnants of yaml usage
+  * [cleanup] Remove unused lifeguard.uids file
+  * [cleanup] Remove unused "devtodo" file
+  * [getbootstate] Deal with compilation warnings
+  * [dsme] Remove legacy libstartup.so symlink
+  * [state] Put conditionally used code into #ifdef block
+  * [dsme-wdd] Remove dead code
+  * [dbus] Add introspect support. Fixes MER#1763
+  * [dbusproxy] Fix dsme state signaling and querying
+  * [dbusproxy] Send thermal shutdown indications on SystemBus
+  * [dbus] Separate connect requests from getting connected
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 24 Mar 2017 13:31:59 +0200
+
 dsme (0.75.2) precise; urgency=low
 
   * [debug] Add special mode for running dsme-server with valgrind. JB#37757
