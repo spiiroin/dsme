@@ -6,7 +6,6 @@
    Copyright (C) 2010 Nokia Corporation.
    Copyright (C) 2015-2017 Jolla Ltd.
 
-
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
@@ -39,181 +38,306 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define ME "dbusautoconnector: "
 
-#define DSME_SYSTEM_BUS_DIR "/var/run/dbus"
-#define DSME_SYSTEM_BUS_FILE "system_bus_socket"
-#define DSME_INOTIFY_BUF_SIZE (sizeof(struct inotify_event) + PATH_MAX + 1)
+#define DSME_SYSTEM_BUS_DIR   "/var/run/dbus"
+#define DSME_SYSTEM_BUS_FILE  "system_bus_socket"
+#define DSME_SYSTEM_BUS_PATH  DSME_SYSTEM_BUS_DIR"/"DSME_SYSTEM_BUS_FILE
 
+/* ========================================================================= *
+ * Types
+ * ========================================================================= */
 
-static void stop_dbus_watch(void);
+typedef enum
+{
+    BUS_STATE_UNKNOWN,
+    BUS_STATE_MISSING,
+    BUS_STATE_PRESENT,
+} bus_state_t;
 
+/* ========================================================================= *
+ * Prototypes
+ * ========================================================================= */
 
-static int          inotify_fd    = -1;
-static guint        inotify_id    =  0;
-static int          watch_fd      = -1;
-static dsme_timer_t connect_timer = 0;
+static void     connect_request        (void);
 
+static int      connect_timer_cb       (void *dummy);
+static void     connect_timer_start    (void);
+static void     connect_timer_stop     (void);
 
-static void connect_to_dbus(void)
+static void     systembus_state_update (void);
+
+static gboolean systembus_watcher_cb   (GIOChannel *src, GIOCondition cnd, gpointer dta);
+static bool     systembus_watcher_start(void);
+static void     systembus_watcher_stop (void);
+
+void            module_init            (module_t *handle);
+void            module_fini            (void);
+
+/* ========================================================================= *
+ * Data
+ * ========================================================================= */
+
+static bus_state_t  systembus_state = BUS_STATE_UNKNOWN;
+
+static dsme_timer_t connect_timer_id = 0;
+
+static int          systembus_watcher_fd = -1;
+static int          systembus_watcher_wd = -1;
+static guint        systembus_watcher_id =  0;
+
+/* ========================================================================= *
+ * Functions
+ * ========================================================================= */
+
+/* ------------------------------------------------------------------------- *
+ * connect_request
+ * ------------------------------------------------------------------------- */
+
+static void
+connect_request(void)
 {
     DSM_MSGTYPE_DBUS_CONNECT msg = DSME_MSG_INIT(DSM_MSGTYPE_DBUS_CONNECT);
 
     broadcast_internally(&msg);
 }
 
-static int connect_to_dbus_if_available(void* dummy)
+/* ------------------------------------------------------------------------- *
+ * connect_timer
+ * ------------------------------------------------------------------------- */
+
+static int
+connect_timer_cb(void* dummy)
 {
-    bool keep_trying = true;
+    dsme_log(LOG_DEBUG, ME"Connect timer: triggered");
 
-    if( dsme_dbus_is_available() ) {
-        keep_trying = false;
-        connect_to_dbus();
-    }
+    connect_request();
 
-    if( !keep_trying )
-        connect_timer = 0;
-
-    return keep_trying;
+    /* Repeat forever until we get either CONNECTED or DISCONNECT event */
+    return TRUE;
 }
 
-static void try_connecting_to_dbus_until_successful(void)
+static void
+connect_timer_start(void)
 {
-    if (connect_to_dbus_if_available(0) != 0) {
-        // D-Bus not available yet; keep trying once a second until successful
-        connect_timer = dsme_create_timer(1, connect_to_dbus_if_available, 0);
+    if( connect_timer_id )
+        goto EXIT;
+
+    dsme_log(LOG_DEBUG, ME"Connect timer: start");
+
+    connect_timer_id = dsme_create_timer(1, connect_timer_cb, 0);
+
+    connect_request();
+
+EXIT:
+    return;
+}
+
+static void
+connect_timer_stop(void)
+{
+    if( connect_timer_id ) {
+        dsme_log(LOG_DEBUG, ME"Connect timer: stop");
+
+        dsme_destroy_timer(connect_timer_id), connect_timer_id = 0;
     }
 }
 
+/* ------------------------------------------------------------------------- *
+ * systembus_state
+ * ------------------------------------------------------------------------- */
 
-static gboolean handle_inotify_event(GIOChannel*  source,
-                                     GIOCondition condition,
-                                     gpointer     data)
+static void
+systembus_state_update(void)
 {
-    bool keep_watching = true;
+    int prev = systembus_state;
 
-    if (condition & G_IO_IN) {
-        dsme_log(LOG_NOTICE, "Got D-Bus dir inotify watch event");
+    if( access(DSME_SYSTEM_BUS_PATH, F_OK) == 0 )
+        systembus_state = BUS_STATE_PRESENT;
+    else
+        systembus_state = BUS_STATE_MISSING;
 
-        char buf[DSME_INOTIFY_BUF_SIZE];
-        int  n;
+    if( prev == systembus_state )
+        goto EXIT;
 
-        n = TEMP_FAILURE_RETRY(read(inotify_fd, buf, DSME_INOTIFY_BUF_SIZE));
-        if (n < sizeof(struct inotify_event)) {
-            dsme_log(LOG_ERR, "Error receiving D-Bus dir inotify watch event");
-            keep_watching = false;
-        } else {
-            struct inotify_event* event = (struct inotify_event*)&buf[0];
+    dsme_log(LOG_DEBUG, ME"SystemBus socket exists: %d -> %d",
+             prev, systembus_state);
 
-            if (event->mask & IN_CREATE &&
-                event->len > 0          &&
-                strcmp(event->name, DSME_SYSTEM_BUS_FILE) == 0)
-            {
-                dsme_log(LOG_INFO, "D-Bus System bus socket created; connect");
-                try_connecting_to_dbus_until_successful();
-                keep_watching = false; // TODO: add support for re-connect
+    if( systembus_state == BUS_STATE_PRESENT )
+        connect_timer_start();
+    else
+        connect_timer_stop();
+
+EXIT:
+    return;
+}
+
+/* ------------------------------------------------------------------------- *
+ * systembus_watcher
+ * ------------------------------------------------------------------------- */
+
+static inline void *lea(const void *base, ssize_t offs)
+{
+    return offs + (char *)base;
+}
+
+static gboolean
+systembus_watcher_cb(GIOChannel *src, GIOCondition cnd, gpointer dta)
+{
+    bool keep_watching = false;
+    bool update = false;
+
+    char buf[4096] __attribute__ ((aligned(__alignof__(struct inotify_event))));
+
+    if( cnd & (G_IO_ERR | G_IO_HUP | G_IO_NVAL) ) {
+        dsme_log(LOG_ERR, ME"SystemBus watch: ERR, HUP or NVAL condition");
+        goto EXIT;
+    }
+
+    if( cnd & G_IO_IN ) {
+        int todo = read(systembus_watcher_fd, buf, sizeof buf);
+
+        if( todo == -1 ) {
+            if( errno == EAGAIN || errno == EINTR )
+                keep_watching = true;
+            else
+                dsme_log(LOG_ERR, ME"SystemBus watch: read error: %m");
+            goto EXIT;
+        }
+
+        struct inotify_event *eve = lea(buf, 0);
+
+        while( todo > 0 ) {
+            if( todo < sizeof *eve ) {
+                dsme_log(LOG_ERR, ME"SystemBus watch: truncated event");
+                goto EXIT;
             }
+
+            int size = sizeof *eve + eve->len;
+
+            if( todo < size ) {
+                dsme_log(LOG_ERR, ME"SystemBus watch: oversized event");
+                goto EXIT;
+            }
+
+            if( eve->len > 0 && !strcmp(eve->name, DSME_SYSTEM_BUS_FILE) )
+                update = true;
+
+            eve = lea(eve, size), todo -= size;
         }
     }
-    if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
-        dsme_log(LOG_ERR, "ERR, HUP or NVAL on D-Bus dir inotify watch");
-        keep_watching = false;
-    }
 
-    if(!keep_watching) {
-        inotify_id = 0;
-        stop_dbus_watch();
+    keep_watching = true;
+
+    if( update )
+        systembus_state_update();
+
+EXIT:
+    if( !keep_watching ) {
+        systembus_watcher_id = 0;
+        systembus_watcher_stop();
     }
 
     return keep_watching;
 }
 
-static bool set_up_watch_for_dbus(void)
+static bool
+systembus_watcher_start(void)
 {
     GIOChannel *chn =  0;
 
-    if( inotify_id )
+    if( systembus_watcher_id )
         goto cleanup;
 
-    dsme_log(LOG_DEBUG, "setting up a watch for D-Bus System bus socket dir");
+    dsme_log(LOG_DEBUG, ME"SystemBus watch: starting");
 
-    if ((inotify_fd = inotify_init()) == -1) {
-        dsme_log(LOG_ERR, "Error initializing inotify for D-Bus: %m");
-        goto cleanup;
-    }
-    if ((watch_fd = inotify_add_watch(inotify_fd,
-                                      DSME_SYSTEM_BUS_DIR,
-                                      IN_CREATE))
-                  == -1)
-    {
-        dsme_log(LOG_ERR, "Error adding inotify watch for D-Bus: %m");
+    if( (systembus_watcher_fd = inotify_init()) == -1 ) {
+        dsme_log(LOG_ERR, ME"SystemBus watch: inotify init: %m");
         goto cleanup;
     }
 
-    if ((chn = g_io_channel_unix_new(inotify_fd)) == 0) {
-        dsme_log(LOG_ERR, "Error creating channel to watch for D-Bus");
+    uint32_t mask = IN_CREATE | IN_DELETE | IN_MOVED_FROM | IN_MOVED_TO;
+
+    systembus_watcher_wd = inotify_add_watch(systembus_watcher_fd,
+                                             DSME_SYSTEM_BUS_DIR, mask);
+
+    if( systembus_watcher_wd == -1 ) {
+        dsme_log(LOG_ERR, ME"SystemBus watch: add inotify watch: %m");
         goto cleanup;
     }
-    g_io_channel_set_close_on_unref(chn, FALSE);
 
-    inotify_id = g_io_add_watch(chn,
-                                G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
-                                handle_inotify_event,
-                                0);
+    if( !(chn = g_io_channel_unix_new(systembus_watcher_fd)) ) {
+        dsme_log(LOG_ERR, ME"SystemBus watch: creating io channel failed");
+        goto cleanup;
+    }
+
+    systembus_watcher_id = g_io_add_watch(chn,
+                                          G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+                                          systembus_watcher_cb, 0);
+    if( !systembus_watcher_id )
+        dsme_log(LOG_ERR, ME"SystemBus watch: adding io watch failed");
+
 cleanup:
 
-    if( !inotify_id ) {
-        dsme_log(LOG_ERR, "Error adding watch for D-Bus");
-        stop_dbus_watch();
-    }
+    if( !systembus_watcher_id )
+        systembus_watcher_stop();
 
-    return inotify_id != 0;
+    return systembus_watcher_id != 0;
 }
 
-static void stop_dbus_watch(void)
+static void
+systembus_watcher_stop(void)
 {
-    if( inotify_id ) {
-        dsme_log(LOG_DEBUG, "stopping D-Bus System bus dir watching");
-        g_source_remove(inotify_id), inotify_id = 0;
+    if( systembus_watcher_id ) {
+        dsme_log(LOG_DEBUG, ME"SystemBus watch: stopping");
+        g_source_remove(systembus_watcher_id), systembus_watcher_id = 0;
     }
 
-    if (inotify_fd != -1) {
-        if (watch_fd != -1) {
-            inotify_rm_watch(inotify_fd, watch_fd);
-            watch_fd = -1;
+    if( systembus_watcher_fd != -1 ) {
+        if( systembus_watcher_wd != -1 ) {
+            inotify_rm_watch(systembus_watcher_fd, systembus_watcher_wd),
+                systembus_watcher_wd = -1;
         }
-        close(inotify_fd);
-        inotify_fd = -1;
+
+        close(systembus_watcher_fd), systembus_watcher_fd = -1;
     }
 }
 
+/* ------------------------------------------------------------------------- *
+ * module
+ * ------------------------------------------------------------------------- */
+
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
+{
+    dsme_log(LOG_DEBUG, ME"DBUS_CONNECTED");
+    connect_timer_stop();
+}
+
+DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
+{
+    dsme_log(LOG_DEBUG, ME"DBUS_DISCONNECT");
+    connect_timer_stop();
+}
+
+module_fn_info_t message_handlers[] = {
+  DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
+  DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
+  { 0 }
+};
 
 void module_init(module_t* handle)
 {
-    dsme_log(LOG_DEBUG, "dbusautoconnector.so loaded");
+    dsme_log(LOG_DEBUG, ME"loaded");
 
-    /* Allow use of dbus functionality so that we can commence
-     * system bus connection attempts.
-     */
-    dsme_dbus_startup();
-
-    if (dsme_dbus_is_available()) {
-        connect_to_dbus();
-    } else {
-        set_up_watch_for_dbus();
-        if (dsme_dbus_is_available()) {
-            connect_to_dbus();
-            stop_dbus_watch();
-        }
-    }
+    systembus_watcher_start();
+    systembus_state_update();
 }
 
 void module_fini(void)
 {
-    stop_dbus_watch();
+    systembus_watcher_stop();
 
-    if (connect_timer) {
-        dsme_destroy_timer(connect_timer), connect_timer = 0;
-    }
+    connect_timer_stop();
 
-    dsme_log(LOG_DEBUG, "dbusautoconnector.so unloaded");
+    dsme_log(LOG_DEBUG, ME"unloaded");
 }

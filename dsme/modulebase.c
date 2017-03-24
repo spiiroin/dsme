@@ -49,6 +49,7 @@ static const char *msg_type_repr(int type)
     X(CLOSE,                        0x00000001);
     X(DBUS_CONNECT,                 0x00000100);
     X(DBUS_DISCONNECT,              0x00000101);
+    X(DBUS_CONNECTED,               0x00000102);
     X(STATE_CHANGE_IND,             0x00000301);
     X(STATE_QUERY,                  0x00000302);
     X(SAVE_DATA_IND,                0x00000304);
@@ -328,9 +329,11 @@ const module_t* current_module(void)
     return currently_handling_module;
 }
 
-void enter_module(const module_t* module)
+const module_t* enter_module(const module_t* module)
 {
+    const module_t *previous = currently_handling_module;
     currently_handling_module = module;
+    return previous;
 }
 
 void leave_module()

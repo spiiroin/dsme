@@ -8,6 +8,7 @@
    Copyright (C) 2017 Jolla Oy
 
    @author Marko Lemmetty <marko.lemmetty@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -88,7 +89,7 @@ static gchar*      partition_name = NULL;
 // -------------------------------------
 
 // Bind methods when D-Bus is connected.
-static bool        dbus_bound = false;
+static bool        dbus_methods_bound = false;
 // Is plug-in initialized.
 static bool        abootsettings_init = false;
 
@@ -106,8 +107,6 @@ static bool write_device_info_to_disk();
 static bool read_device_info_from_disk();
 static bool decode_device_info(device_info* dev, char* buf);
 static int  encode_device_info(device_info* dev, char* buf);
-
-
 
 /* ========================================================================= *
  * D-Bus Query API
@@ -193,43 +192,60 @@ static void set_locked(const DsmeDbusMessage* request,
     dsme_dbus_message_append_int(*reply, ABOOTSET_RET_OK);
 }
 
-static const char service[]   = "org.sailfishos.abootsettings";
-static const char interface[] = "org.sailfishos.abootsettings";
-static const char path[]      = "/org/sailfishos/abootsettings";
+static const char abootsettings_service[]   = "org.sailfishos.abootsettings";
+static const char abootsettings_interface[] = "org.sailfishos.abootsettings";
+static const char abootsettings_path[]      = "/org/sailfishos/abootsettings";
 
-static const dsme_dbus_binding_t methods[] =
+static const dsme_dbus_binding_t dbus_methods_array[] =
 {
-    { get_locked, "get_locked" },
-    { set_locked, "set_locked" },
-    { 0, 0 }
+    // method calls
+    {
+        .method = get_locked,
+        .name   = "get_locked",
+        .args   =
+            "    <arg direction=\"out\" name=\"state\" type=\"i\"/>\n"
+    },
+    {
+        .method = set_locked,
+        .name   = "set_locked",
+        .args   =
+            "    <arg direction=\"in\" name=\"state\" type=\"i\"/>\n"
+            "    <arg direction=\"out\" name=\"success\" type=\"i\"/>\n"
+    },
+    // sentinel
+    {
+        .name   = 0,
+    }
 };
-
 
 /* ========================================================================= *
  * Internal DSME event handling
  * ========================================================================= */
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DSM_MSGTYPE_DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, PFIX"DSM_MSGTYPE_DBUS_CONNECTED");
 
     // Check that plug-in is initialized.
     if( abootsettings_init )
     {
         dsme_log(LOG_DEBUG, PFIX"bind methods");
-        dsme_dbus_bind_methods(&dbus_bound, methods, service, interface);
+        dsme_dbus_bind_methods(&dbus_methods_bound,
+                               abootsettings_service,
+                               abootsettings_path,
+                               abootsettings_interface,
+                               dbus_methods_array);
     }
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
     dsme_log(LOG_DEBUG, PFIX"DSM_MSGTYPE_DBUS_DISCONNECT");
-    dsme_dbus_unbind_methods(&dbus_bound, methods, service, interface);
 }
 
 module_fn_info_t message_handlers[] =
 {
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };
@@ -287,14 +303,17 @@ void module_fini(void)
 {
     dsme_log(LOG_DEBUG, PFIX"module_fini");
 
-    dsme_dbus_unbind_methods(&dbus_bound, methods, service, interface);
+    dsme_dbus_unbind_methods(&dbus_methods_bound,
+                             abootsettings_service,
+                             abootsettings_path,
+                             abootsettings_interface,
+                             dbus_methods_array);
 
     abootsettings_init = false;
 
     g_free(partition_name);
     partition_name = NULL;
 }
-
 
 /* ========================================================================= *
  * Device info funtions
@@ -702,7 +721,6 @@ static bool write_device_info_to_disk()
     dsme_log(LOG_DEBUG, PFIX"Device info write successful");
     return true;
 }
-
 
 /* ------------------------------------------------------------------------
  * get_unlocked_value

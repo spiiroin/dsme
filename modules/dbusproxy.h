@@ -4,8 +4,10 @@
    DSME internal D-Bus proxy control messages
    <p>
    Copyright (C) 2009-2010 Nokia Corporation.
+   Copyright (C) 2015-2017 Jolla Ltd.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -30,9 +32,11 @@
 enum {
     DSME_MSG_ENUM(DSM_MSGTYPE_DBUS_CONNECT,    0x00000100),
     DSME_MSG_ENUM(DSM_MSGTYPE_DBUS_DISCONNECT, 0x00000101),
+    DSME_MSG_ENUM(DSM_MSGTYPE_DBUS_CONNECTED,  0x00000102),
 };
 
 typedef dsmemsg_generic_t DSM_MSGTYPE_DBUS_CONNECT;
 typedef dsmemsg_generic_t DSM_MSGTYPE_DBUS_DISCONNECT;
+typedef dsmemsg_generic_t DSM_MSGTYPE_DBUS_CONNECTED;
 
 #endif

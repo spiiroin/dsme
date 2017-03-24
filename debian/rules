@@ -67,7 +67,6 @@ install:
 	# debian/tmp.
 	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
 	#mkdir $(CURDIR)/debian/tmp/etc/dsme
-	install -m 440  dsme/lifeguard.uids $(CURDIR)/debian/tmp/etc/dsme/
 	install -m 440  dsme/dsme.conf      $(CURDIR)/debian/tmp/etc/dbus-1/system.d/
 
 	# install tests (if needed)

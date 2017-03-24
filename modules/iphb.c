@@ -3000,10 +3000,10 @@ static void systembus_disconnect(void)
  * ------------------------------------------------------------------------- */
 
 /** Signal binding state, set to true if signal handlers are installed */
-static bool bound = false;
+static bool dbus_signals_bound = false;
 
 /** Array of signal handlers to install when D-Bus connection is available */
-static const dsme_dbus_signal_binding_t signals[] =
+static const dsme_dbus_signal_binding_t dbus_signals_array[] =
 {
     { xtimed_alarm_status_cb,  "com.nokia.time", "next_bootup_event" },
     { xtimed_config_status_cb, "com.nokia.time", "settings_changed" },
@@ -3055,10 +3055,10 @@ DSME_HANDLER(DSM_MSGTYPE_WAIT, conn, msg)
 }
 
 /** Handle connected to system bus */
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_INFO, PFIX"DBUS_CONNECT");
-    dsme_dbus_bind_signals(&bound, signals);
+    dsme_log(LOG_INFO, PFIX"DBUS_CONNECTED");
+    dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
 }
 
@@ -3066,7 +3066,6 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
     dsme_log(LOG_INFO, PFIX"DBUS_DISCONNECT");
-    dsme_dbus_unbind_signals(&bound, signals);
     systembus_disconnect();
 }
 
@@ -3075,7 +3074,7 @@ module_fn_info_t message_handlers[] =
     DSME_HANDLER_BINDING(DSM_MSGTYPE_HEARTBEAT),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_WAIT),
 
-    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
     { 0 }
 };
@@ -3298,7 +3297,7 @@ void module_fini(void)
     clientlist_wakeup_clients_cancel();
 
     /* detach dbus handlers */
-    dsme_dbus_unbind_signals(&bound, signals);
+    dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
 
     /* store alarm queue state to a file*/
     xtimed_status_save();

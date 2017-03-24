@@ -48,18 +48,15 @@ Test cases and xml test description for DSME
 %build
 unset LD_AS_NEEDED
 ./verify_version.sh
-chmod a+x autogen.sh
-./autogen.sh
-chmod a+x configure
-
-%configure --disable-static \
+test -e Makefile || ./autogen.sh
+test -e Makefile || (%configure --disable-static \
     --disable-poweron-timer \
     --disable-upstart \
     --enable-runlevel \
     --enable-systemd \
     --enable-pwrkeymonitor \
     --disable-validatorlistener \
-    --enable-abootsettings
+    --enable-abootsettings)
 
 make %{?_smp_mflags}
 
@@ -67,6 +64,7 @@ make %{?_smp_mflags}
 rm -rf %{buildroot}
 %make_install
 
+install -d %{buildroot}%{_sysconfdir}/dsme/
 install -D -m 644 reboot-via-dsme.sh %{buildroot}/etc/profile.d/reboot-via-dsme.sh
 install -D -m 644 %{SOURCE1} %{buildroot}/lib/systemd/system/%{name}.service
 install -d %{buildroot}/lib/systemd/system/multi-user.target.wants/
@@ -92,7 +90,6 @@ systemctl daemon-reload || :
 %{_libdir}/dsme/*
 %attr(755,root,root)%{_sbindir}/*
 %dir %{_sysconfdir}/dsme/
-%config %{_sysconfdir}/dsme/lifeguard.uids
 %config %{_sysconfdir}/dbus-1/system.d/dsme.conf
 %doc debian/copyright COPYING
 /lib/systemd/system/%{name}.service

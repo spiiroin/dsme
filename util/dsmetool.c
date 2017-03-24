@@ -4,10 +4,13 @@
  * Dsmetool can be used to send commands to DSME.
  * <p>
  * Copyright (C) 2004-2011 Nokia Corporation.
+ * Copyright (C) 2013-2017 Jolla Ltd.
  *
  * @author Ismo Laitinen <ismo.laitinen@nokia.com>
  * @author Semi Malinen <semi.malinen@nokia.com>
  * @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+ * @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
+ * @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
  * @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
  *
  * This file is part of Dsme.
@@ -180,6 +183,7 @@ static const char *dsme_msg_type_repr(int type)
     //internal
     X(DBUS_CONNECT,                 0x00000100);
     X(DBUS_DISCONNECT,              0x00000101);
+    X(DBUS_CONNECTED,               0x00000102);
     X(SHUTDOWN,                     0x00000316);
     X(SET_USB_STATE,                0x00000317);
     X(TELINIT,                      0x00000318);

@@ -235,6 +235,7 @@ static dsme_runlevel_t state2runlevel(dsme_state_t state)
   return runlevel;
 }
 
+#ifndef DSME_SUPPORT_DIRECT_USER_ACTDEAD
 static bool need_to_use_reboot(dsme_state_t target_state)
 {
     static const char output_path[] = "/run/systemd/reboot-param";
@@ -331,6 +332,7 @@ EXIT:
 
     return use_reboot;
 }
+#endif
 
 static dsme_state_t select_state(void)
 {
@@ -1118,17 +1120,17 @@ static void runlevel_switch_ind(const DsmeDbusMessage* ind)
     }
 }
 
-static bool bound = false;
+static bool dbus_signals_bound = false;
 
-static const dsme_dbus_signal_binding_t signals[] = {
+static const dsme_dbus_signal_binding_t dbus_signals_array[] = {
     { runlevel_switch_ind, "com.nokia.startup.signal", "runlevel_switch_done" },
     { 0, 0 }
 };
 
-DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
+DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-  dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECT");
-  dsme_dbus_bind_signals(&bound, signals);
+  dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
+  dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
 #ifdef DSME_VIBRA_FEEDBACK
   dsme_ini_vibrafeedback();
 #endif // DSME_VIBRA_FEEDBACK
@@ -1137,7 +1139,6 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
   dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
-  dsme_dbus_unbind_signals(&bound, signals);
 }
 
 module_fn_info_t message_handlers[] = {
@@ -1152,7 +1153,7 @@ module_fn_info_t message_handlers[] = {
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_THERMAL_STATUS),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_EMERGENCY_CALL_STATE),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_BATTERY_STATE),
-      DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECT),
+      DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
       {0}
 };
@@ -1308,7 +1309,7 @@ static int  get_battery_level(void)
 void module_init(module_t* handle)
 {
   /* Do not connect to D-Bus; it is probably not started yet.
-   * Instead, wait for DSM_MSGTYPE_DBUS_CONNECT.
+   * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
    */
 
   dsme_log(LOG_DEBUG, "state.so started");
@@ -1331,7 +1332,7 @@ void module_init(module_t* handle)
 
 void module_fini(void)
 {
-  dsme_dbus_unbind_signals(&bound, signals);
+  dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
 #ifdef DSME_VIBRA_FEEDBACK
   dsme_fini_vibrafeedback();
 #endif  // DSME_VIBRA_FEEDBACK

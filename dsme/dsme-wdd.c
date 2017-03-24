@@ -191,11 +191,6 @@ void signal_handler(int sig)
     }
 }
 
-#ifdef DSME_LOG_ENABLE
-static int        logging_verbosity = LOG_INFO;
-static log_method logging_method    = LOG_METHOD_SYSLOG;
-#endif
-
 static void parse_options(int   argc,   /* in  */
                           char* argv[], /* in  */
                           int*  daemon) /* out */
