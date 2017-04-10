@@ -89,7 +89,7 @@ static const struct
     { "undefined",                  false, false },
     { "mass_storage",               true,  true  },
     { "data_in_use",                true,  true  },
-    { "mtp_mode",                   true,  true  },
+    { "mtp_mode",                   true,  false },
     { "pc_suite",                   true,  false },
     { "USB connected",              true,  false },
     { "charger_connected",          true,  false },
