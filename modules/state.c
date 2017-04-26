@@ -513,7 +513,6 @@ static void try_to_change_state(dsme_state_t new_state)
 static void change_state(dsme_state_t new_state)
 {
   if (new_state == DSME_STATE_SHUTDOWN ||
-      new_state == DSME_STATE_ACTDEAD  || 
       new_state == DSME_STATE_REBOOT)
   {
       DSM_MSGTYPE_SAVE_DATA_IND save_msg =
