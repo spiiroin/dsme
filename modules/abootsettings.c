@@ -282,14 +282,15 @@ void module_init(module_t* handle)
             }
             else
             {
-                 dsme_log(LOG_ERR, PFIX"Error: get string err (%d): %s",
-                    error->code, error->message);
+                dsme_log(LOG_ERR, PFIX"%s: deviceinfo partition not defined",
+                         ABOOTSET_INI);
             }
         }
         else
         {
-            dsme_log(LOG_ERR, PFIX"INI file not found (%d): %s",
-                error->code, error->message);
+            dsme_log(error->code == G_FILE_ERROR_NOENT ? LOG_DEBUG : LOG_ERR,
+                     PFIX"%s: INI file could not be loaded: %s",
+                     ABOOTSET_INI, error->message);
         }
 
         g_key_file_free(key_file);
