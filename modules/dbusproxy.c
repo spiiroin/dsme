@@ -253,7 +253,6 @@ static void emit_dsme_state_signals(void)
 
     switch( dsme_state ) {
     case DSME_STATE_SHUTDOWN:
-    case DSME_STATE_ACTDEAD:
     case DSME_STATE_REBOOT:
         emit_dsme_dbus_signal(dsme_shutdown_ind);
         break;
