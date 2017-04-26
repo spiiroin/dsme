@@ -1,3 +1,10 @@
+dsme (0.76.2) precise; urgency=low
+
+  * [actdead] Do not indicate shutdown when booting to act dead. Fixes JB#38482
+  * [abootsettings] Do not complain about missing ini-file. Fixes JB#38483
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 26 Apr 2017 17:16:40 +0300
+
 dsme (0.76.1) precise; urgency=low
 
   * [usbtracker] Do not block shutdown due to mtp mode. Fixes JB#38317
