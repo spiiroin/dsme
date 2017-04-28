@@ -1,3 +1,9 @@
+dsme (0.77.0) precise; urgency=low
+
+  * [dsme] Add support for android 6 device info. Fixes JB#38456
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 28 Apr 2017 13:57:38 +0300
+
 dsme (0.76.2) precise; urgency=low
 
   * [actdead] Do not indicate shutdown when booting to act dead. Fixes JB#38482
