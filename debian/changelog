@@ -1,3 +1,9 @@
+dsme (0.76.1.1) precise; urgency=low
+
+  * [dsme] Add support for android 6 device info. Fixes JB#38456
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 28 Apr 2017 14:03:23 +0300
+
 dsme (0.76.1) precise; urgency=low
 
   * [usbtracker] Do not block shutdown due to mtp mode. Fixes JB#38317
