@@ -36,6 +36,7 @@
 
 #include <glib.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -43,6 +44,12 @@
 #include <fcntl.h>
 #include <linux/fs.h>
 
+// To enable debug time logging.
+/*
+#undef dsme_log
+#define dsme_log(level, fmt...) /
+(dsme_log_txt((level)<LOG_WARNING?(level):LOG_WARNING, fmt))
+*/
 #define PFIX                     "abootsettings: "
 // Device info magic string (from aboot)
 #define DEVICE_MAGIC             "ANDROID-BOOT!"
@@ -53,6 +60,8 @@
 #define DEVICE_MAGIC_DATA_SIZE16 16
 // Version (from aboot)
 #define DEVICE_INFO_VERSION_1    1
+#define DEVICE_INFO_VERSION_2    2  // android 6
+#define DEVICE_INFO_VERSION_3    3  // android 6 VBOOT MOTA
 // DBus return value
 #define ABOOTSET_RET_OK          1
 // Block size is 512 bytes, so dev info will fit to 1k buffer
@@ -60,22 +69,30 @@
 // Ini file path
 #define ABOOTSET_INI             "/etc/dsme/abootsettings.ini"
 
+#define MAX_VERSION_LEN          64
+
 // -------------------------------------
 // device info defines and variables etc.
 // -------------------------------------
 typedef struct device_info device_info;
-
+// Support for SFOS aboot device info versions 1, 2 and 3.
 struct device_info
 {
-    unsigned char magic[DEVICE_MAGIC_SIZE];  // 13 bytes
-    int32_t is_unlocked;
-    int32_t is_tampered;
-    int32_t is_verified;
-    int32_t charger_screen_enabled;
-    char display_panel[MAX_PANEL_ID_LEN];    // 64 bytes
+    unsigned char   magic[DEVICE_MAGIC_SIZE]; // 13 bytes
+    int32_t         is_unlocked;
+    int32_t         is_tampered;
+    int32_t         is_verified;
+    int32_t         is_unlock_critical;
+    int32_t         charger_screen_enabled;
+    char            display_panel[MAX_PANEL_ID_LEN];
+    char            bootloader_version[MAX_VERSION_LEN];
+    char            radio_version[MAX_VERSION_LEN];
+    int32_t         verity_mode;       // 1 = enforcing, 0 = logging
+    uint32_t        devinfo_version;   // Androids device info version
 };
 
 static device_info device;
+// SFOS devcie info version for passport.
 static int32_t     device_info_version = 0;
 static int         partition = -1;
 static int         block_size = 0;
@@ -473,48 +490,92 @@ static int encode_device_info(device_info *dev, char* buf)
         return 0;
     }
 
-    /* Check version and copy data to buffer */
-    if( device_info_version == DEVICE_INFO_VERSION_1 )
+    // Check that we support this version and copy data to buffer
+    if( device_info_version == DEVICE_INFO_VERSION_1 ||
+        device_info_version == DEVICE_INFO_VERSION_2 ||
+        device_info_version == DEVICE_INFO_VERSION_3 )
     {
-        /* Copy version number (4 bytes) */
+        // Copy version number (4 bytes)
 
         value = device_info_version;
         memcpy(buf, &value, sizeof value);
         size = sizeof value;
 
-        /* Copy magic (16 bytes) */
+        // Copy magic (16 bytes)
 
         memcpy(buf+size, dev->magic, DEVICE_MAGIC_SIZE);
         size += DEVICE_MAGIC_DATA_SIZE16;
 
-        /* Copy is_unlocked (4 bytes) */
+        // Copy is_unlocked (4 bytes)
 
         value = dev->is_unlocked;
         memcpy(buf+size, &value, sizeof value);
         size += sizeof value;
 
-        /* Copy is_tampered (4 bytes) */
+        // Copy is_tampered (4 bytes)
 
         value = dev->is_tampered;
         memcpy(buf+size, &value, sizeof value);
         size += sizeof value;
 
-        /* Copy is_verified (4 bytes) */
+        if ( device_info_version == DEVICE_INFO_VERSION_2 )
+        {
+            // Copy is_unlock_critical (4 bytes)
 
-        value = dev->is_verified;
-        memcpy(buf+size, &value, sizeof value);
-        size += sizeof value;
+            value = dev->is_unlock_critical;
+            memcpy(buf+size, &value, sizeof value);
+            size += sizeof value;
+        }
+        else
+        {
+            // Copy is_verified (4 bytes)
 
-        /* Copy charger_screen_enabled (4 bytes) */
+            value = dev->is_verified;
+            memcpy(buf+size, &value, sizeof value);
+            size += sizeof value;
+        }
+
+        // Copy charger_screen_enabled (4 bytes)
 
         value = dev->charger_screen_enabled;
         memcpy(buf+size, &value, sizeof value);
         size += sizeof value;
 
-        /* Copy display_panel (64 bytes) */
+        // Copy display_panel (64 bytes)
 
         memcpy(buf+size, dev->display_panel, MAX_PANEL_ID_LEN);
         size += MAX_PANEL_ID_LEN;
+
+        if ( device_info_version == DEVICE_INFO_VERSION_2 ||
+             device_info_version == DEVICE_INFO_VERSION_3 )
+        {
+            // Copy bootloader_version (64 bytes)
+
+            memcpy(buf+size, dev->bootloader_version, MAX_VERSION_LEN);
+            size += MAX_VERSION_LEN;
+
+            // Copy radio_version (64 bytes)
+
+            memcpy(buf+size, dev->radio_version, MAX_VERSION_LEN);
+            size += MAX_VERSION_LEN;
+        }
+
+        if ( device_info_version == DEVICE_INFO_VERSION_2 )
+        {
+            uint32_t u_value = 0;
+
+            // Copy verity_mode (4 bytes)
+
+            value = dev->verity_mode;
+            memcpy(buf+size, &value, sizeof value);
+            size += sizeof value;
+
+            // Copy devinfo_version (4 bytes)
+
+            u_value = dev->devinfo_version;
+            memcpy(buf+size, &u_value, sizeof u_value);
+            size += sizeof u_value;
+        }
     }
     else
     {
@@ -542,7 +603,7 @@ static bool decode_device_info(device_info* dev, char* buf)
 
     dsme_log(LOG_DEBUG, PFIX"decode_device_info");
 
-    /* Copy version number */
+    // Copy version number
 
     memcpy(&value, buf, sizeof value);
     size = sizeof value;
@@ -551,29 +612,31 @@ static bool decode_device_info(device_info* dev, char* buf)
     // Save current device info version
     device_info_version = value;
 
-    // Check version and read data from buffer.
-    if( device_info_version == DEVICE_INFO_VERSION_1 )
+    // Check that we can support this version and read data from buffer.
+    if( device_info_version == DEVICE_INFO_VERSION_1 ||
+        device_info_version == DEVICE_INFO_VERSION_2 ||
+        device_info_version == DEVICE_INFO_VERSION_3 )
     {
-        /* Copy magic. */
-        /* Copy 13 bytes to buffer */
+        // Copy magic.
+        // Copy 13 bytes to buffer
         memcpy( dev->magic, buf+size, DEVICE_MAGIC_SIZE );
-        /* Move index 16 bytes, since data size in disk is 16 bytes */
+        // Move index 16 bytes, since data size in disk is 16 bytes
         size += DEVICE_MAGIC_DATA_SIZE16;
 
-        /* Check that we have magic */
+        // Check that we have magic
         if( memcmp(dev->magic, DEVICE_MAGIC, DEVICE_MAGIC_SIZE) )
         {
             dsme_log(LOG_ERR, PFIX"Device magic not found");
             return false;
         }
 
-        /* Copy is_unlocked */
+        // Copy is_unlocked
 
         memcpy(&value, buf+size, sizeof value);
         size += sizeof value;
 
-        /* Check that value is "bool" e.g. 0 or 1 */
-        /* Note that in aboot bool is integer */
+        // Check that value is "bool" e.g. 0 or 1
+        // Note that in aboot bool is integer
         if( value == 0 || value == 1 )
         {
             dev->is_unlocked = value;
@@ -584,7 +647,7 @@ static bool decode_device_info(device_info* dev, char* buf)
             return false;
         }
 
-        /* Copy is_tampered */
+        // Copy is_tampered
 
         memcpy(&value, buf+size, sizeof value);
         size += sizeof value;
@@ -599,22 +662,42 @@ static bool decode_device_info(device_info* dev, char* buf)
             return false;
         }
 
-        /* Copy is_verified */
-
-        memcpy(&value, buf+size, sizeof value);
-        size += sizeof value;
-
-        if( value == 0 || value == 1 )
+        if ( device_info_version == DEVICE_INFO_VERSION_2 )
         {
-            dev->is_verified = value;
+            // Copy is_unlock_critical (4 bytes)
+
+            memcpy(&value, buf+size, sizeof value);
+            size += sizeof value;
+
+            if( value == 0 || value == 1 )
+            {
+                dev->is_unlock_critical = value;
+            }
+            else
+            {
+                dsme_log(LOG_ERR, PFIX"is_unlock_critical value not in range");
+                return false;
+            }
         }
         else
         {
-            dsme_log(LOG_ERR, PFIX"is_verified value not in range");
-            return false;
+            // Copy is_verified
+
+            memcpy(&value, buf+size, sizeof value);
+            size += sizeof value;
+
+            if( value == 0 || value == 1 )
+            {
+                dev->is_verified = value;
+            }
+            else
+            {
+                dsme_log(LOG_ERR, PFIX"is_verified value not in range");
+                return false;
+            }
         }
 
-        /* Copy charger_screen_enabled */
+        // Copy charger_screen_enabled
 
         memcpy(&value, buf+size, sizeof value);
         size += sizeof value;
@@ -629,9 +712,49 @@ static bool decode_device_info(device_info* dev, char* buf)
             return false;
         }
 
-        /* Copy display_panel (64 bytes) */
+        // Copy display_panel (64 bytes)
 
         memcpy(dev->display_panel, buf+size, MAX_PANEL_ID_LEN );
+        size += MAX_PANEL_ID_LEN;
+
+        if ( device_info_version == DEVICE_INFO_VERSION_2 ||
+             device_info_version == DEVICE_INFO_VERSION_3 )
+        {
+            // Copy bootloader_version (64 bytes)
+
+            memcpy(dev->bootloader_version, buf+size, MAX_VERSION_LEN );
+            size += MAX_VERSION_LEN;
+
+            // Copy radio_version (64 bytes)
+
+            memcpy(dev->radio_version, buf+size, MAX_VERSION_LEN );
+            size += MAX_VERSION_LEN;
+        }
+
+        if ( device_info_version == DEVICE_INFO_VERSION_2 )
+        {
+            uint32_t u_value = 0;
+
+            // Copy verity_mode (4 bytes)
+
+            memcpy(&value, buf+size, sizeof value);
+            size += sizeof value;
+
+            if( value == 0 || value == 1 )
+            {
+                dev->verity_mode = value;
+            }
+            else
+            {
+                dsme_log(LOG_ERR, PFIX"verity_mode value not in range");
+                return false;
+            }
+
+            // Copy devinfo_version (4 bytes)
+
+            memcpy(&u_value, buf+size, sizeof u_value);
+            dev->devinfo_version = u_value;
+        }
 
         return true;
     }
