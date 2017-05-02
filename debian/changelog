@@ -1,3 +1,9 @@
+dsme (0.77.1) precise; urgency=low
+
+  * [iphb] Reduce journal spam during bootup. Fixes JB#38527
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 02 May 2017 18:41:51 +0300
+
 dsme (0.77.0) precise; urgency=low
 
   * [dsme] Add support for android 6 device info. Fixes JB#38456
