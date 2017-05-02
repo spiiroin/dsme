@@ -496,7 +496,7 @@ static void xmce_set_runstate(bool running)
 {
     if( mce_is_running != running ) {
 	mce_is_running = running;
-	dsme_log(LOG_NOTICE, PFIX"mce state -> %s",
+	dsme_log(LOG_INFO, PFIX"mce state -> %s",
 		 running ? "running" : "terminated");
     }
 }
@@ -979,7 +979,7 @@ static time_t deltatime_get(void)
 
     deltatime_cached = strtol(tmp, 0, 0);
 
-    dsme_log(LOG_WARNING, PFIX"rtc delta is %ld", (long)deltatime_cached);
+    dsme_log(LOG_INFO, PFIX"rtc delta is %ld", (long)deltatime_cached);
 
 cleanup:
 
@@ -1204,7 +1204,10 @@ static bool rtc_set_time_raw(struct rtc_time *tod)
 	goto cleanup;
 
     if( ioctl(rtc_fd, RTC_SET_TIME, tod) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"%s: %s: %m", rtc_path, "RTC_SET_TIME");
+	/* In many devices the rtc time of day can't be changed
+	 * and a failure to do just activates the "deltatime"
+	 * workaround -> do not complain in default verbosity. */
+	dsme_log(LOG_INFO, PFIX"%s: %s: %m", rtc_path, "RTC_SET_TIME");
 	goto cleanup;
     }
 
@@ -1492,7 +1495,7 @@ static bool rtc_handle_input(void)
 	struct timeval tv;
 
 	if( deltatime_is_needed )
-	    dsme_log(LOG_WARNING, PFIX"rtc not writable; not using it as system time source");
+	    dsme_log(LOG_INFO, PFIX"rtc not writable; not using it as system time source");
 	else if( !rtc_get_time_tv(&tv) )
 	    dsme_log(LOG_WARNING, PFIX"failed to read rtc time");
 	else if( settimeofday(&tv, 0) == -1 )
@@ -3158,9 +3161,9 @@ static void systemtime_init(void)
     time_t t_min = mintime_fetch();
     time_t t_rtc = rtc_get_time_tm(&tm);
 
-    dsme_log(LOG_NOTICE, PFIX"min at %s", t_repr(t_min, tmp, sizeof tmp));
-    dsme_log(LOG_NOTICE, PFIX"rtc at %s", t_repr(t_rtc, tmp, sizeof tmp));
-    dsme_log(LOG_NOTICE, PFIX"sys at %s", t_repr(t_sys, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX"min at %s", t_repr(t_min, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX"rtc at %s", t_repr(t_rtc, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX"sys at %s", t_repr(t_sys, tmp, sizeof tmp));
 
     /* Take possible cached sys-time vs rtc-time delta into account */
 
@@ -3169,7 +3172,7 @@ static void systemtime_init(void)
     if( delta != 0 ) {
 	/* If we have cached delta time; before accepting it
 	 * check if RTC_SET_TIME actually fails */
-        dsme_log(LOG_WARNING, PFIX"rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
+        dsme_log(LOG_INFO, PFIX"rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
         if( !rtc_set_time_t(t_rtc) )
             deltatime_is_needed = true;
 	else
@@ -3185,7 +3188,7 @@ static void systemtime_init(void)
 
     if( t_rtc < t_min ) {
         t_rtc = t_min;
-        dsme_log(LOG_WARNING, PFIX"rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
+        dsme_log(LOG_INFO, PFIX"rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
         if( !rtc_set_time_t(t_rtc) )
             deltatime_is_needed = true;
     }
@@ -3194,7 +3197,7 @@ static void systemtime_init(void)
      * it is ahead of the system time */
 
     if( delta == 0 || t_sys < t_rtc ) {
-        dsme_log(LOG_WARNING, PFIX"sys to %s", t_repr(t_rtc, tmp, sizeof tmp));
+        dsme_log(LOG_INFO, PFIX"sys to %s", t_repr(t_rtc, tmp, sizeof tmp));
         struct timeval tv = { .tv_sec = t_rtc, .tv_usec = 0 };
         if( settimeofday(&tv, 0) == -1 )
             dsme_log(LOG_WARNING, PFIX"failed to set system time");
@@ -3264,7 +3267,7 @@ void module_init(module_t *handle)
      * from dsme too if they are available. */
     if( linux_alarm_init() ) {
 	/* We should get timerfd wakeup even if the device is suspended. */
-        dsme_log(LOG_NOTICE, PFIX"using timerfd alarm to resume");
+        dsme_log(LOG_INFO, PFIX"using timerfd alarm to resume");
     }
     else if( android_alarm_init() ) {
 	/* On suspend the next to occur alarm device wakeup is programmed
