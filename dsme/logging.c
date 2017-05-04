@@ -197,21 +197,6 @@ static void log_to_sti(int prio, const char* message)
     }
 }
 
-
-/*
- * This routine is used when stdout logging method is set
- */
-static void log_to_stdout(int prio, const char* message)
-{
-    if (logopt.verbosity >= prio) {
-        if (prio >= 0) {
-            fprintf(stdout, "%s %s: ", logopt.prefix, log_prio_str(prio));
-        }
-        fprintf(stdout, "%s\n", message);
-    }
-}
-
-
 /*
  * This routine is used when stderr logging method is set
  */
@@ -405,9 +390,6 @@ out:
                         "STI init failed, will fall back to stderr method\n");
                 dsme_log_routine = log_to_stderr;
             }
-        case LOG_METHOD_STDOUT:
-            dsme_log_routine = log_to_stdout;
-            break;
 
         case LOG_METHOD_STDERR:
             dsme_log_routine = log_to_stderr;
@@ -486,9 +468,6 @@ void dsme_log_close(void)
     }
 
     switch (logopt.method) {
-        case LOG_METHOD_STDOUT:
-            fflush(stdout);
-            break;
         case LOG_METHOD_STDERR:
             fflush(stderr);
             break;

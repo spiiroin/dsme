@@ -220,7 +220,7 @@ static void reset_alarm_queue(void)
 
 static void initialize(void)
 {
-  if (!dsme_log_open(LOG_METHOD_STDOUT, 7, false, "    ", 0, 0, "")) {
+  if (!dsme_log_open(LOG_METHOD_STDERR, 7, false, "    ", 0, 0, "")) {
       fatal("dsme_log_open() failed");
   }
 

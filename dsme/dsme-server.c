@@ -78,7 +78,7 @@ static void usage(const char *  progname)
          progname);
   fprintf(stderr, "Valid options:\n");
   fprintf(stderr, " -l  --logging     "
-                    "Logging type (syslog, sti, stderr, stdout, none)\n");
+                    "Logging type (syslog, sti, stderr, none)\n");
   fprintf(stderr, " -v  --verbosity   Log verbosity (3..7)\n");
 #ifdef DSME_SYSTEMD_ENABLE
   fprintf(stderr, " -s  --systemd     "
