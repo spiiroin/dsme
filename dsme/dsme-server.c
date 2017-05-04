@@ -122,10 +122,10 @@ static void parse_options(int      argc,           /* in  */
                           char*    argv[],         /* in  */
                           GSList** module_names)   /* out */
 {
-  int          next_option;
-  const char*  program_name  = argv[0];
-  const char*  short_options = "dhsp:l:v:";
-  const struct option long_options[] = {
+    const char*  program_name  = argv[0];
+    const char*  short_options = "dhsp:l:v:";
+    const struct option long_options[] =
+    {
         { "startup-module", 1, NULL, 'p' },
         { "help",           0, NULL, 'h' },
         { "verbosity",      1, NULL, 'v' },
@@ -135,73 +135,71 @@ static void parse_options(int      argc,           /* in  */
         { "logging",        1, NULL, 'l' },
         { "valgrind",       0, NULL, 901  },
         { 0, 0, 0, 0 }
-  };
+    };
 
-  while ((next_option =
-          getopt_long(argc, argv, short_options, long_options,0)) != -1)
-    {
-      switch (next_option) {
+    for( ;; ) {
+        int opt = getopt_long(argc, argv, short_options, long_options, 0);
+
+        if( opt == -1 )
+            break;
+
+        switch( opt ) {
         case 901:
-          fprintf(stderr, ME"enabling valgrind mode");
-          valgrind_mode_enabled = true;
-          break;
+            fprintf(stderr, ME"enabling valgrind mode");
+            valgrind_mode_enabled = true;
+            break;
 
         case 'p': /* -p or --startup-module, allow only once */
-        {
-          if (module_names) {
-            *module_names = g_slist_append(*module_names, optarg);
-          }
-        }
-          break;
+            if (module_names)
+                *module_names = g_slist_append(*module_names, optarg);
+            break;
 
         case 'l': /* -l or --logging */
-        {
-          const char *log_method_name[] = {
-              "none",   /* LOG_METHOD_NONE */
-              "sti",    /* LOG_METHOD_STI */
-              "stdout", /* LOG_METHOD_STDOUT */
-              "stderr", /* LOG_METHOD_STDERR */
-              "syslog", /* LOG_METHOD_SYSLOG */
-              "file"    /* LOG_METHOD_FILE */
-          };
-          int i;
+            {
+                const char *log_method_name[] = {
+                    "none",   /* LOG_METHOD_NONE */
+                    "stderr", /* LOG_METHOD_STDERR */
+                    "syslog", /* LOG_METHOD_SYSLOG */
+                    "file"    /* LOG_METHOD_FILE */
+                };
+                int i;
 
-          for (i = 0; i < ArraySize(log_method_name); i++) {
-              if (!strcmp(optarg, log_method_name[i])) {
-                  logging_method = (log_method)i;
-                  break;
-              }
-          }
-          if (i == ArraySize(log_method_name))
-              fprintf(stderr,
-                      ME "Ignoring invalid logging method %s\n",
-                      optarg);
-        }
-          break;
+                for (i = 0; i < ArraySize(log_method_name); i++) {
+                    if (!strcmp(optarg, log_method_name[i])) {
+                        logging_method = (log_method)i;
+                        break;
+                    }
+                }
+                if (i == ArraySize(log_method_name))
+                    fprintf(stderr,
+                            ME "Ignoring invalid logging method %s\n",
+                            optarg);
+            }
+            break;
+
         case 'v': /* -v or --verbosity */
-          if (strlen(optarg) == 1 && isdigit(optarg[0]))
-              logging_verbosity = atoi(optarg);
-          break;
+            if (strlen(optarg) == 1 && isdigit(optarg[0]))
+                logging_verbosity = atoi(optarg);
+            break;
 #ifdef DSME_SYSTEMD_ENABLE
         case 's': /* -s or --systemd */
-          signal_systemd = 1;
-          break;
+            signal_systemd = 1;
+            break;
 #endif
         case 'h': /* -h or --help */
-          usage(program_name);
-          exit(EXIT_SUCCESS);
+            usage(program_name);
+            exit(EXIT_SUCCESS);
 
         case '?': /* Unrecognized option */
-          usage(program_name);
-          exit(EXIT_FAILURE);
-      }
+            exit(EXIT_FAILURE);
+        }
     }
 
-  /* check if unknown parameters were given */
-  if (optind < argc) {
-      usage(program_name);
-      exit(EXIT_FAILURE);
-  }
+    /* check if unknown parameters were given */
+    if (optind < argc) {
+        usage(program_name);
+        exit(EXIT_FAILURE);
+    }
 }
 
 static bool receive_and_queue_message(dsmesock_connection_t* conn)

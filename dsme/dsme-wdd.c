@@ -103,13 +103,16 @@ void dsme_log_txt(int level, const char *fmt, ...)
 */
 static void usage(const char *  progname)
 {
-    printf("USAGE: %s [-d] options\n",
+    printf("USAGE: %s [dsme wdd options] -- [dsme server options]\n",
            progname);
-    printf("Valid options:\n");
+    printf("\n");
+    printf("Valid dsme wdd options are:\n");
     printf(" -d  --daemon      "
-             "Detach from terminal and run in background\n");
+           "Detach from terminal and run in background\n");
     printf(" -h  --help        Help\n");
-    printf("All other options are passed to %s\n", DSME_SERVER_PATH);
+    printf("\n");
+    printf("Extra options are passed to %s running as a child process.\n",
+           DSME_SERVER_PATH);
 }
 
 /**
@@ -217,37 +220,37 @@ static void parse_options(int   argc,   /* in  */
                           char* argv[], /* in  */
                           int*  daemon) /* out */
 {
-    int          next_option;
     const char*  program_name  = argv[0];
-    const char*  short_options = "dhsp:l:v:";
-    const struct option long_options[] = {
+    const char*  short_options = "dh";
+    const struct option long_options[] =
+    {
         { "help",           0, NULL, 'h' },
-        { "verbosity",      1, NULL, 'v' },
-#ifdef DSME_SYSTEMD_ENABLE
-        { "systemd",        0, NULL, 's' },
-#endif
-        { "logging",        1, NULL, 'l' },
         { "daemon",         0, NULL, 'd' },
         { 0, 0, 0, 0 }
     };
 
     if (daemon) { *daemon = 0; }
 
-    while ((next_option =
-            getopt_long(argc, argv, short_options, long_options,0)) != -1)
-    {
-        switch (next_option) {
+    for( ;; ) {
+        int opt = getopt_long(argc, argv, short_options, long_options, 0);
+        if( opt == -1 )
+            break;
 
-            case 'd': /* -d or --daemon */
-                if (daemon) *daemon = 1;
-                break;
-            case 'h': /* -h or --help */
-                usage(program_name);
-                break;
+        switch( opt ) {
+        case 'd': /* -d or --daemon */
+            if (daemon) *daemon = 1;
+            break;
 
-            case '?': /* Unreckgnized option */
-                usage(program_name);
-                break;
+        case 'h': /* -h or --help */
+            usage(program_name);
+            exit(EXIT_SUCCESS);
+
+        case '?': /* Unreckgnized option */
+            exit(EXIT_FAILURE);
+
+        default:
+            usage(program_name);
+            exit(EXIT_FAILURE);
         }
     }
 }
@@ -655,11 +658,12 @@ int main(int argc, char *argv[])
 
         // exec dsme server core
         char* newargv[argc+1];
-        newargv[0] = (char*)DSME_SERVER_PATH;
-        for (int i = 1; i < argc; ++i) {
-            newargv[i] = argv[i];
+        int newargc = 0;
+        newargv[newargc++] = (char*)DSME_SERVER_PATH;
+        for (int i = optind; i < argc; ++i) {
+            newargv[newargc++] = argv[i];
         }
-        newargv[argc] = 0;
+        newargv[newargc] = 0;
         execv(DSME_SERVER_PATH, newargv);
         fprintf(stderr,
                 ME "execv failed: %s: %s\n",
