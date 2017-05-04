@@ -80,6 +80,8 @@ static void usage(const char *  progname)
   fprintf(stderr, " -l  --logging     "
                     "Logging type (syslog, stderr, none)\n");
   fprintf(stderr, " -v  --verbosity   Log verbosity (3..7)\n");
+  fprintf(stderr, " -t  --log-include   <file-pattern>:<func-pattern>\n");
+  fprintf(stderr, " -e  --log-exclude   <file-pattern>:<func-pattern>\n");
 #ifdef DSME_SYSTEMD_ENABLE
   fprintf(stderr, " -s  --systemd     "
                     "Signal systemd when initialization is done\n");
@@ -123,7 +125,7 @@ static void parse_options(int      argc,           /* in  */
                           GSList** module_names)   /* out */
 {
     const char*  program_name  = argv[0];
-    const char*  short_options = "dhsp:l:v:";
+    const char*  short_options = "dhsp:l:v:i:e:";
     const struct option long_options[] =
     {
         { "startup-module", 1, NULL, 'p' },
@@ -133,6 +135,8 @@ static void parse_options(int      argc,           /* in  */
         { "systemd",        0, NULL, 's' },
 #endif
         { "logging",        1, NULL, 'l' },
+        { "log-include",    1, NULL, 'i' },
+        { "log-exclude",    1, NULL, 'e' },
         { "valgrind",       0, NULL, 901  },
         { 0, 0, 0, 0 }
     };
@@ -180,6 +184,14 @@ static void parse_options(int      argc,           /* in  */
         case 'v': /* -v or --verbosity */
             if (strlen(optarg) == 1 && isdigit(optarg[0]))
                 logging_verbosity = atoi(optarg);
+            break;
+
+        case 'i': /* -i or --log-include */
+            dsme_log_include(optarg);
+            break;
+
+        case 'e': /* -e or --log-exclude */
+            dsme_log_exclude(optarg);
             break;
 #ifdef DSME_SYSTEMD_ENABLE
         case 's': /* -s or --systemd */

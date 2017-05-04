@@ -78,15 +78,28 @@ static volatile bool run = true;
 
 static volatile bool dsme_abnormal_exit = false;
 
-/** dsme-wdd version of dsme_log_txt()
+/** dsme-wdd version of dsme_log_p_()
+ */
+bool dsme_log_p_(int prio, const char *file, const char *func)
+{
+    (void)file;
+    (void)func;
+
+    return prio <= LOG_WARNING;
+}
+
+/** dsme-wdd version of dsme_log_queue()
  *
  * Always logs to stderr.
  *
  * No debug logging allowed.
  */
-void dsme_log_txt(int level, const char *fmt, ...)
+void dsme_log_queue(int prio, const char *file, const char *func, const char *fmt, ...)
 {
-    if( level <= LOG_WARNING ) {
+    (void)file;
+    (void)func;
+
+    if( prio <= LOG_WARNING ) {
         char txt[128];
         va_list va;
 
