@@ -212,6 +212,9 @@ PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1)
 if test "x$enable_vibra_feedback" != xno; then
 PKG_CHECK_MODULES(LIBNGF, libngf0 >= 0.24)
 fi
+if test "x$enable_systemd" != xno; then
+PKG_CHECK_MODULES(LIBSYSTEMD, libsystemd)
+fi
 
 # Check libs (that are not yet checked)
 # Whitespaces in 'action-if-found' fields in order to not (auto)update LIBS variable

@@ -219,7 +219,7 @@ PKG_NAMES += dsme_dbus_if
 PKG_NAMES += thermalmanager_dbus_if
 PKG_NAMES += libiphb
 PKG_NAMES += systemd
-PKG_NAMES += libsystemd-daemon
+PKG_NAMES += libsystemd
 PKG_NAMES += libngf0
 
 maintenance  = normalize clean distclean mostlyclean

@@ -30,11 +30,9 @@ dsme_SOURCES = dsme-wdd.c \
 
 
 dsme_CFLAGS = -g -std=c99 -Wall -Wwrite-strings -Wmissing-prototypes -Werror \
-              $(C_OPTFLAGS)
+              $(C_OPTFLAGS) $(LIBSYSTEMD_CFLAGS)
 dsme_LDFLAGS = -Wl,--as-needed
-if WANT_SYSTEMD
-dsme_LDADD   = -L/lib -lsystemd-daemon
-endif
+dsme_LDADD = $(LIBSYSTEMD_LIBS)
 
 #
 # dsme-server
