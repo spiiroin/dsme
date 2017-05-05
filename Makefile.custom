@@ -1,3 +1,4 @@
+# ----------------------------------------------------------- -*- mode: sh -*-
 # Package version
 VERSION   := 0.77.1
 
@@ -135,9 +136,6 @@ CPPFLAGS += -D_GNU_SOURCE
 CPPFLAGS += -D_FILE_OFFSET_BITS=64
 CPPFLAGS += -D_FORTIFY_SOURCE=2
 
-# Enable core feature: logging
-CPPFLAGS += -DDSME_LOG_ENABLE
-
 # Configuration: can do USER <-> ACTDEAD without reboot
 #CPPFLAGS += -DDSME_SUPPORT_DIRECT_USER_ACTDEAD
 
@@ -249,8 +247,6 @@ dsme-OBJS += dsme/dsme-wdd-wd.o
 dsme-OBJS += dsme/dsme-wdd.o
 #dsme-OBJS += dsme/logging.o
 dsme-OBJS += dsme/oom.o
-
-dsme/dsme : CPPFLAGS += -UDSME_LOG_ENABLE
 
 dsme/dsme : $(dsme-OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)

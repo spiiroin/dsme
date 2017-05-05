@@ -77,11 +77,9 @@ static void usage(const char *  progname)
                     "[-p <optional-module>] [...] options\n",
          progname);
   fprintf(stderr, "Valid options:\n");
-#ifdef DSME_LOG_ENABLE
   fprintf(stderr, " -l  --logging     "
                     "Logging type (syslog, sti, stderr, stdout, none)\n");
   fprintf(stderr, " -v  --verbosity   Log verbosity (3..7)\n");
-#endif
 #ifdef DSME_SYSTEMD_ENABLE
   fprintf(stderr, " -s  --systemd     "
                     "Signal systemd when initialization is done\n");
@@ -106,10 +104,9 @@ static void signal_handler(int sig)
   }
 }
 
-#ifdef DSME_LOG_ENABLE
 static int        logging_verbosity = LOG_NOTICE;
 static log_method logging_method    = LOG_METHOD_SYSLOG;
-#endif
+
 #ifdef DSME_SYSTEMD_ENABLE
 static int signal_systemd = 0;
 #endif
@@ -135,9 +132,7 @@ static void parse_options(int      argc,           /* in  */
 #ifdef DSME_SYSTEMD_ENABLE
         { "systemd",        0, NULL, 's' },
 #endif
-#ifdef DSME_LOG_ENABLE  
         { "logging",        1, NULL, 'l' },
-#endif
         { "valgrind",       0, NULL, 901  },
         { 0, 0, 0, 0 }
   };
@@ -159,7 +154,6 @@ static void parse_options(int      argc,           /* in  */
         }
           break;
 
-#ifdef DSME_LOG_ENABLE  
         case 'l': /* -l or --logging */
         {
           const char *log_method_name[] = {
@@ -188,12 +182,6 @@ static void parse_options(int      argc,           /* in  */
           if (strlen(optarg) == 1 && isdigit(optarg[0]))
               logging_verbosity = atoi(optarg);
           break;
-#else
-        case 'l':
-        case 'v':
-          fprintf(stderr, ME "Logging not compiled in\n");
-          break;
-#endif  
 #ifdef DSME_SYSTEMD_ENABLE
         case 's': /* -s or --systemd */
           signal_systemd = 1;
@@ -283,7 +271,6 @@ int main(int argc, char *argv[])
       return EXIT_FAILURE;
   }
 
-#ifdef DSME_LOG_ENABLE
   dsme_log_open(logging_method,
                 logging_verbosity,
                 0,
@@ -291,14 +278,11 @@ int main(int argc, char *argv[])
                 0,
                 0,
                 "/var/log/dsme.log");
-#endif
 
   /* load modules */
   if (!modulebase_init(module_names)) {
       g_slist_free(module_names);
-#ifdef DSME_LOG_ENABLE
       dsme_log_close();
-#endif
       return EXIT_FAILURE;
   }
   g_slist_free(module_names);
@@ -306,9 +290,7 @@ int main(int argc, char *argv[])
   /* init socket communication */
   if (dsmesock_listen(receive_and_queue_message) == -1) {
       dsme_log(LOG_CRIT, "Error creating DSM socket: %s", strerror(errno));
-#ifdef DSME_LOG_ENABLE  
       dsme_log_close();
-#endif
       return EXIT_FAILURE;
   }
 
@@ -335,9 +317,7 @@ int main(int argc, char *argv[])
 
   modulebase_shutdown();
 
-#ifdef DSME_LOG_ENABLE
   dsme_log_close();
-#endif
 
   return dsme_main_loop_exit_code();
 }

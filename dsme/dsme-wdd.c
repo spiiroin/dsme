@@ -35,9 +35,11 @@
 #include "dsme-wdd.h"
 #include "dsme-wdd-wd.h"
 #include "../include/dsme/oom.h"
+#include "../include/dsme/logging.h"
 
 #include <unistd.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -75,6 +77,26 @@ static void mainloop(unsigned sleep_interval,
 static volatile bool run = true;
 
 static volatile bool dsme_abnormal_exit = false;
+
+/** dsme-wdd version of dsme_log_txt()
+ *
+ * Always logs to stderr.
+ *
+ * No debug logging allowed.
+ */
+void dsme_log_txt(int level, const char *fmt, ...)
+{
+    if( level <= LOG_WARNING ) {
+        char txt[128];
+        va_list va;
+
+        va_start(va, fmt);
+        vsnprintf(txt, sizeof txt, fmt, va);
+        va_end(va);
+
+        fprintf(stderr, ME"%s\n", txt);
+    }
+}
 
 /**
    Usage
@@ -204,9 +226,7 @@ static void parse_options(int   argc,   /* in  */
 #ifdef DSME_SYSTEMD_ENABLE
         { "systemd",        0, NULL, 's' },
 #endif
-#ifdef DSME_LOG_ENABLE  
         { "logging",        1, NULL, 'l' },
-#endif
         { "daemon",         0, NULL, 'd' },
         { 0, 0, 0, 0 }
     };

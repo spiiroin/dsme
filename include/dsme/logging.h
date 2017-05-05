@@ -4,8 +4,14 @@
    Prototypes for logging functions.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2015-2017 Jolla Ltd.
 
    @author Tuukka Tikkanen
+   @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Antti Virtanen <antti.i.virtanen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -63,18 +69,12 @@ typedef enum {
 */
 
 /* Function prototypes */
-#ifdef DSME_LOG_ENABLE
-/* Function prototypes */
 void dsme_log_txt(int level, const char *fmt, ...)
     __attribute__((format(printf,2,3)));
 void dsme_log_raw(int level, const char *fmt, ...) __attribute__((format(printf,2,3)));
 
 /* Macros */
 #define dsme_log(level, fmt...) dsme_log_txt(level, fmt)
-#else
-#define dsme_log(level, fmt...)
-#endif
-
 
 typedef struct {
     DSMEMSG_PRIVATE_FIELDS

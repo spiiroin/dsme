@@ -4,9 +4,14 @@
    Implements DSME logging functionality.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Yuri Zaporogets
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Antti Virtanen <antti.i.virtanen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -39,9 +44,6 @@
 
 #include <pthread.h>
 #include <semaphore.h>
-
-/* Logging is only enabled if this is defined */
-#ifdef DSME_LOG_ENABLE
 
 /* STI channel number for dsme traces */
 #define DSME_STI_CHANNEL 44
@@ -557,5 +559,3 @@ EXIT:
 
     return str ?: strdup("error");
 }
-
-#endif /* DSME_LOG_ENABLE */
