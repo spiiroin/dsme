@@ -110,6 +110,12 @@ static void        log_entry_vformat          (log_entry_t *self, int prio, cons
 static void        log_entry_format           (log_entry_t *self, int prio, const char *file, const char *func, const char *fmt, ...) __attribute__((format(printf,5,6)));;
 
 /* ------------------------------------------------------------------------- *
+ * log_state_t
+ * ------------------------------------------------------------------------- */
+
+static const char *log_state_repr             (log_state_t state);
+
+/* ------------------------------------------------------------------------- *
  * Logging Priorities
  * ------------------------------------------------------------------------- */
 
@@ -137,7 +143,7 @@ static void        log_rule_delete_cb         (gpointer self);
  * Logging Control
  * ------------------------------------------------------------------------- */
 
-static void        dsme_log_clear_rules       (void);
+void               dsme_log_clear_rules       (void);
 static void        dsme_log_add_rule          (const char *pattern, log_state_t state);
 void               dsme_log_include           (const char *pattern);
 void               dsme_log_exclude           (const char *pattern);
@@ -236,6 +242,26 @@ log_entry_format(log_entry_t *self, int prio, const char *file,
     va_start(va, fmt);
     log_entry_vformat(self, prio, file, func, fmt, va);
     va_end(va);
+}
+
+/* ========================================================================= *
+ * log_state_t
+ * ========================================================================= */
+
+static const char *
+log_state_repr(log_state_t state)
+{
+    const char *repr = "LOG_STATE_INVALID";
+
+    switch( state ) {
+    case LOG_STATE_UNKNOWN:  repr = "LOG_STATE_UNKNOWN";  break;
+    case LOG_STATE_INCLUDED: repr = "LOG_STATE_INCLUDED"; break;
+    case LOG_STATE_EXCLUDED: repr = "LOG_STATE_EXCLUDED"; break;
+    case LOG_STATE_DEFAULT:  repr = "LOG_STATE_DEFAULT";  break;
+    default: break;
+    }
+
+    return repr;
 }
 
 /* ========================================================================= *
@@ -494,9 +520,11 @@ static GHashTable *dsme_log_rule_cache = 0;
 
 /** Remove all include/exclude rules
  */
-static void
+void
 dsme_log_clear_rules(void)
 {
+    dsme_log_queue(LOG_DEBUG, __FILE__, __FUNCTION__, "log rules cleared");
+
     if( dsme_log_rule_list ) {
         g_slist_free_full(dsme_log_rule_list, log_rule_delete_cb),
             dsme_log_rule_list = 0;
@@ -516,6 +544,9 @@ dsme_log_clear_rules(void)
 static void
 dsme_log_add_rule(const char *pattern, log_state_t state)
 {
+    dsme_log_queue(LOG_DEBUG, __FILE__, __FUNCTION__, "log rule '%s' -> %s",
+                   pattern, log_state_repr(state));
+
     if( dsme_log_rule_cache )
         g_hash_table_remove_all(dsme_log_rule_cache);
     else
@@ -538,7 +569,8 @@ dsme_log_add_rule(const char *pattern, log_state_t state)
 void
 dsme_log_include(const char *pattern)
 {
-    dsme_log_add_rule(pattern, LOG_STATE_INCLUDED);
+    if( pattern )
+        dsme_log_add_rule(pattern, LOG_STATE_INCLUDED);
 }
 
 /** Add Exclude rule
@@ -548,7 +580,8 @@ dsme_log_include(const char *pattern)
 void
 dsme_log_exclude(const char *pattern)
 {
-    dsme_log_add_rule(pattern, LOG_STATE_EXCLUDED);
+    if( pattern )
+        dsme_log_add_rule(pattern, LOG_STATE_EXCLUDED);
 }
 
 /** Evaluate if file/function is included to/excluded from logging
@@ -579,6 +612,7 @@ dsme_log_evaluate(const char *file, const char *func)
 
         if( fnmatch(rule->pattern, key, 0) != 0 )
             continue;
+
         hit = GINT_TO_POINTER(rule->state);
         break;
     }
@@ -595,8 +629,14 @@ EXIT:
 void
 dsme_log_set_verbosity(int verbosity)
 {
-    dsme_log(LOG_DEBUG, "setting logging verbosity to %d", verbosity);
-    logopt.verbosity = verbosity;
+    verbosity = log_prio_cap(verbosity);
+
+    if( logopt.verbosity != verbosity ) {
+        dsme_log_queue(LOG_DEBUG, __FILE__, __FUNCTION__, "verbosity: %s -> %s",
+                       log_prio_str(logopt.verbosity),
+                       log_prio_str(verbosity));
+        logopt.verbosity = verbosity;
+    }
 }
 
 /** Log level testing predicate

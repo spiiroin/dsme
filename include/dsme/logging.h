@@ -53,9 +53,16 @@ typedef struct
     int verbosity;
 } DSM_MSGTYPE_SET_LOGGING_VERBOSITY;
 
+typedef dsmemsg_generic_t DSM_MSGTYPE_ADD_LOGGING_INCLUDE;
+typedef dsmemsg_generic_t DSM_MSGTYPE_ADD_LOGGING_EXCLUDE;
+typedef dsmemsg_generic_t DSM_MSGTYPE_USE_LOGGING_DEFAULTS;
+
 enum
 {
     DSME_MSG_ENUM(DSM_MSGTYPE_SET_LOGGING_VERBOSITY, 0x00001103),
+    DSME_MSG_ENUM(DSM_MSGTYPE_ADD_LOGGING_INCLUDE,   0x00001104),
+    DSME_MSG_ENUM(DSM_MSGTYPE_ADD_LOGGING_EXCLUDE,   0x00001105),
+    DSME_MSG_ENUM(DSM_MSGTYPE_USE_LOGGING_DEFAULTS,  0x00001106),
 };
 
 /* Logging functionality */
@@ -67,6 +74,7 @@ void dsme_log_close(void);
 void dsme_log_set_verbosity(int verbosity);
 void dsme_log_include(const char *pat);
 void dsme_log_exclude(const char *pat);
+void dsme_log_clear_rules(void);
 bool dsme_log_p_ (int level, const char *file, const char *func);
 void dsme_log_queue(int level, const char *file, const char *func, const char *fmt, ...) __attribute__((format(printf,4,5)));
 

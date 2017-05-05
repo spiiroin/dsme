@@ -216,24 +216,39 @@ static void parse_options(int      argc,           /* in  */
 
 static bool receive_and_queue_message(dsmesock_connection_t* conn)
 {
-  bool                               keep_connection = true;
-  DSM_MSGTYPE_SET_LOGGING_VERBOSITY* logging;
+    bool keep_connection = true;
+    dsmemsg_generic_t *msg = 0;
 
-  dsmemsg_generic_t* msg;
-  msg = (dsmemsg_generic_t*)dsmesock_receive(conn);
-  if (msg) {
-      broadcast_internally_from_socket(msg, conn);
-      if (DSMEMSG_CAST(DSM_MSGTYPE_CLOSE, msg)) {
+    DSM_MSGTYPE_SET_LOGGING_VERBOSITY *logverb;
+
+    if( !(msg = dsmesock_receive(conn)) )
+        goto EXIT;
+
+    broadcast_internally_from_socket(msg, conn);
+
+    if( DSMEMSG_CAST(DSM_MSGTYPE_CLOSE, msg) ) {
         keep_connection = false;
-      } else if ((logging = DSMEMSG_CAST(DSM_MSGTYPE_SET_LOGGING_VERBOSITY,
-                                         msg)))
-      {
-          dsme_log_set_verbosity(logging->verbosity);
-      }
-      free(msg);
-  }
+    }
+    else if( DSMEMSG_CAST(DSM_MSGTYPE_ADD_LOGGING_INCLUDE, msg) ) {
+        const char *pattern = DSMEMSG_EXTRA(msg);
+        dsme_log_include(pattern);
+    }
+    else if( DSMEMSG_CAST(DSM_MSGTYPE_ADD_LOGGING_EXCLUDE, msg) ) {
+        const char *pattern = DSMEMSG_EXTRA(msg);
+        dsme_log_exclude(pattern);
+    }
+    else if( DSMEMSG_CAST(DSM_MSGTYPE_USE_LOGGING_DEFAULTS, msg) ) {
+        dsme_log_clear_rules();
+    }
+    else if( (logverb = DSMEMSG_CAST(DSM_MSGTYPE_SET_LOGGING_VERBOSITY, msg)) )
+    {
+        dsme_log_set_verbosity(logverb->verbosity);
+    }
 
-  return keep_connection;
+EXIT:
+    free(msg);
+
+    return keep_connection;
 }
 
 /**
