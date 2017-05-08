@@ -1,3 +1,15 @@
+dsme (0.78.0) precise; urgency=low
+
+  * [packaging] Adjust libsystemd build requirements. JB#37916
+  * [dsme] Drop option to build dsme without logging
+  * [dsme] Fix dsme-wdd and dsme-server command line parsing
+  * [logging] Drop log-to-stdout feature
+  * [logging] Drop log-to-sti feature
+  * [logging] Allow fine tuned diagnostic logging. Fixes JB#38501
+  * [logging] Add runtime logging include/exclude control. JB#38501
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 08 May 2017 09:41:43 +0300
+
 dsme (0.77.1) precise; urgency=low
 
   * [iphb] Reduce journal spam during bootup. Fixes JB#38527
