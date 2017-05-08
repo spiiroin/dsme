@@ -182,14 +182,11 @@ else
   AC_DEFINE_UNQUOTED([DSME_SBIN_PATH],["$sbindir"],[Installation dir for DSME executables])
 fi
 
-# FIXME: DSME_LOG_ENABLE should be proper&working configure option
-#AC_DEFINE([DSME_LOG_ENABLE], [1])
-
 AC_SUBST(CPP_GENFLAGS, ["-D_GNU_SOURCE -D_FILE_OFFSET_BITS=64"])
 
 AC_SUBST(C_GENFLAGS, ["-pthread -g -std=c99 -Wall -Wwrite-strings -Wmissing-prototypes -Werror -Wshadow"])
 AC_SUBST(C_OPTFLAGS, ["-O2"])
-AC_SUBST(C_DBGFLAGS, ["-g -DDEBUG -DDSME_LOG_ENABLE"])
+AC_SUBST(C_DBGFLAGS, ["-g -DDEBUG"])
 
 # Checks for programs.
 AC_PROG_CC
@@ -211,6 +208,9 @@ PKG_CHECK_MODULES(DBUS, dbus-1)
 PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1)
 if test "x$enable_vibra_feedback" != xno; then
 PKG_CHECK_MODULES(LIBNGF, libngf0 >= 0.24)
+fi
+if test "x$enable_systemd" != xno; then
+PKG_CHECK_MODULES(LIBSYSTEMD, libsystemd)
 fi
 
 # Check libs (that are not yet checked)

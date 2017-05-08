@@ -2,7 +2,7 @@
 # Generic options
 #
 ACLOCAL_AMFLAGS = -I m4
-AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) $(DBUS_CFLAGS) $(GLIB_CFLAGS) -DDSME_LOG_ENABLE
+AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) $(DBUS_CFLAGS) $(GLIB_CFLAGS)
 AM_LDFLAGS = -Wl,--as-needed -pthread -rdynamic $(GLIB_LIBS) -ldsme -ldbus-1 -ldbus-glib-1 -lpthread -ldl -ldsme
 AM_CPPFLAGS = $(CPP_GENFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 TESTS = testmod_alarmtracker \

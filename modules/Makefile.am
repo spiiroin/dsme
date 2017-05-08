@@ -1,7 +1,7 @@
 #
 # Generic options
 #
-AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) -DDSME_LOG_ENABLE -fPIC
+AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) -fPIC
 AM_LDFLAGS = -pthread -module -avoid-version -shared
 AM_CPPFLAGS = $(CPP_GENFLAGS)
 ACLOCAL_AMFLAGS = -I m4

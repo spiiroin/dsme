@@ -4,8 +4,14 @@
    Prototypes for logging functions.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2015-2017 Jolla Ltd.
 
    @author Tuukka Tikkanen
+   @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Antti Virtanen <antti.i.virtanen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -22,94 +28,63 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DSME_LOGGING_H
-#define DSME_LOGGING_H
+#ifndef  DSME_LOGGING_H
+# define DSME_LOGGING_H
 
-#include <dsme/messages.h>
+# include <dsme/messages.h>
 /* Even if syslog is not used, use the message levels therein */
-#include <syslog.h>
-#include <stdbool.h>
-#include <unistd.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+# include <syslog.h>
+# include <stdbool.h>
+# include <unistd.h>
 
 /* Logging methods */
 typedef enum {
     LOG_METHOD_NONE,   /* Suppress all the messages */
-    LOG_METHOD_STI,    /* Serial trace interface */
-    LOG_METHOD_STDOUT, /* Print messages to stdout */
     LOG_METHOD_STDERR, /* Print messages to stderr */
     LOG_METHOD_SYSLOG, /* Use syslog(3) */
     LOG_METHOD_FILE    /* Output messages to the file */
 } log_method;
 
 
-/**
-   Logs a single message.
-
-   @param level Message level, one of the following:
-      @arg @c LOG_CRIT - critical failure, DSME must exit
-      @arg @c LOG_ERR - error condition, possibly resulting in
-                        reduced functionality
-      @arg @c LOG_WARNING - abnormal condition, possibly resulting in
-                        reduced functionality
-      @arg @c LOG_NOTICE - normal, but significant, condition
-      @arg @c LOG_INFO - informational message
-      @arg @c LOG_DEBUG - debugging message
-   @param fmt Printf-style format string.
-   @param ... Message variables.
-*/
-
-/* Function prototypes */
-#ifdef DSME_LOG_ENABLE
-/* Function prototypes */
-void dsme_log_txt(int level, const char *fmt, ...)
-    __attribute__((format(printf,2,3)));
-void dsme_log_raw(int level, const char *fmt, ...) __attribute__((format(printf,2,3)));
-
-/* Macros */
-#define dsme_log(level, fmt...) dsme_log_txt(level, fmt)
-#else
-#define dsme_log(level, fmt...)
-#endif
-
-
-typedef struct {
+/* libdsm/dsmesocke IPC */
+typedef struct
+{
     DSMEMSG_PRIVATE_FIELDS
     int verbosity;
 } DSM_MSGTYPE_SET_LOGGING_VERBOSITY;
 
-enum {
+typedef dsmemsg_generic_t DSM_MSGTYPE_ADD_LOGGING_INCLUDE;
+typedef dsmemsg_generic_t DSM_MSGTYPE_ADD_LOGGING_EXCLUDE;
+typedef dsmemsg_generic_t DSM_MSGTYPE_USE_LOGGING_DEFAULTS;
+
+enum
+{
     DSME_MSG_ENUM(DSM_MSGTYPE_SET_LOGGING_VERBOSITY, 0x00001103),
+    DSME_MSG_ENUM(DSM_MSGTYPE_ADD_LOGGING_INCLUDE,   0x00001104),
+    DSME_MSG_ENUM(DSM_MSGTYPE_ADD_LOGGING_EXCLUDE,   0x00001105),
+    DSME_MSG_ENUM(DSM_MSGTYPE_USE_LOGGING_DEFAULTS,  0x00001106),
 };
 
-
-/**
-   Initializes the logging subsystem.
-*/
+/* Logging functionality */
 bool dsme_log_open(log_method method, int verbosity, int usetime,
                    const char *prefix, int facility, int option,
                    const char *filename);
-
-void dsme_log_set_verbosity(int verbosity);
-
-
-/**
-   Flushes and shuts down the logging subsystem.
-*/
-void dsme_log_close(void);
-
-/**
-   Ask logging thread to stop
-*/
 void dsme_log_stop(void);
+void dsme_log_close(void);
+void dsme_log_set_verbosity(int verbosity);
+void dsme_log_include(const char *pat);
+void dsme_log_exclude(const char *pat);
+void dsme_log_clear_rules(void);
+bool dsme_log_p_ (int level, const char *file, const char *func);
+void dsme_log_queue(int level, const char *file, const char *func, const char *fmt, ...) __attribute__((format(printf,4,5)));
+
+#  define dsme_log(LEV_, FMT_, ARGS_...) \
+     do {\
+         if( dsme_log_p_(LEV_, __FILE__, __FUNCTION__) ) {\
+             dsme_log_queue(LEV_, __FILE__, __FUNCTION__, FMT_, ## ARGS_);\
+         }\
+     }while(0)
 
 char* pid2text(pid_t pid);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif
+#endif /* DSME_LOGGING_H */

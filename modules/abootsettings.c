@@ -44,12 +44,6 @@
 #include <fcntl.h>
 #include <linux/fs.h>
 
-// To enable debug time logging.
-/*
-#undef dsme_log
-#define dsme_log(level, fmt...) /
-(dsme_log_txt((level)<LOG_WARNING?(level):LOG_WARNING, fmt))
-*/
 #define PFIX                     "abootsettings: "
 // Device info magic string (from aboot)
 #define DEVICE_MAGIC             "ANDROID-BOOT!"

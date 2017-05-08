@@ -77,11 +77,11 @@ static void usage(const char *  progname)
                     "[-p <optional-module>] [...] options\n",
          progname);
   fprintf(stderr, "Valid options:\n");
-#ifdef DSME_LOG_ENABLE
   fprintf(stderr, " -l  --logging     "
-                    "Logging type (syslog, sti, stderr, stdout, none)\n");
+                    "Logging type (syslog, stderr, none)\n");
   fprintf(stderr, " -v  --verbosity   Log verbosity (3..7)\n");
-#endif
+  fprintf(stderr, " -t  --log-include   <file-pattern>:<func-pattern>\n");
+  fprintf(stderr, " -e  --log-exclude   <file-pattern>:<func-pattern>\n");
 #ifdef DSME_SYSTEMD_ENABLE
   fprintf(stderr, " -s  --systemd     "
                     "Signal systemd when initialization is done\n");
@@ -106,10 +106,9 @@ static void signal_handler(int sig)
   }
 }
 
-#ifdef DSME_LOG_ENABLE
 static int        logging_verbosity = LOG_NOTICE;
 static log_method logging_method    = LOG_METHOD_SYSLOG;
-#endif
+
 #ifdef DSME_SYSTEMD_ENABLE
 static int signal_systemd = 0;
 #endif
@@ -125,117 +124,131 @@ static void parse_options(int      argc,           /* in  */
                           char*    argv[],         /* in  */
                           GSList** module_names)   /* out */
 {
-  int          next_option;
-  const char*  program_name  = argv[0];
-  const char*  short_options = "dhsp:l:v:";
-  const struct option long_options[] = {
+    const char*  program_name  = argv[0];
+    const char*  short_options = "dhsp:l:v:i:e:";
+    const struct option long_options[] =
+    {
         { "startup-module", 1, NULL, 'p' },
         { "help",           0, NULL, 'h' },
         { "verbosity",      1, NULL, 'v' },
 #ifdef DSME_SYSTEMD_ENABLE
         { "systemd",        0, NULL, 's' },
 #endif
-#ifdef DSME_LOG_ENABLE  
         { "logging",        1, NULL, 'l' },
-#endif
+        { "log-include",    1, NULL, 'i' },
+        { "log-exclude",    1, NULL, 'e' },
         { "valgrind",       0, NULL, 901  },
         { 0, 0, 0, 0 }
-  };
+    };
 
-  while ((next_option =
-          getopt_long(argc, argv, short_options, long_options,0)) != -1)
-    {
-      switch (next_option) {
+    for( ;; ) {
+        int opt = getopt_long(argc, argv, short_options, long_options, 0);
+
+        if( opt == -1 )
+            break;
+
+        switch( opt ) {
         case 901:
-          fprintf(stderr, ME"enabling valgrind mode");
-          valgrind_mode_enabled = true;
-          break;
+            fprintf(stderr, ME"enabling valgrind mode");
+            valgrind_mode_enabled = true;
+            break;
 
         case 'p': /* -p or --startup-module, allow only once */
-        {
-          if (module_names) {
-            *module_names = g_slist_append(*module_names, optarg);
-          }
-        }
-          break;
+            if (module_names)
+                *module_names = g_slist_append(*module_names, optarg);
+            break;
 
-#ifdef DSME_LOG_ENABLE  
         case 'l': /* -l or --logging */
-        {
-          const char *log_method_name[] = {
-              "none",   /* LOG_METHOD_NONE */
-              "sti",    /* LOG_METHOD_STI */
-              "stdout", /* LOG_METHOD_STDOUT */
-              "stderr", /* LOG_METHOD_STDERR */
-              "syslog", /* LOG_METHOD_SYSLOG */
-              "file"    /* LOG_METHOD_FILE */
-          };
-          int i;
+            {
+                const char *log_method_name[] = {
+                    "none",   /* LOG_METHOD_NONE */
+                    "stderr", /* LOG_METHOD_STDERR */
+                    "syslog", /* LOG_METHOD_SYSLOG */
+                    "file"    /* LOG_METHOD_FILE */
+                };
+                int i;
 
-          for (i = 0; i < ArraySize(log_method_name); i++) {
-              if (!strcmp(optarg, log_method_name[i])) {
-                  logging_method = (log_method)i;
-                  break;
-              }
-          }
-          if (i == ArraySize(log_method_name))
-              fprintf(stderr,
-                      ME "Ignoring invalid logging method %s\n",
-                      optarg);
-        }
-          break;
+                for (i = 0; i < ArraySize(log_method_name); i++) {
+                    if (!strcmp(optarg, log_method_name[i])) {
+                        logging_method = (log_method)i;
+                        break;
+                    }
+                }
+                if (i == ArraySize(log_method_name))
+                    fprintf(stderr,
+                            ME "Ignoring invalid logging method %s\n",
+                            optarg);
+            }
+            break;
+
         case 'v': /* -v or --verbosity */
-          if (strlen(optarg) == 1 && isdigit(optarg[0]))
-              logging_verbosity = atoi(optarg);
-          break;
-#else
-        case 'l':
-        case 'v':
-          fprintf(stderr, ME "Logging not compiled in\n");
-          break;
-#endif  
+            if (strlen(optarg) == 1 && isdigit(optarg[0]))
+                logging_verbosity = atoi(optarg);
+            break;
+
+        case 'i': /* -i or --log-include */
+            dsme_log_include(optarg);
+            break;
+
+        case 'e': /* -e or --log-exclude */
+            dsme_log_exclude(optarg);
+            break;
 #ifdef DSME_SYSTEMD_ENABLE
         case 's': /* -s or --systemd */
-          signal_systemd = 1;
-          break;
+            signal_systemd = 1;
+            break;
 #endif
         case 'h': /* -h or --help */
-          usage(program_name);
-          exit(EXIT_SUCCESS);
+            usage(program_name);
+            exit(EXIT_SUCCESS);
 
         case '?': /* Unrecognized option */
-          usage(program_name);
-          exit(EXIT_FAILURE);
-      }
+            exit(EXIT_FAILURE);
+        }
     }
 
-  /* check if unknown parameters were given */
-  if (optind < argc) {
-      usage(program_name);
-      exit(EXIT_FAILURE);
-  }
+    /* check if unknown parameters were given */
+    if (optind < argc) {
+        usage(program_name);
+        exit(EXIT_FAILURE);
+    }
 }
 
 static bool receive_and_queue_message(dsmesock_connection_t* conn)
 {
-  bool                               keep_connection = true;
-  DSM_MSGTYPE_SET_LOGGING_VERBOSITY* logging;
+    bool keep_connection = true;
+    dsmemsg_generic_t *msg = 0;
 
-  dsmemsg_generic_t* msg;
-  msg = (dsmemsg_generic_t*)dsmesock_receive(conn);
-  if (msg) {
-      broadcast_internally_from_socket(msg, conn);
-      if (DSMEMSG_CAST(DSM_MSGTYPE_CLOSE, msg)) {
+    DSM_MSGTYPE_SET_LOGGING_VERBOSITY *logverb;
+
+    if( !(msg = dsmesock_receive(conn)) )
+        goto EXIT;
+
+    broadcast_internally_from_socket(msg, conn);
+
+    if( DSMEMSG_CAST(DSM_MSGTYPE_CLOSE, msg) ) {
         keep_connection = false;
-      } else if ((logging = DSMEMSG_CAST(DSM_MSGTYPE_SET_LOGGING_VERBOSITY,
-                                         msg)))
-      {
-          dsme_log_set_verbosity(logging->verbosity);
-      }
-      free(msg);
-  }
+    }
+    else if( DSMEMSG_CAST(DSM_MSGTYPE_ADD_LOGGING_INCLUDE, msg) ) {
+        const char *pattern = DSMEMSG_EXTRA(msg);
+        dsme_log_include(pattern);
+    }
+    else if( DSMEMSG_CAST(DSM_MSGTYPE_ADD_LOGGING_EXCLUDE, msg) ) {
+        const char *pattern = DSMEMSG_EXTRA(msg);
+        dsme_log_exclude(pattern);
+    }
+    else if( DSMEMSG_CAST(DSM_MSGTYPE_USE_LOGGING_DEFAULTS, msg) ) {
+        dsme_log_clear_rules();
+    }
+    else if( (logverb = DSMEMSG_CAST(DSM_MSGTYPE_SET_LOGGING_VERBOSITY, msg)) )
+    {
+        dsme_log_set_verbosity(logverb->verbosity);
+    }
 
-  return keep_connection;
+EXIT:
+    free(msg);
+
+    return keep_connection;
 }
 
 /**
@@ -283,7 +296,6 @@ int main(int argc, char *argv[])
       return EXIT_FAILURE;
   }
 
-#ifdef DSME_LOG_ENABLE
   dsme_log_open(logging_method,
                 logging_verbosity,
                 0,
@@ -291,14 +303,11 @@ int main(int argc, char *argv[])
                 0,
                 0,
                 "/var/log/dsme.log");
-#endif
 
   /* load modules */
   if (!modulebase_init(module_names)) {
       g_slist_free(module_names);
-#ifdef DSME_LOG_ENABLE
       dsme_log_close();
-#endif
       return EXIT_FAILURE;
   }
   g_slist_free(module_names);
@@ -306,9 +315,7 @@ int main(int argc, char *argv[])
   /* init socket communication */
   if (dsmesock_listen(receive_and_queue_message) == -1) {
       dsme_log(LOG_CRIT, "Error creating DSM socket: %s", strerror(errno));
-#ifdef DSME_LOG_ENABLE  
       dsme_log_close();
-#endif
       return EXIT_FAILURE;
   }
 
@@ -335,9 +342,7 @@ int main(int argc, char *argv[])
 
   modulebase_shutdown();
 
-#ifdef DSME_LOG_ENABLE
   dsme_log_close();
-#endif
 
   return dsme_main_loop_exit_code();
 }

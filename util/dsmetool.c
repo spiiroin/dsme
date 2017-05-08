@@ -78,6 +78,7 @@ static bool log_verbose = false;
 
 static const char        *dsme_msg_type_repr(int type);
 static const char        *dsme_state_repr(dsme_state_t state);
+static int64_t            boottime_get_ms(void);
 
 /* ------------------------------------------------------------------------- *
  * DSMEIPC_CONNECTION
@@ -106,6 +107,9 @@ static void               xdsme_request_shutdown(void);
 static void               xdsme_request_powerup(void);
 static void               xdsme_request_runlevel(const char *runlevel);
 static void               xdsme_request_loglevel(unsigned level);
+static void               xdsme_request_log_include(const char *pattern);
+static void               xdsme_request_log_exclude(const char *pattern);
+static void               xdsme_request_log_defaults(void);
 
 /* ------------------------------------------------------------------------- *
  * RTC_OPTIONS
@@ -443,6 +447,27 @@ static void xdsme_request_loglevel(unsigned level)
     dsmeipc_send(&req);
 }
 
+static void xdsme_request_log_include(const char *pattern)
+{
+    DSM_MSGTYPE_ADD_LOGGING_INCLUDE req = DSME_MSG_INIT(DSM_MSGTYPE_ADD_LOGGING_INCLUDE);
+
+    dsmeipc_send_with_string(&req, pattern);
+}
+
+static void xdsme_request_log_exclude(const char *pattern)
+{
+    DSM_MSGTYPE_ADD_LOGGING_EXCLUDE req = DSME_MSG_INIT(DSM_MSGTYPE_ADD_LOGGING_EXCLUDE);
+
+    dsmeipc_send_with_string(&req, pattern);
+}
+
+static void xdsme_request_log_defaults(void)
+{
+    DSM_MSGTYPE_USE_LOGGING_DEFAULTS req = DSME_MSG_INIT(DSM_MSGTYPE_USE_LOGGING_DEFAULTS);
+
+    dsmeipc_send(&req);
+}
+
 /* ========================================================================= *
  * RTC_OPTIONS
  * ========================================================================= */
@@ -565,6 +590,9 @@ static void output_usage(const char *name)
 "  -v --version                    Print the versions of DSME and dsmetool\n"
 "  -V --verbose                    Make dsmetool more verbose\n"
 "  -l --loglevel <0..7>            Change DSME's logging verbosity\n"
+"  -i --log-include <file:func>    Include logging from matching functions\n"
+"  -e --log-exclude <file:func>    Exclude logging from matching functions\n"
+"  -L --log-defaults               Clear include/exclude patterns\n"
 "\n"
 "  -g --get-state                  Print device state, i.e. one of\n"
 "                                   SHUTDOWN USER ACTDEAD REBOOT BOOT\n"
@@ -591,20 +619,23 @@ int main(int argc, char *argv[])
 {
     const char *program_name  = argv[0];
     int         retval        = EXIT_FAILURE;
-    const char *short_options = "hdsbvact:l:guoV";
+    const char *short_options = "hdsbvact:l:guoVi:e:L";
     const struct option long_options[] = {
-        {"help",       no_argument,       NULL, 'h'},
-        {"start-dbus", no_argument,       NULL, 'd'},
-        {"stop-dbus",  no_argument,       NULL, 's'},
-        {"reboot",     no_argument,       NULL, 'b'},
-        {"version",    no_argument,       NULL, 'v'},
-        {"clear-rtc",  no_argument,       NULL, 'c'},
-        {"get-state",  no_argument,       NULL, 'g'},
-        {"powerup",    no_argument,       NULL, 'u'},
-        {"shutdown",   no_argument,       NULL, 'o'},
-        {"telinit",    required_argument, NULL, 't'},
-        {"loglevel",   required_argument, NULL, 'l'},
-        {"verbose",    no_argument,       NULL, 'V'},
+        {"help",         no_argument,       NULL, 'h'},
+        {"start-dbus",   no_argument,       NULL, 'd'},
+        {"stop-dbus",    no_argument,       NULL, 's'},
+        {"reboot",       no_argument,       NULL, 'b'},
+        {"version",      no_argument,       NULL, 'v'},
+        {"clear-rtc",    no_argument,       NULL, 'c'},
+        {"get-state",    no_argument,       NULL, 'g'},
+        {"powerup",      no_argument,       NULL, 'u'},
+        {"shutdown",     no_argument,       NULL, 'o'},
+        {"telinit",      required_argument, NULL, 't'},
+        {"loglevel",     required_argument, NULL, 'l'},
+        {"log-include",  required_argument, NULL, 'i'},
+        {"log-exclude",  required_argument, NULL, 'e'},
+        {"log-defaults", no_argument,       NULL, 'L'},
+        {"verbose",      no_argument,       NULL, 'V'},
         {0, 0, 0, 0}
     };
 
@@ -656,6 +687,18 @@ int main(int argc, char *argv[])
 
         case 'l':
             xdsme_request_loglevel(parse_loglevel(optarg));
+            break;
+
+        case 'i':
+            xdsme_request_log_include(optarg);
+            break;
+
+        case 'e':
+            xdsme_request_log_exclude(optarg);
+            break;
+
+        case 'L':
+            xdsme_request_log_defaults();
             break;
 
         case 'c':

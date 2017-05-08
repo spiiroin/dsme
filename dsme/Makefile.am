@@ -1,7 +1,7 @@
 #
 # Generic options
 #
-AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) -DDSME_LOG_ENABLE
+AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS)
 AM_LDFLAGS = -pthread
 AM_CPPFLAGS = $(CPP_GENFLAGS)
 ACLOCAL_AMFLAGS = -I m4
@@ -30,11 +30,9 @@ dsme_SOURCES = dsme-wdd.c \
 
 
 dsme_CFLAGS = -g -std=c99 -Wall -Wwrite-strings -Wmissing-prototypes -Werror \
-              $(C_OPTFLAGS)
+              $(C_OPTFLAGS) $(LIBSYSTEMD_CFLAGS)
 dsme_LDFLAGS = -Wl,--as-needed
-if WANT_SYSTEMD
-dsme_LDADD   = -L/lib -lsystemd-daemon
-endif
+dsme_LDADD = $(LIBSYSTEMD_LIBS)
 
 #
 # dsme-server
@@ -42,7 +40,7 @@ endif
 dsme_server_SOURCES = dsme-server.c modulebase.c timers.c logging.c oom.c \
                       mainloop.c dsmesock.c dsme-rd-mode.c
 dsme_server_LDFLAGS = $(AM_LDFLAGS) -rdynamic `pkg-config --libs gthread-2.0` -Wl,--as-needed
-dsme_server_CPPFLAGS = $(CPP_GENFLAGS) $(GLIB_CFLAGS) -DDSME_LOG_ENABLE
+dsme_server_CPPFLAGS = $(CPP_GENFLAGS) $(GLIB_CFLAGS)
 dsme_server_LDADD = $(GLIB_LIBS) -ldsme -ldl
 
 #
