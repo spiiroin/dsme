@@ -121,6 +121,16 @@ dsme_create_timer_seconds(unsigned              seconds,
                             callback, data);
 }
 
+dsme_timer_t
+dsme_create_timer(unsigned              milliseconds,
+                  dsme_timer_callback_t callback,
+                  void*                 data)
+{
+    return timergate_create(G_PRIORITY_DEFAULT,
+                            milliseconds,
+                            callback, data);
+}
+
 void
 dsme_destroy_timer(dsme_timer_t timer)
 {

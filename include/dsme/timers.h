@@ -37,17 +37,27 @@ typedef int (*dsme_timer_callback_t)(void* data);
 typedef unsigned dsme_timer_t;
 
 /**
-   Creates a new DSME timer.
+   Creates a new DSME timer with second resolution
 
    @param seconds  Timer expiry in seconds from current time
    @param callback Function to be called when the timer expires
    @param data     Passed to callback function as an argument.
    @return !0 on success; 0 on failure
-           pointer is returned.
 */
 dsme_timer_t dsme_create_timer_seconds(unsigned               seconds,
                                        dsme_timer_callback_t  callback,
                                        void*                  data);
+
+/** Creates a new DSME timer with millisecond resolution
+
+   @param seconds  Timer expiry in milliseconds from current time
+   @param callback Function to be called when the timer expires
+   @param data     Passed to callback function as an argument.
+   @return !0 on success; 0 on failure
+*/
+dsme_timer_t dsme_create_timer(unsigned              milliseconds,
+                               dsme_timer_callback_t callback,
+                               void*                 data);
 
 /**
    Deactivates and destroys an existing timer.
