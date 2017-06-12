@@ -68,6 +68,9 @@ static bool is_in_list(const char* file, GSList* list);
 static bool is_basename_in_list(const char* file, GSList* list);
 
 
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
+
 static guint       validator_id = 0;
 
 static bool        got_mandatory_files = false;
@@ -191,6 +194,8 @@ static gboolean handle_validator_message(GIOChannel*  source,
                                          GIOCondition condition,
                                          gpointer     data)
 {
+    const module_t *caller = enter_module(this_module);
+
     dsme_log(LOG_DEBUG, "Activity on Validator socket");
 
     bool keep_listening = true;
@@ -266,6 +271,7 @@ static gboolean handle_validator_message(GIOChannel*  source,
         stop_listening_to_validator();
     }
 
+    enter_module(caller);
     return keep_listening;
 }
 
@@ -409,6 +415,8 @@ static bool is_basename_in_list(const char* file, GSList* list)
 void module_init(module_t* handle)
 {
     dsme_log(LOG_DEBUG, "validatorlistener.so loaded");
+
+    this_module = handle;
 
     if (!read_mandatory_file_list(DSME_CONFIG_VALIDATED_PATH, &mandatory_files))
     {

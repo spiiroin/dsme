@@ -41,6 +41,7 @@
 #include "dbusproxy.h"
 #include "dsme_dbus.h"
 
+#include "../include/dsme/modulebase.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/timers.h"
@@ -53,6 +54,9 @@
 
 /** Prefix string used for logging from this module */
 #define PFIX "usbtracker: "
+
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
 
 /* ========================================================================= *
  * Prototypes & variables
@@ -357,6 +361,8 @@ xusbmoded_query_mode_cb(DBusPendingCall *pending, void *aptr)
 {
     (void) aptr; // not used
 
+    const module_t *caller = enter_module(this_module);
+
     DBusMessage *rsp = 0;
     const char  *dta = 0;
     DBusError    err = DBUS_ERROR_INIT;
@@ -382,6 +388,7 @@ cleanup:
     if( rsp ) dbus_message_unref(rsp);
 
     dbus_error_free(&err);
+    enter_module(caller);
 }
 
 /** Initiate async query to find out current usb mode
@@ -480,6 +487,8 @@ xusbmoded_query_owner_cb(DBusPendingCall *pending, void *aptr)
 
     dsme_log(LOG_DEBUG, PFIX"usb_moded runstate reply");
 
+    const module_t *caller = enter_module(this_module);
+
     DBusMessage *rsp = 0;
     const char  *dta = 0;
     DBusError    err = DBUS_ERROR_INIT;
@@ -505,6 +514,7 @@ cleanup:
     if( rsp ) dbus_message_unref(rsp);
 
     dbus_error_free(&err);
+    enter_module(caller);
 }
 
 /** Verify that a usbmoded exists via an asynchronous GetNameOwner method call
@@ -568,6 +578,8 @@ xusbmoded_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
 {
     (void) aptr; // not used
 
+    const module_t *caller = enter_module(this_module);
+
     DBusHandlerResult res = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     const char *sender = 0;
@@ -612,6 +624,7 @@ cleanup:
 
     dbus_error_free(&err);
 
+    enter_module(caller);
     return res;
 }
 
@@ -741,6 +754,8 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t* handle)
 {
+    this_module = handle;
+
     /* Do not connect to D-Bus; it is probably not started yet.
      * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
      */

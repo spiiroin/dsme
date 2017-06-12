@@ -31,6 +31,7 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "../include/dsme/modulebase.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/mainloop.h"
@@ -60,6 +61,9 @@ static dsme_timer_t pwrkey_timer = 0;
 
 /** Prefix string for logging messages from this module */
 #define PFIX "pwrkeymonitor: "
+
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
 
 /** Predicate for: Operating system update in progress
  *
@@ -341,6 +345,7 @@ static
 gboolean
 process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
 {
+    const module_t *caller = enter_module(this_module);
     gboolean keep_going = TRUE;
 
     struct input_event buf[32];
@@ -412,6 +417,8 @@ process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
          * the channel must be removed from tracking list */
         watchlist_remove(chan);
     }
+
+    enter_module(caller);
 
     return keep_going;
 }
@@ -551,6 +558,8 @@ stop_pwrkey_monitor(void)
 void
 module_init(module_t * handle)
 {
+    this_module = handle;
+
     start_pwrkey_monitor();
 
     dsme_log(LOG_DEBUG, "libpwrkeymonitor.so loaded");

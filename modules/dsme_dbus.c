@@ -1184,6 +1184,11 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
 {
     DsmeDbusManager *self = aptr;
 
+    /* Dispatching context can/should be defined in methdo call and
+     * signal handler configuration. If not, make sure we default to
+     * "core" module context. */
+    const module_t *caller = enter_module(0);
+
     DBusHandlerResult result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     switch( dbus_message_get_type(msg) ) {
@@ -1241,6 +1246,7 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
         break;
     }
 
+    enter_module(caller);
     return result;;
 }
 

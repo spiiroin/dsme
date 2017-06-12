@@ -140,6 +140,9 @@ static char *t_repr(time_t t, char *buff, size_t size);
  * Variables
  * ------------------------------------------------------------------------- */
 
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
+
 /** Path to android alarm device node */
 static const char android_alarm_path[] = "/dev/alarm";
 
@@ -512,6 +515,8 @@ xmce_verify_name_cb(DBusPendingCall *pending, void *user_data)
 {
     (void)user_data;
 
+    const module_t *caller = enter_module(this_module);
+
     gchar       *owner = 0;
     DBusMessage *rsp   = 0;
 
@@ -525,6 +530,8 @@ cleanup:
     g_free(owner);
 
     if( rsp ) dbus_message_unref(rsp);
+
+    enter_module(caller);
 }
 
 /** Verify that a mce exists via an asynchronous GetNameOwner method call
@@ -619,6 +626,8 @@ xmce_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *user_data)
 {
     (void)user_data;
 
+    const module_t *caller = enter_module(this_module);
+
     DBusHandlerResult res = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     const char *sender = 0;
@@ -659,6 +668,7 @@ xmce_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *user_data)
 
 cleanup:
     dbus_error_free(&err);
+    enter_module(caller);
     return res;
 }
 
@@ -2827,6 +2837,7 @@ static gboolean epollfd_iowatch_cb(GIOChannel*  source,
 				   GIOCondition condition,
 				   gpointer     data)
 {
+    const module_t    *caller     = enter_module(this_module);
     gboolean           keep_going = FALSE;
     bool               wakeup_mce = false;
 
@@ -2909,6 +2920,7 @@ cleanup_nak:
 	dsme_log(LOG_CRIT, PFIX"epoll waiting disabled");
 
     wakelock_unlock(rtc_input);
+    enter_module(caller);
 
     return keep_going;
 }
@@ -3240,6 +3252,8 @@ void module_init(module_t *handle)
     bool success = false;
 
     dsme_log(LOG_INFO, PFIX"iphb.so loaded");
+
+    this_module = handle;
 
     /* restore alarm queue state */
     xtimed_status_load();

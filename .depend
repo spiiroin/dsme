@@ -197,6 +197,8 @@ modules/bootreasonlogger.pic.o:\
 modules/dbusautoconnector.o:\
 	modules/dbusautoconnector.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\
@@ -205,6 +207,8 @@ modules/dbusautoconnector.o:\
 modules/dbusautoconnector.pic.o:\
 	modules/dbusautoconnector.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\
@@ -280,6 +284,8 @@ modules/heartbeat.o:\
 	modules/heartbeat.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	modules/heartbeat.h\
 
@@ -287,6 +293,8 @@ modules/heartbeat.pic.o:\
 	modules/heartbeat.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	modules/heartbeat.h\
 
@@ -388,6 +396,8 @@ modules/pwrkeymonitor.o:\
 	modules/pwrkeymonitor.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/runlevel.h\
@@ -397,6 +407,8 @@ modules/pwrkeymonitor.pic.o:\
 	modules/pwrkeymonitor.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/runlevel.h\
@@ -565,6 +577,8 @@ modules/upstart.pic.o:\
 modules/usbtracker.o:\
 	modules/usbtracker.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\
@@ -574,6 +588,8 @@ modules/usbtracker.o:\
 modules/usbtracker.pic.o:\
 	modules/usbtracker.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\

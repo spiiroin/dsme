@@ -26,6 +26,7 @@
 */
 
 #include "heartbeat.h"
+#include "../include/dsme/modulebase.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/mainloop.h"
@@ -38,12 +39,16 @@
 
 #include <glib.h>
 
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
+
 static guint watch_id = 0;
 
 static gboolean emit_heartbeat_message(GIOChannel*  source,
                                        GIOCondition condition,
                                        gpointer     data)
 {
+    const module_t *caller = enter_module(this_module);
     bool keep_going = false;
 
     // handle errors
@@ -87,6 +92,7 @@ cleanup:
         dsme_main_loop_quit(EXIT_FAILURE);
     }
 
+    enter_module(caller);
     return keep_going;
 }
 
@@ -123,6 +129,8 @@ static void stop_heatbeat(void)
 void module_init(module_t* handle)
 {
     dsme_log(LOG_DEBUG, "heartbeat.so loaded");
+
+    this_module = handle;
 
     start_heartbeat();
 }
