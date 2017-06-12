@@ -4,8 +4,11 @@
    A simple test driver and test cases for DSME
    <p>
    Copyright (C) 2011 Nokia Corporation
+   Copyright (C) 2015-2017 Jolla Ltd.
 
    @author Jyrki Hämäläinen <ext-jyrki.hamalainen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -30,7 +33,7 @@
 
 typedef struct test_timer_t {
     unsigned               seconds;
-    dsme_timer_callback_t* callback;
+    dsme_timer_callback_t  callback;
     void*                  data;
 } test_timer_t;
 
@@ -113,7 +116,7 @@ static inline void trigger_timer(void)
 static int dsme_create_timer_fails = 0;
 
 dsme_timer_t dsme_create_timer(unsigned               seconds,
-                               dsme_timer_callback_t* callback,
+                               dsme_timer_callback_t  callback,
                                void*                  data)
 {
   if (!dsme_create_timer_fails) {

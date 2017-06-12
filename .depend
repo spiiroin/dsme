@@ -112,10 +112,16 @@ dsme/oom.pic.o:\
 
 dsme/timers.o:\
 	dsme/timers.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/timers.h\
 
 dsme/timers.pic.o:\
 	dsme/timers.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/timers.h\
 
 getbootstate/getbootstate.o:\

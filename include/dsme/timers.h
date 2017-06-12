@@ -4,9 +4,11 @@
    Defines structures and function prototypes for using DSME timers.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2017 Jolla Ltd.
 
    @author Ari Saastamoinen
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -30,7 +32,7 @@
 extern "C" {
 #endif
 
-typedef int dsme_timer_callback_t(void* data);
+typedef int (*dsme_timer_callback_t)(void* data);
 
 typedef unsigned dsme_timer_t;
 
@@ -39,26 +41,24 @@ typedef unsigned dsme_timer_t;
 
    @param seconds  Timer expiry in seconds from current time
    @param callback Function to be called when the timer expires
-   @param data	   Passed to callback function as an argument.
+   @param data     Passed to callback function as an argument.
    @return !0 on success; 0 on failure
            pointer is returned.
 */
 dsme_timer_t dsme_create_timer(unsigned               seconds,
-                               dsme_timer_callback_t* callback,
+                               dsme_timer_callback_t  callback,
                                void*                  data);
 
 dsme_timer_t dsme_create_timer_high_priority(unsigned               seconds,
-                                             dsme_timer_callback_t* callback,
+                                             dsme_timer_callback_t  callback,
                                              void*                  data);
-
 
 /**
    Deactivates and destroys an existing timer.
 
-   @param timer	Timer to be destroyed.
+   @param timer Timer to be destroyed.
 */
 void dsme_destroy_timer(dsme_timer_t timer);
-
 
 #ifdef __cplusplus
 }
