@@ -780,7 +780,7 @@ bool modulebase_init(const struct _GSList* module_names)
 
 const char* module_name(const module_t* module)
 {
-  return module->name;
+    return module ? module->name : 0;
 }
 
 int modulebase_shutdown(void)

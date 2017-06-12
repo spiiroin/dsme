@@ -1807,13 +1807,7 @@ EXIT:
 static const char *
 dsme_dbus_calling_module_name(void)
 {
-    const char     *name   = 0;
-    const module_t *module = current_module();
-
-    if( module )
-        name = module_name(module);
-
-    return name ?: "UNKNOWN";
+    return module_name(current_module()) ?: "UNKNOWN";
 }
 
 static bool
