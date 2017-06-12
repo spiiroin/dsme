@@ -40,12 +40,14 @@ dsme/dsme-wdd-wd.pic.o:\
 
 dsme/dsme-wdd.o:\
 	dsme/dsme-wdd.c\
+	include/dsme/logging.h\
 	include/dsme/oom.h\
 	dsme/dsme-wdd-wd.h\
 	dsme/dsme-wdd.h\
 
 dsme/dsme-wdd.pic.o:\
 	dsme/dsme-wdd.c\
+	include/dsme/logging.h\
 	include/dsme/oom.h\
 	dsme/dsme-wdd-wd.h\
 	dsme/dsme-wdd.h\
@@ -241,6 +243,7 @@ modules/dsme_dbus.o:\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\
 	include/dsme/modules.h\
+	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 
 modules/dsme_dbus.pic.o:\
@@ -250,6 +253,7 @@ modules/dsme_dbus.pic.o:\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\
 	include/dsme/modules.h\
+	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 
 modules/emergencycalltracker.o:\
