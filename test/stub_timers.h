@@ -115,9 +115,9 @@ static inline void trigger_timer(void)
 
 static int dsme_create_timer_fails = 0;
 
-dsme_timer_t dsme_create_timer(unsigned               seconds,
-                               dsme_timer_callback_t  callback,
-                               void*                  data)
+dsme_timer_t dsme_create_timer_seconds(unsigned               seconds,
+                                       dsme_timer_callback_t  callback,
+                                       void*                  data)
 {
   if (!dsme_create_timer_fails) {
       ++timers;

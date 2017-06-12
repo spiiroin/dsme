@@ -570,9 +570,9 @@ static void start_delayed_shutdown_timer(unsigned seconds)
 {
   if (!delayed_shutdown_timer) {
       stop_delayed_runlevel_timers();
-      if (!(delayed_shutdown_timer = dsme_create_timer(seconds,
-                                                       delayed_shutdown_fn,
-                                                       NULL)))
+      if (!(delayed_shutdown_timer = dsme_create_timer_seconds(seconds,
+                                                               delayed_shutdown_fn,
+                                                               NULL)))
       {
           dsme_log(LOG_CRIT, PFIX"Could not create a shutdown timer; exit!");
           dsme_exit(EXIT_FAILURE);
@@ -597,9 +597,9 @@ static bool start_delayed_actdead_timer(unsigned seconds)
 {
   bool success = false;
   if (!delayed_shutdown_timer && !delayed_actdead_timer && !delayed_user_timer) {
-      if (!(delayed_actdead_timer = dsme_create_timer(seconds,
-                                                      delayed_actdead_fn,
-                                                      NULL)))
+      if (!(delayed_actdead_timer = dsme_create_timer_seconds(seconds,
+                                                              delayed_actdead_fn,
+                                                              NULL)))
       {
           dsme_log(LOG_CRIT, PFIX"Could not create an actdead timer; exit!");
           dsme_exit(EXIT_FAILURE);
@@ -627,9 +627,9 @@ static bool start_delayed_user_timer(unsigned seconds)
 {
   bool success = false;
   if (!delayed_shutdown_timer && !delayed_actdead_timer && !delayed_user_timer) {
-      if (!(delayed_user_timer = dsme_create_timer(seconds,
-                                                   delayed_user_fn,
-                                                   NULL)))
+      if (!(delayed_user_timer = dsme_create_timer_seconds(seconds,
+                                                           delayed_user_fn,
+                                                           NULL)))
       {
           dsme_log(LOG_CRIT, PFIX"Could not create a user timer; exit!");
           dsme_exit(EXIT_FAILURE);
@@ -688,9 +688,9 @@ static void stop_overheat_timer(void)
 static void start_overheat_timer(void)
 {
   if (!overheat_timer) {
-      if (!(overheat_timer = dsme_create_timer(DSME_THERMAL_SHUTDOWN_TIMER,
-                                               delayed_overheat_fn,
-                                               NULL)))
+      if (!(overheat_timer = dsme_create_timer_seconds(DSME_THERMAL_SHUTDOWN_TIMER,
+                                                       delayed_overheat_fn,
+                                                       NULL)))
       {
           dsme_log(LOG_CRIT, PFIX"Could not create a timer; overheat immediately!");
           delayed_overheat_fn(0);
@@ -714,10 +714,9 @@ static int delayed_overheat_fn(void* unused)
 static void start_charger_disconnect_timer(int delay_s)
 {
   if (!charger_disconnect_timer) {
-      if (!(charger_disconnect_timer = dsme_create_timer(
-                                           delay_s,
-                                           delayed_charger_disconnect_fn,
-                                           NULL)))
+      if (!(charger_disconnect_timer = dsme_create_timer_seconds(delay_s,
+                                                                 delayed_charger_disconnect_fn,
+                                                                 NULL)))
       {
           dsme_log(LOG_ERR,
                    PFIX"Could not create a timer; disconnect immediately!");
@@ -1006,9 +1005,9 @@ static void stop_battery_empty_timer(void)
 static void start_battery_empty_timer(void)
 {
   if (!battery_empty_timer) {
-    battery_empty_timer = dsme_create_timer(DSME_BATTERY_EMPTY_SHUTDOWN_TIMER,
-                                            delayed_battery_empty_fn,
-                                            NULL);
+    battery_empty_timer = dsme_create_timer_seconds(DSME_BATTERY_EMPTY_SHUTDOWN_TIMER,
+                                                    delayed_battery_empty_fn,
+                                                    NULL);
     if (!battery_empty_timer)
     {
       dsme_log(LOG_ERR,

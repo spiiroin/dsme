@@ -11,7 +11,7 @@
    powerkey has been continously pressed for 5 seconds.
    <p>
    Copyright (C) 2010 Nokia Corporation.
-   Copyright (C) 2013 Jolla Ltd.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Markus Lehtonen <markus.lehtonen@nokia.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
@@ -132,8 +132,9 @@ start_pwrkey_timer(void)
     {
         dsme_log(LOG_DEBUG, PFIX"Timer already running");
     }
-    else if( !(pwrkey_timer = dsme_create_timer(PWRKEY_TIMER_SECONDS,
-                                                pwrkey_trigger, NULL)) )
+    else if( !(pwrkey_timer = dsme_create_timer_seconds(PWRKEY_TIMER_SECONDS,
+                                                        pwrkey_trigger,
+                                                        NULL)) )
     {
         dsme_log(LOG_CRIT, PFIX"Timer creation failed!");
     }

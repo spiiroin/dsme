@@ -45,9 +45,9 @@ typedef unsigned dsme_timer_t;
    @return !0 on success; 0 on failure
            pointer is returned.
 */
-dsme_timer_t dsme_create_timer(unsigned               seconds,
-                               dsme_timer_callback_t  callback,
-                               void*                  data);
+dsme_timer_t dsme_create_timer_seconds(unsigned               seconds,
+                                       dsme_timer_callback_t  callback,
+                                       void*                  data);
 
 /**
    Deactivates and destroys an existing timer.

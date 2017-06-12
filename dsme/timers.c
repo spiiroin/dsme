@@ -112,9 +112,9 @@ timergate_create(gint priority,
 }
 
 dsme_timer_t
-dsme_create_timer(unsigned              seconds,
-                  dsme_timer_callback_t callback,
-                  void*                 data)
+dsme_create_timer_seconds(unsigned              seconds,
+                          dsme_timer_callback_t callback,
+                          void*                 data)
 {
     return timergate_create(G_PRIORITY_DEFAULT,
                             seconds * 1000,

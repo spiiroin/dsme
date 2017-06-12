@@ -125,7 +125,7 @@ connect_timer_start(void)
 
     dsme_log(LOG_DEBUG, ME"Connect timer: start");
 
-    connect_timer_id = dsme_create_timer(1, connect_timer_cb, 0);
+    connect_timer_id = dsme_create_timer_seconds(1, connect_timer_cb, 0);
 
     connect_request();
 
