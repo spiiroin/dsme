@@ -534,6 +534,7 @@ modules/thermalsensor_generic.o:\
 	modules/thermalsensor_generic.c\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/thermalmanager.h\
 
@@ -541,6 +542,7 @@ modules/thermalsensor_generic.pic.o:\
 	modules/thermalsensor_generic.c\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/thermalmanager.h\
 
@@ -564,6 +566,7 @@ modules/usbtracker.o:\
 	modules/usbtracker.c\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 	modules/state-internal.h\
@@ -572,6 +575,7 @@ modules/usbtracker.pic.o:\
 	modules/usbtracker.c\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 	modules/state-internal.h\

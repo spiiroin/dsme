@@ -43,6 +43,7 @@
 
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
+#include "../include/dsme/timers.h"
 #include <dsme/state.h>
 
 #include <string.h>
@@ -113,7 +114,7 @@ static void update_status   (const char *mode);
 #define WAIT_FOR_USB_MODED_MS (30 * 1000)
 
 /** Timer id: waiting for USB_MODED_DBUS_SERVICE to show up */
-static guint wait_for_usb_moded_id = 0;
+static dsme_timer_t wait_for_usb_moded_id = 0;
 
 static gboolean wait_for_usb_moded_cb     (gpointer aptr);
 static void     wait_for_usb_moded_cancel (void);
@@ -318,7 +319,7 @@ wait_for_usb_moded_cancel(void)
 {
     if( wait_for_usb_moded_id ) {
         dsme_log(LOG_DEBUG, PFIX"stop waiting for usb_moded");
-        g_source_remove(wait_for_usb_moded_id),
+        dsme_destroy_timer(wait_for_usb_moded_id),
             wait_for_usb_moded_id = 0;
     }
 }
@@ -329,8 +330,8 @@ wait_for_usb_moded_start(void)
 {
     if( !wait_for_usb_moded_id ) {
         dsme_log(LOG_DEBUG, PFIX"start waiting for usb_moded");
-        wait_for_usb_moded_id = g_timeout_add(WAIT_FOR_USB_MODED_MS,
-                                              wait_for_usb_moded_cb, 0);
+        wait_for_usb_moded_id = dsme_create_timer(WAIT_FOR_USB_MODED_MS,
+                                                  wait_for_usb_moded_cb, 0);
     }
 }
 

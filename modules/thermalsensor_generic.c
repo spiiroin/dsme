@@ -29,6 +29,7 @@
 #include "thermalmanager.h"
 
 #include "../include/dsme/modules.h"
+#include "../include/dsme/timers.h"
 #include "../include/dsme/logging.h"
 
 #include "dbusproxy.h"
@@ -128,7 +129,7 @@ typedef struct
     char              *sg_mode_disable;
 
     /** Idle callback identifier for thermal object notifications */
-    guint              sg_notify_id;
+    dsme_timer_t       sg_notify_id;
 
     /** Thermal level configuration array */
     sensor_level_t     sg_level[THERMAL_STATUS_COUNT];
@@ -578,7 +579,7 @@ thermal_sensor_generic_delete(thermal_sensor_generic_t *self)
         goto EXIT;
 
     if( self->sg_notify_id ) {
-        g_source_remove(self->sg_notify_id),
+        dsme_destroy_timer(self->sg_notify_id),
             self->sg_notify_id = 0;
     }
 
@@ -1157,14 +1158,12 @@ thermal_sensor_generic_read_sensor_cb(thermal_object_t *object)
     if( !thermal_sensor_generic_read_sensor(self) )
         goto EXIT;
 
-#if 0
-    thermal_object_handle_update(object);
-#else
     if( !self->sg_notify_id ) {
         self->sg_notify_id =
-            g_idle_add(thermal_sensor_generic_sensor_notify_cb, object);
+            dsme_create_timer(0, thermal_sensor_generic_sensor_notify_cb,
+                              object);
     }
-#endif
+
     ack = true;
 
 EXIT:

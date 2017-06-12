@@ -168,7 +168,7 @@ static int rtc_fd = -1;
 static client_t *clients = NULL;
 
 /** Timer for serving wakeups with shorter than heartbeat range */
-static guint wakeup_timer = 0;
+static dsme_timer_t wakeup_timer = 0;
 
 /** System bus connection (for IPC with mce) */
 static DBusConnection *systembus = 0;
@@ -2235,7 +2235,7 @@ static void clientlist_start_wakeup_timeout(const struct timeval *sleep_time)
     int ms = sleep_time->tv_sec * 1000 + sleep_time->tv_usec / 1000;
 
     dsme_log(LOG_DEBUG, PFIX"setting a wakeup in %d ms", ms);
-    wakeup_timer = g_timeout_add(ms, clientlist_handle_wakeup_timeout, 0);
+    wakeup_timer = dsme_create_timer(ms, clientlist_handle_wakeup_timeout, 0);
 }
 
 /** Cancel timer for waking up clients before the next heartbeat
@@ -2243,7 +2243,7 @@ static void clientlist_start_wakeup_timeout(const struct timeval *sleep_time)
 static void clientlist_cancel_wakeup_timeout(void)
 {
     if( wakeup_timer )
-	g_source_remove(wakeup_timer), wakeup_timer = 0;
+        dsme_destroy_timer(wakeup_timer), wakeup_timer = 0;
 }
 
 /** Helper for formatting time-to values for logging purposes
@@ -2409,7 +2409,7 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
  *       Otherwise the RTC wakeup might not get programmed
  *       directly due to clients issuing wakeup requests.
  */
-static guint clientlist_wakeup_clients_id = 0;
+static dsme_timer_t clientlist_wakeup_clients_id = 0;
 
 /** Timer callback delayed wakeup checking
  *
@@ -2449,7 +2449,7 @@ static void clientlist_wakeup_clients_cancel(void)
 {
     if( clientlist_wakeup_clients_id ) {
 	dsme_log(LOG_DEBUG, PFIX"cancel delayed wakeup checking");
-	g_source_remove(clientlist_wakeup_clients_id),
+	dsme_destroy_timer(clientlist_wakeup_clients_id),
 	    clientlist_wakeup_clients_id = 0;
 	wakelock_unlock(iphb_wakeup);
     }
@@ -2478,7 +2478,7 @@ static void clientlist_wakeup_clients_later(const struct timeval *now)
 	dsme_log(LOG_DEBUG, PFIX"schedule delayed wakeup checking");
 	wakelock_lock(iphb_wakeup, -1);
 	clientlist_wakeup_clients_id =
-	    g_timeout_add(200, clientlist_wakeup_clients_cb, 0);
+	    dsme_create_timer(200, clientlist_wakeup_clients_cb, 0);
     }
 }
 /* ------------------------------------------------------------------------- *
