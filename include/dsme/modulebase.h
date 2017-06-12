@@ -86,7 +86,6 @@ void process_message_queue(void);
 
 const module_t* current_module(void);
 const module_t* enter_module(const module_t* module);
-void leave_module(void);
 
 /**
    Adds a message to list of handlers

@@ -336,12 +336,6 @@ const module_t* enter_module(const module_t* module)
     return previous;
 }
 
-void leave_module()
-{
-    currently_handling_module = 0;
-}
-
-
 // TODO: all these returns and mallocs are a mess
 static void queue_message(const endpoint_t* from,
                           const module_t*   to,

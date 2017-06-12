@@ -1714,7 +1714,6 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
             enter_module(module);
         bindings->method(&message, &reply);
         enter_module(restore);
-        //leave_module();
 
         if( !dbus_message_get_no_reply(req) ) {
             if( !reply ) {
