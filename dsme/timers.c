@@ -121,16 +121,6 @@ dsme_create_timer(unsigned              seconds,
                             callback, data);
 }
 
-dsme_timer_t
-dsme_create_timer_high_priority(unsigned              seconds,
-                                dsme_timer_callback_t callback,
-                                void*                 data)
-{
-    return timergate_create(G_PRIORITY_HIGH,
-                            seconds * 1000,
-                            callback, data);
-}
-
 void
 dsme_destroy_timer(dsme_timer_t timer)
 {
