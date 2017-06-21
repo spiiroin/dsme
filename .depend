@@ -40,12 +40,14 @@ dsme/dsme-wdd-wd.pic.o:\
 
 dsme/dsme-wdd.o:\
 	dsme/dsme-wdd.c\
+	include/dsme/logging.h\
 	include/dsme/oom.h\
 	dsme/dsme-wdd-wd.h\
 	dsme/dsme-wdd.h\
 
 dsme/dsme-wdd.pic.o:\
 	dsme/dsme-wdd.c\
+	include/dsme/logging.h\
 	include/dsme/oom.h\
 	dsme/dsme-wdd-wd.h\
 	dsme/dsme-wdd.h\
@@ -110,10 +112,16 @@ dsme/oom.pic.o:\
 
 dsme/timers.o:\
 	dsme/timers.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/timers.h\
 
 dsme/timers.pic.o:\
 	dsme/timers.c\
+	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/timers.h\
 
 getbootstate/getbootstate.o:\
@@ -189,6 +197,8 @@ modules/bootreasonlogger.pic.o:\
 modules/dbusautoconnector.o:\
 	modules/dbusautoconnector.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\
@@ -197,6 +207,8 @@ modules/dbusautoconnector.o:\
 modules/dbusautoconnector.pic.o:\
 	modules/dbusautoconnector.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\
@@ -241,6 +253,7 @@ modules/dsme_dbus.o:\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\
 	include/dsme/modules.h\
+	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 
 modules/dsme_dbus.pic.o:\
@@ -250,6 +263,7 @@ modules/dsme_dbus.pic.o:\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\
 	include/dsme/modules.h\
+	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 
 modules/emergencycalltracker.o:\
@@ -270,6 +284,8 @@ modules/heartbeat.o:\
 	modules/heartbeat.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	modules/heartbeat.h\
 
@@ -277,6 +293,8 @@ modules/heartbeat.pic.o:\
 	modules/heartbeat.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	modules/heartbeat.h\
 
@@ -378,6 +396,8 @@ modules/pwrkeymonitor.o:\
 	modules/pwrkeymonitor.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/runlevel.h\
@@ -387,6 +407,8 @@ modules/pwrkeymonitor.pic.o:\
 	modules/pwrkeymonitor.c\
 	include/dsme/logging.h\
 	include/dsme/mainloop.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/runlevel.h\
@@ -524,6 +546,7 @@ modules/thermalsensor_generic.o:\
 	modules/thermalsensor_generic.c\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/thermalmanager.h\
 
@@ -531,6 +554,7 @@ modules/thermalsensor_generic.pic.o:\
 	modules/thermalsensor_generic.c\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/thermalmanager.h\
 
@@ -553,7 +577,10 @@ modules/upstart.pic.o:\
 modules/usbtracker.o:\
 	modules/usbtracker.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
 	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 	modules/state-internal.h\
@@ -561,7 +588,10 @@ modules/usbtracker.o:\
 modules/usbtracker.pic.o:\
 	modules/usbtracker.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
 	include/dsme/modules.h\
+	include/dsme/modules.h\
+	include/dsme/timers.h\
 	modules/dbusproxy.h\
 	modules/dsme_dbus.h\
 	modules/state-internal.h\

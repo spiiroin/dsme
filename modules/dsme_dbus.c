@@ -1184,6 +1184,11 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
 {
     DsmeDbusManager *self = aptr;
 
+    /* Dispatching context can/should be defined in methdo call and
+     * signal handler configuration. If not, make sure we default to
+     * "core" module context. */
+    const module_t *caller = enter_module(0);
+
     DBusHandlerResult result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     switch( dbus_message_get_type(msg) ) {
@@ -1241,6 +1246,7 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
         break;
     }
 
+    enter_module(caller);
     return result;;
 }
 
@@ -1714,7 +1720,6 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
             enter_module(module);
         bindings->method(&message, &reply);
         enter_module(restore);
-        //leave_module();
 
         if( !dbus_message_get_no_reply(req) ) {
             if( !reply ) {
@@ -1808,13 +1813,7 @@ EXIT:
 static const char *
 dsme_dbus_calling_module_name(void)
 {
-    const char     *name   = 0;
-    const module_t *module = current_module();
-
-    if( module )
-        name = module_name(module);
-
-    return name ?: "UNKNOWN";
+    return module_name(current_module()) ?: "UNKNOWN";
 }
 
 static bool

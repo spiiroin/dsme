@@ -5,10 +5,13 @@
    Proceses that do not respond to the request will be killed by signal 9.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Ismo Laitinen <ismo.laitinen@nokia.com>
    @author Ari Saastamoinen
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -181,9 +184,10 @@ static void ping_all(void)
                 kill(proc->pid, SIGABRT);
 
                 /* ...but make sure to kill it after a grace period */
-                proc->kill_timer = dsme_create_timer(ABORT_GRACE_PERIOD_SECONDS,
-                                                     abort_timeout_func,
-                                                     GINT_TO_POINTER(proc->pid));
+                proc->kill_timer =
+                    dsme_create_timer_seconds(ABORT_GRACE_PERIOD_SECONDS,
+                                              abort_timeout_func,
+                                              GINT_TO_POINTER(proc->pid));
                 if (proc->kill_timer == 0) {
                     /* timer creation failed; kill the process immediately */
                     dsme_log(LOG_ERR, "...kill due to timer failure: %s", strerror(errno));

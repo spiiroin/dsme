@@ -26,6 +26,7 @@
 
 #include "dsme_dbus.h"
 #include "dbusproxy.h"
+#include "../include/dsme/modulebase.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/timers.h"
@@ -78,6 +79,9 @@ void            module_fini            (void);
  * Data
  * ========================================================================= */
 
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
+
 static bus_state_t  systembus_state = BUS_STATE_UNKNOWN;
 
 static dsme_timer_t connect_timer_id = 0;
@@ -125,7 +129,7 @@ connect_timer_start(void)
 
     dsme_log(LOG_DEBUG, ME"Connect timer: start");
 
-    connect_timer_id = dsme_create_timer(1, connect_timer_cb, 0);
+    connect_timer_id = dsme_create_timer_seconds(1, connect_timer_cb, 0);
 
     connect_request();
 
@@ -184,6 +188,7 @@ static inline void *lea(const void *base, ssize_t offs)
 static gboolean
 systembus_watcher_cb(GIOChannel *src, GIOCondition cnd, gpointer dta)
 {
+    const module_t *caller = enter_module(this_module);
     bool keep_watching = false;
     bool update = false;
 
@@ -238,6 +243,7 @@ EXIT:
         systembus_watcher_stop();
     }
 
+    enter_module(caller);
     return keep_watching;
 }
 
@@ -328,6 +334,8 @@ module_fn_info_t message_handlers[] = {
 void module_init(module_t* handle)
 {
     dsme_log(LOG_DEBUG, ME"loaded");
+
+    this_module = handle;
 
     systembus_watcher_start();
     systembus_state_update();

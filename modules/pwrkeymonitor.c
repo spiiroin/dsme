@@ -11,7 +11,7 @@
    powerkey has been continously pressed for 5 seconds.
    <p>
    Copyright (C) 2010 Nokia Corporation.
-   Copyright (C) 2013 Jolla Ltd.
+   Copyright (C) 2013-2017 Jolla Ltd.
 
    @author Markus Lehtonen <markus.lehtonen@nokia.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
@@ -31,6 +31,7 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include "../include/dsme/modulebase.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/mainloop.h"
@@ -60,6 +61,9 @@ static dsme_timer_t pwrkey_timer = 0;
 
 /** Prefix string for logging messages from this module */
 #define PFIX "pwrkeymonitor: "
+
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
 
 /** Predicate for: Operating system update in progress
  *
@@ -132,8 +136,9 @@ start_pwrkey_timer(void)
     {
         dsme_log(LOG_DEBUG, PFIX"Timer already running");
     }
-    else if( !(pwrkey_timer = dsme_create_timer(PWRKEY_TIMER_SECONDS,
-                                                pwrkey_trigger, NULL)) )
+    else if( !(pwrkey_timer = dsme_create_timer_seconds(PWRKEY_TIMER_SECONDS,
+                                                        pwrkey_trigger,
+                                                        NULL)) )
     {
         dsme_log(LOG_CRIT, PFIX"Timer creation failed!");
     }
@@ -340,6 +345,7 @@ static
 gboolean
 process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
 {
+    const module_t *caller = enter_module(this_module);
     gboolean keep_going = TRUE;
 
     struct input_event buf[32];
@@ -411,6 +417,8 @@ process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
          * the channel must be removed from tracking list */
         watchlist_remove(chan);
     }
+
+    enter_module(caller);
 
     return keep_going;
 }
@@ -550,6 +558,8 @@ stop_pwrkey_monitor(void)
 void
 module_init(module_t * handle)
 {
+    this_module = handle;
+
     start_pwrkey_monitor();
 
     dsme_log(LOG_DEBUG, "libpwrkeymonitor.so loaded");

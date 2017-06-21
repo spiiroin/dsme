@@ -323,6 +323,7 @@ getbootstate/getbootstate: getbootstate/getbootstate.o
 
 CLEAN_SOURCES += dsme/dsme-rd-mode.c
 CLEAN_SOURCES += dsme/dsmesock.c
+CLEAN_SOURCES += dsme/timers.c
 CLEAN_SOURCES += modules/abootsettings.c
 CLEAN_SOURCES += modules/dbusautoconnector.c
 CLEAN_SOURCES += modules/dbusproxy.c
@@ -356,6 +357,7 @@ CLEAN_HEADERS += modules/runlevel.h
 CLEAN_HEADERS += modules/isi_conf.h
 CLEAN_HEADERS += include/dsme/oom.h
 CLEAN_HEADERS += include/dsme/mainloop.h
+CLEAN_HEADERS += include/dsme/timers.h
 
 # Files with whitespace issues
 
@@ -366,7 +368,6 @@ DIRTY_SOURCES += dsme/logging.c
 DIRTY_SOURCES += dsme/mainloop.c
 DIRTY_SOURCES += dsme/modulebase.c
 DIRTY_SOURCES += dsme/oom.c
-DIRTY_SOURCES += dsme/timers.c
 DIRTY_SOURCES += getbootstate/getbootstate.c
 DIRTY_SOURCES += modules/alarmtracker.c
 DIRTY_SOURCES += modules/batterytracker.c
@@ -401,7 +402,6 @@ DIRTY_HEADERS += include/dsme/dsmesock.h
 DIRTY_HEADERS += include/dsme/logging.h
 DIRTY_HEADERS += include/dsme/modulebase.h
 DIRTY_HEADERS += include/dsme/modules.h
-DIRTY_HEADERS += include/dsme/timers.h
 DIRTY_HEADERS += modules/malf.h
 DIRTY_HEADERS += modules/state-internal.h
 DIRTY_HEADERS += test/stub_cal.h

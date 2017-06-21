@@ -4,9 +4,12 @@
    Implementation of DSME timers.
    <p>
    Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (C) 2015-2017 Jolla Ltd.
 
    @author Ari Saastamoinen
    @authot Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -24,26 +27,113 @@
 */
 
 #include "../include/dsme/timers.h"
+#include "../include/dsme/modulebase.h"
+#include "../include/dsme/logging.h"
+
 #include <glib.h>
 
-
-dsme_timer_t dsme_create_timer(unsigned               seconds,
-                               dsme_timer_callback_t* callback,
-                               void*                  data)
+typedef struct
 {
-  return g_timeout_add_seconds(seconds, callback, data);
+    const module_t        *tg_module;
+    guint                  tg_interval;
+    dsme_timer_callback_t  tg_callback;
+    void                  *tg_data;
+
+} timergate_t;
+
+static void
+timergate_delete(timergate_t *self)
+{
+    if( !self )
+        goto EXIT;
+
+    dsme_log(LOG_DEBUG, "delete %ums timer from module: %s",
+             self->tg_interval, module_name(self->tg_module) ?: "unknown");
+    g_slice_free1(sizeof *self, self);
+
+EXIT:
+    return;
 }
 
-
-dsme_timer_t dsme_create_timer_high_priority(unsigned               seconds,
-                                             dsme_timer_callback_t* callback,
-                                             void*                  data)
+static void
+timergate_delete_cb(gpointer aptr)
 {
-  return g_timeout_add_full(G_PRIORITY_HIGH, 1000*seconds, callback, data, 0);
+    timergate_delete(aptr);
 }
 
-
-void dsme_destroy_timer(dsme_timer_t timer)
+static gboolean
+timergate_timeout_cb(gpointer aptr)
 {
-  g_source_remove(timer); // TODO: or g_source_destroy()?
+    timergate_t *self = aptr;
+
+    dsme_log(LOG_DEBUG, "dispatch %ums timer at module: %s",
+             self->tg_interval, module_name(self->tg_module) ?: "unknown");
+
+    const module_t *cur = enter_module(self->tg_module);
+    int rc = self->tg_callback(self->tg_data);
+    enter_module(cur);
+
+    return rc != 0;
+}
+
+static dsme_timer_t
+timergate_create(gint priority,
+                 guint interval,
+                 dsme_timer_callback_t callback,
+                 void *data)
+{
+    guint id = 0;
+
+    timergate_t *self = g_slice_alloc0(sizeof *self);
+
+    self->tg_module   = current_module();
+    self->tg_interval = interval;
+    self->tg_callback = callback;
+    self->tg_data     = data;
+
+    dsme_log(LOG_DEBUG, "create %ums timer from module: %s",
+             self->tg_interval, module_name(self->tg_module) ?: "unknown");
+
+    if( interval > 0 ) {
+        id = g_timeout_add_full(priority, interval,
+                                timergate_timeout_cb,
+                                self, timergate_delete_cb);
+    }
+    else {
+        id = g_idle_add_full(priority,
+                             timergate_timeout_cb,
+                             self, timergate_delete_cb);
+    }
+
+    if( !id )
+        timergate_delete(self);
+
+    return id;
+}
+
+dsme_timer_t
+dsme_create_timer_seconds(unsigned              seconds,
+                          dsme_timer_callback_t callback,
+                          void*                 data)
+{
+    return timergate_create(G_PRIORITY_DEFAULT,
+                            seconds * 1000,
+                            callback, data);
+}
+
+dsme_timer_t
+dsme_create_timer(unsigned              milliseconds,
+                  dsme_timer_callback_t callback,
+                  void*                 data)
+{
+    return timergate_create(G_PRIORITY_DEFAULT,
+                            milliseconds,
+                            callback, data);
+}
+
+void
+dsme_destroy_timer(dsme_timer_t timer)
+{
+    if( timer )
+        g_source_remove(timer);
 }

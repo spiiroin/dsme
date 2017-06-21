@@ -5,9 +5,10 @@
    issue warnings. If battery level goes below safe limit, make shutdown
 
    <p>
-   Copyright (C) 2013 Jolla Oy.
+   Copyright (C) 2013-2017 Jolla Oy.
 
    @author Pekka Lundstrom <pekka.lundstrom@jolla.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -285,8 +286,9 @@ static void send_empty_if_needed()
              */
             if ((dsme_state == DSME_STATE_ACTDEAD) && alarm_active) {
                 if (! alarm_delayed_empty_timer) {
-                    alarm_delayed_empty_timer = dsme_create_timer(ALARM_DELAYED_TIMEOUT,
-                                                                  delayed_empty_fn, NULL);
+                    alarm_delayed_empty_timer =
+                        dsme_create_timer_seconds(ALARM_DELAYED_TIMEOUT,
+                                                  delayed_empty_fn, NULL);
                     dsme_log(LOG_INFO, "batterytracker: Battery empty but shutdown delayed because of active alarm");
                 }
                 if (alarm_delayed_empty_timer)

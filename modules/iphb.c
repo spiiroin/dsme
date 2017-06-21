@@ -140,6 +140,9 @@ static char *t_repr(time_t t, char *buff, size_t size);
  * Variables
  * ------------------------------------------------------------------------- */
 
+/** Cached module handle for this plugin */
+static const module_t *this_module = 0;
+
 /** Path to android alarm device node */
 static const char android_alarm_path[] = "/dev/alarm";
 
@@ -168,7 +171,7 @@ static int rtc_fd = -1;
 static client_t *clients = NULL;
 
 /** Timer for serving wakeups with shorter than heartbeat range */
-static guint wakeup_timer = 0;
+static dsme_timer_t wakeup_timer = 0;
 
 /** System bus connection (for IPC with mce) */
 static DBusConnection *systembus = 0;
@@ -512,6 +515,8 @@ xmce_verify_name_cb(DBusPendingCall *pending, void *user_data)
 {
     (void)user_data;
 
+    const module_t *caller = enter_module(this_module);
+
     gchar       *owner = 0;
     DBusMessage *rsp   = 0;
 
@@ -525,6 +530,8 @@ cleanup:
     g_free(owner);
 
     if( rsp ) dbus_message_unref(rsp);
+
+    enter_module(caller);
 }
 
 /** Verify that a mce exists via an asynchronous GetNameOwner method call
@@ -619,6 +626,8 @@ xmce_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *user_data)
 {
     (void)user_data;
 
+    const module_t *caller = enter_module(this_module);
+
     DBusHandlerResult res = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
     const char *sender = 0;
@@ -659,6 +668,7 @@ xmce_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *user_data)
 
 cleanup:
     dbus_error_free(&err);
+    enter_module(caller);
     return res;
 }
 
@@ -2235,7 +2245,7 @@ static void clientlist_start_wakeup_timeout(const struct timeval *sleep_time)
     int ms = sleep_time->tv_sec * 1000 + sleep_time->tv_usec / 1000;
 
     dsme_log(LOG_DEBUG, PFIX"setting a wakeup in %d ms", ms);
-    wakeup_timer = g_timeout_add(ms, clientlist_handle_wakeup_timeout, 0);
+    wakeup_timer = dsme_create_timer(ms, clientlist_handle_wakeup_timeout, 0);
 }
 
 /** Cancel timer for waking up clients before the next heartbeat
@@ -2243,7 +2253,7 @@ static void clientlist_start_wakeup_timeout(const struct timeval *sleep_time)
 static void clientlist_cancel_wakeup_timeout(void)
 {
     if( wakeup_timer )
-	g_source_remove(wakeup_timer), wakeup_timer = 0;
+        dsme_destroy_timer(wakeup_timer), wakeup_timer = 0;
 }
 
 /** Helper for formatting time-to values for logging purposes
@@ -2409,7 +2419,7 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
  *       Otherwise the RTC wakeup might not get programmed
  *       directly due to clients issuing wakeup requests.
  */
-static guint clientlist_wakeup_clients_id = 0;
+static dsme_timer_t clientlist_wakeup_clients_id = 0;
 
 /** Timer callback delayed wakeup checking
  *
@@ -2449,7 +2459,7 @@ static void clientlist_wakeup_clients_cancel(void)
 {
     if( clientlist_wakeup_clients_id ) {
 	dsme_log(LOG_DEBUG, PFIX"cancel delayed wakeup checking");
-	g_source_remove(clientlist_wakeup_clients_id),
+	dsme_destroy_timer(clientlist_wakeup_clients_id),
 	    clientlist_wakeup_clients_id = 0;
 	wakelock_unlock(iphb_wakeup);
     }
@@ -2478,7 +2488,7 @@ static void clientlist_wakeup_clients_later(const struct timeval *now)
 	dsme_log(LOG_DEBUG, PFIX"schedule delayed wakeup checking");
 	wakelock_lock(iphb_wakeup, -1);
 	clientlist_wakeup_clients_id =
-	    g_timeout_add(200, clientlist_wakeup_clients_cb, 0);
+	    dsme_create_timer(200, clientlist_wakeup_clients_cb, 0);
     }
 }
 /* ------------------------------------------------------------------------- *
@@ -2827,6 +2837,7 @@ static gboolean epollfd_iowatch_cb(GIOChannel*  source,
 				   GIOCondition condition,
 				   gpointer     data)
 {
+    const module_t    *caller     = enter_module(this_module);
     gboolean           keep_going = FALSE;
     bool               wakeup_mce = false;
 
@@ -2909,6 +2920,7 @@ cleanup_nak:
 	dsme_log(LOG_CRIT, PFIX"epoll waiting disabled");
 
     wakelock_unlock(rtc_input);
+    enter_module(caller);
 
     return keep_going;
 }
@@ -3240,6 +3252,8 @@ void module_init(module_t *handle)
     bool success = false;
 
     dsme_log(LOG_INFO, PFIX"iphb.so loaded");
+
+    this_module = handle;
 
     /* restore alarm queue state */
     xtimed_status_load();

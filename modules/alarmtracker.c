@@ -195,7 +195,7 @@ static int set_internal_alarm_state(void* dummy)
           int transition = seconds(now, alarm_queue_head)
                          - dsme_snooze_timeout_in_seconds();
           alarm_state_transition_timer =
-              dsme_create_timer(transition, set_internal_alarm_state, 0);
+              dsme_create_timer_seconds(transition, set_internal_alarm_state, 0);
           dsme_log(LOG_DEBUG, "alarmtracker: next snooze in %d s", transition);
 
           alarm_set = false;
