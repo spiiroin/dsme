@@ -1,3 +1,17 @@
+dsme (0.78.1) precise; urgency=low
+
+  * [build] Update header dependencies
+  * [modulebase] Remove unused leave_module() function
+  * [modulebase] Allow passing NULL to module_name()
+  * [timers] Dispatch timers in correct module context. Fixes JB#38322
+  * [timers] Remove unused dsme_create_timer_high_priority() function
+  * [timers] Rename dsme_create_timer() to dsme_create_timer_seconds()
+  * [timers] Add dsme_create_timer() for ms resolution timeouts
+  * [timers] Use Use dsme timer api instead of the glib one. JB#38322
+  * [modules] Use correct module context in callbacks not dispatched by DSME
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 21 Jun 2017 07:56:03 +0300
+
 dsme (0.78.0) precise; urgency=low
 
   * [packaging] Adjust libsystemd build requirements. JB#37916
