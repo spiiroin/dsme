@@ -441,7 +441,8 @@ static bool set_file_offset()
     // Get partition size.
     partition_size = lseek(partition, 0, SEEK_END);
 
-    dsme_log(LOG_DEBUG, PFIX"Partition size = %llu", partition_size);
+    dsme_log(LOG_DEBUG, PFIX"Partition size = %llu",
+        (unsigned long long)partition_size);
 
     // Set file pointer to start.
     lseek(partition, 0, SEEK_SET);
@@ -460,7 +461,8 @@ static bool set_file_offset()
          dsme_log(LOG_ERR, PFIX"Error: offset null");
          return false;
     }
-    dsme_log(LOG_DEBUG, PFIX"Offset = %llu", devinfo_data_offset);
+    dsme_log(LOG_DEBUG, PFIX"Offset = %llu",
+        (unsigned long long)devinfo_data_offset);
 
     return true;
 }
