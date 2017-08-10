@@ -1,3 +1,9 @@
+dsme (0.78.2) precise; urgency=low
+
+  * [abootsettings] Cast off_t for debug log (aarch64). Fixes JB#39365
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 10 Aug 2017 08:33:34 +0300
+
 dsme (0.78.1) precise; urgency=low
 
   * [build] Update header dependencies
