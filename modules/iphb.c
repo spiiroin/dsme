@@ -92,8 +92,8 @@
 /** Maximum time to stay in suspend [seconds]; zero for no limit */
 #define RTC_MAXIMUM_WAKEUP_TIME (30*60) // 30 minutes
 
-/** Image create time = mtime of mer-release file */
-#define IMAGE_TIME_STAMP_FILE "/etc/mer-release"
+/** Image create time = mtime of os-release file/symlink */
+#define IMAGE_TIME_STAMP_FILE "/etc/os-release"
 
 /** Saved system time = mtime of saved-time file */
 #define SAVED_TIME_FILE       "/var/tmp/saved-time"
