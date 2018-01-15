@@ -92,8 +92,8 @@
 /** Maximum time to stay in suspend [seconds]; zero for no limit */
 #define RTC_MAXIMUM_WAKEUP_TIME (30*60) // 30 minutes
 
-/** Image create time = mtime of mer-release file */
-#define IMAGE_TIME_STAMP_FILE "/etc/mer-release"
+/** Image create time = mtime of os-release file/symlink */
+#define IMAGE_TIME_STAMP_FILE "/etc/os-release"
 
 /** Saved system time = mtime of saved-time file */
 #define SAVED_TIME_FILE       "/var/tmp/saved-time"
@@ -3115,14 +3115,14 @@ static time_t mintime_fetch(void)
 {
     struct tm tm =
     {
-	// 2013-12-01 12:00:00 UTC
+	// 2018-01-01 12:00:00 UTC
 	.tm_sec   = 0,
 	.tm_min   = 0,
 	.tm_hour  = 12,
 
-	.tm_mday  = 10   - 0,
-	.tm_mon   = 12   - 1,
-	.tm_year  = 2013 - 1900,
+	.tm_mday  = 1    - 0,
+	.tm_mon   = 1    - 1,
+	.tm_year  = 2018 - 1900,
 
 	.tm_wday  = -1,
 	.tm_yday  = -1,
