@@ -1,3 +1,10 @@
+dsme (0.78.3) precise; urgency=low
+
+  * [iphb] Take release time stamp from /etc/os-release. Fixes JB#40772
+  * [iphb] Update hardcoded minimum system time. JB#40772
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 15 Jan 2018 14:26:27 +0200
+
 dsme (0.78.2) precise; urgency=low
 
   * [abootsettings] Cast off_t for debug log (aarch64). Fixes JB#39365
