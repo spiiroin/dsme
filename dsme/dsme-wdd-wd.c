@@ -63,6 +63,17 @@ static const wd_t wd[] = {
 /* watchdog file descriptors */
 static int  wd_fd[WD_COUNT];
 
+bool dsme_wd_is_wd_fd(int fd)
+{
+  int i;
+
+  for (i = 0; i < WD_COUNT; ++i) {
+      if (wd_fd[i] != -1 && fd == wd_fd[i])
+          return true;
+  }
+
+  return false;
+}
 
 void dsme_wd_kick(void)
 {

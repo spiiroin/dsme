@@ -162,11 +162,14 @@ static int daemonize(void)
 
     /* Close all file descriptors and redirect stdio to /dev/null */
     i = getdtablesize();
+
     if (i == -1) {
         i = 256;
     }
+
     while (--i >= 0) {
-        close(i);
+        if (!dsme_wd_is_wd_fd(i))
+            close(i);
     }
 
     i = open("/dev/null", O_RDWR);
