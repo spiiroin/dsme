@@ -7,6 +7,11 @@
 
    @author Igor Stoppa <igor.stopaa@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Kalle Lampila <kalle.lampila@cybercom.com>
+   @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 
    This file is part of Dsme.
 

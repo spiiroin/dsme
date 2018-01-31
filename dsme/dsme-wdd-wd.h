@@ -6,6 +6,10 @@
    Copyright (C) 2004-2010 Nokia Corporation.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 
    This file is part of Dsme.
 

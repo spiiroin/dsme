@@ -16,6 +16,7 @@
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
    @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
    @author Carsten Munk <carsten.munk@jollamobile.com>
+   @author Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 
    This file is part of Dsme.
 
