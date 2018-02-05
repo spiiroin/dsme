@@ -7,6 +7,11 @@
 
    @author Igor Stoppa <igor.stopaa@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Matias Muhonen <ext-matias.muhonen@nokia.com>
+   @author Kalle Lampila <kalle.lampila@cybercom.com>
+   @author Jarkko Nikula <jarkko.nikula@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
+   @author Ivaylo Dimitrov <ivo.g.dimitrov.75@gmail.com>
 
    This file is part of Dsme.
 
@@ -63,6 +68,17 @@ static const wd_t wd[] = {
 /* watchdog file descriptors */
 static int  wd_fd[WD_COUNT];
 
+bool dsme_wd_is_wd_fd(int fd)
+{
+  int i;
+
+  for (i = 0; i < WD_COUNT; ++i) {
+      if (wd_fd[i] != -1 && fd == wd_fd[i])
+          return true;
+  }
+
+  return false;
+}
 
 void dsme_wd_kick(void)
 {
