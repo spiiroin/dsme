@@ -1,3 +1,10 @@
+dsme (0.78.4) precise; urgency=low
+
+  * [dsme-wdd] Update authors list
+  * [dsme-wdd] Do not close watchdog file descriptors when daemonizing. Fixes MER#1870
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 13 Feb 2018 09:36:00 +0200
+
 dsme (0.78.3) precise; urgency=low
 
   * [iphb] Take release time stamp from /etc/os-release. Fixes JB#40772
