@@ -1,3 +1,9 @@
+dsme (0.79.0) precise; urgency=low
+
+  * [dsme] Make dsme message type identifiers unique. JB#38500
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 04 Apr 2018 08:51:13 +0300
+
 dsme (0.78.4) precise; urgency=low
 
   * [dsme-wdd] Update authors list
