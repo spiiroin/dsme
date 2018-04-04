@@ -73,21 +73,21 @@ static void usage(const char *  progname);
 */
 static void usage(const char *  progname)
 {
-  fprintf(stderr, "USAGE: %s -p <startup-module> "
-                    "[-p <optional-module>] [...] options\n",
+  printf("USAGE: %s -p <startup-module> "
+	 "[-p <optional-module>] [...] options\n",
          progname);
-  fprintf(stderr, "Valid options:\n");
-  fprintf(stderr, " -l  --logging     "
-                    "Logging type (syslog, stderr, none)\n");
-  fprintf(stderr, " -v  --verbosity   Log verbosity (3..7)\n");
-  fprintf(stderr, " -t  --log-include   <file-pattern>:<func-pattern>\n");
-  fprintf(stderr, " -e  --log-exclude   <file-pattern>:<func-pattern>\n");
+  printf("Valid options:\n");
+  printf(" -l  --logging     "
+	 "Logging type (syslog, stderr, none)\n");
+  printf(" -v  --verbosity   Log verbosity (3..7)\n");
+  printf(" -t  --log-include   <file-pattern>:<func-pattern>\n");
+  printf(" -e  --log-exclude   <file-pattern>:<func-pattern>\n");
 #ifdef DSME_SYSTEMD_ENABLE
-  fprintf(stderr, " -s  --systemd     "
-                    "Signal systemd when initialization is done\n");
+  printf(" -s  --systemd     "
+	 "Signal systemd when initialization is done\n");
 #endif
-  fprintf(stderr, "     --valgrind    Enable running with valgrind\n");
-  fprintf(stderr, " -h  --help        Help\n");
+  printf("     --valgrind    Enable running with valgrind\n");
+  printf(" -h  --help        Help\n");
 }
 
 
