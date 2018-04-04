@@ -50,6 +50,18 @@ typedef struct {
 } DSM_MSGTYPE_DISK_SPACE;
 
 enum {
+  /* NOTE: dsme message types are defined in:
+   * - libdsme
+   * - libiphb
+   * - dsme
+   *
+   * When adding new message types
+   * 1) uniqueness of the identifiers must be
+   *    ensured accross all these source trees
+   * 2) the dsmemsg_id_name() function in libdsme
+   *    must be made aware of the new message type
+   */
+
   DSME_MSG_ENUM(DSM_MSGTYPE_DISK_SPACE, 0x00002000),
 };
 

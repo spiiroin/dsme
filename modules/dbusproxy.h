@@ -30,6 +30,18 @@
 #include <dsme/messages.h>
 
 enum {
+    /* NOTE: dsme message types are defined in:
+     * - libdsme
+     * - libiphb
+     * - dsme
+     *
+     * When adding new message types
+     * 1) uniqueness of the identifiers must be
+     *    ensured accross all these source trees
+     * 2) the dsmemsg_id_name() function in libdsme
+     *    must be made aware of the new message type
+     */
+
     DSME_MSG_ENUM(DSM_MSGTYPE_DBUS_CONNECT,    0x00000100),
     DSME_MSG_ENUM(DSM_MSGTYPE_DBUS_DISCONNECT, 0x00000101),
     DSME_MSG_ENUM(DSM_MSGTYPE_DBUS_CONNECTED,  0x00000102),
