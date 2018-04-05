@@ -67,7 +67,6 @@ static const module_t *this_module = 0;
  * ------------------------------------------------------------------------- */
 
 static void send_usb_status     (bool mounted_to_pc);
-static void send_charger_status (bool charger_connected);
 
 /* ------------------------------------------------------------------------- *
  * Interpreting usb mode strings
@@ -82,6 +81,9 @@ static void send_charger_status (bool charger_connected);
  * - any other name means cable is connected (=charging should be possible)
  * - some special cases signify that fs is mounted or otherwise directly
  *   accessed via usb (mass storage and mtp modes)
+ *
+ * Note that "charging" information derived from usb mode is no longer used
+ * as it does account for wireless / some types of ac chargers.
  */
 static const struct
 {
@@ -197,31 +199,6 @@ cleanup:
     return;
 }
 
-/** Broadcast charger-is-connected status changes within DSME
- */
-static void
-send_charger_status(bool charger_connected)
-{
-    /* Initialize to value that does not match any boolean value */
-    static int prev = -1;
-
-    if( prev == charger_connected )
-        goto cleanup;
-
-    DSM_MSGTYPE_SET_CHARGER_STATE msg = DSME_MSG_INIT(DSM_MSGTYPE_SET_CHARGER_STATE);
-
-    prev = msg.connected = charger_connected;
-
-    dsme_log(LOG_DEBUG, PFIX"broadcasting usb charger state:%s connected",
-             msg.connected ? "" : " not");
-
-    broadcast_internally(&msg);
-
-cleanup:
-
-    return;
-}
-
 /* ========================================================================= *
  * Interpreting usb mode strings
  * ========================================================================= */
@@ -284,7 +261,6 @@ update_status(const char *mode)
     evaluate_status(mode, &charging, &mounted);
 
     /* Broadcast status changes */
-    send_charger_status(charging);
     send_usb_status(mounted);
 }
 

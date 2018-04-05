@@ -291,6 +291,7 @@ static void systembus_disconnect(void);
  * send
  * ------------------------------------------------------------------------- */
 
+static void send_charger_state       (bool charging);
 static void send_battery_state       (bool empty);
 static void send_dsme_state_query    (void);
 
@@ -441,6 +442,11 @@ static void dsme_charger_state_set(dsme_charger_state_t state)
     dsme_charger_state = state;
 
     battery_empty_schedule_rethink();
+
+    if( dsme_charger_state != DSME_CHARGER_STATE_UNKNOWN ) {
+        bool charging = (dsme_charger_state == DSME_CHARGER_STATE_ON);
+        send_charger_state(charging);
+    }
 
 EXIT:
     return;
@@ -1800,6 +1806,28 @@ systembus_disconnect(void)
 /* ========================================================================= *
  * Send internal DSME messages
  * ========================================================================= */
+
+/** Broadcast charger-is-connected status changes within DSME
+ */
+static void
+send_charger_state(bool charging)
+{
+    /* Initialize to value that does not match any boolean value */
+    static int prev = -1;
+
+    if( prev == charging )
+        goto cleanup;
+
+    dsme_log(LOG_DEBUG, PFIX"broadcast: charger_state=%s", bool_repr(charging));
+
+    DSM_MSGTYPE_SET_CHARGER_STATE msg = DSME_MSG_INIT(DSM_MSGTYPE_SET_CHARGER_STATE);
+    prev = msg.connected = charging;
+    broadcast_internally(&msg);
+
+cleanup:
+
+    return;
+}
 
 static void
 send_battery_state(bool empty)
