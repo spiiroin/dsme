@@ -293,6 +293,7 @@ static void systembus_disconnect(void);
 
 static void send_charger_state       (bool charging);
 static void send_battery_state       (bool empty);
+static void send_battery_level       (dsme_battery_level_t level);
 static void send_dsme_state_query    (void);
 
 /* ------------------------------------------------------------------------- *
@@ -538,6 +539,10 @@ static void dsme_battery_level_set(dsme_battery_level_t level)
     dsme_battery_level = level;
 
     battery_empty_schedule_rethink();
+
+    if( dsme_battery_level != DSME_BATTERY_LEVEL_UNKNOWN ) {
+        send_battery_level(dsme_battery_level);
+    }
 
 EXIT:
     return;
@@ -1838,6 +1843,18 @@ send_battery_state(bool empty)
     DSM_MSGTYPE_SET_BATTERY_STATE msg =
         DSME_MSG_INIT(DSM_MSGTYPE_SET_BATTERY_STATE);
     msg.empty = empty;
+    broadcast_internally(&msg);
+}
+
+static void
+send_battery_level(dsme_battery_level_t level)
+{
+    dsme_log(LOG_DEBUG, PFIX"broadcast: battery_level=%s",
+             dsme_battery_level_repr(level));
+
+    DSM_MSGTYPE_SET_BATTERY_LEVEL msg =
+        DSME_MSG_INIT(DSM_MSGTYPE_SET_BATTERY_LEVEL);
+    msg.level = level;
     broadcast_internally(&msg);
 }
 
