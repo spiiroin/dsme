@@ -154,8 +154,6 @@ dsme_main_loop_quit(int exit_code)
     if (state == RUNNING) {
         state = STOPPED;
 
-        dsme_log_stop();
-
         if (mainloop_exit_code < exit_code) {
             mainloop_exit_code = exit_code;
         }
