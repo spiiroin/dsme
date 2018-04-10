@@ -1,5 +1,18 @@
 dsme (0.79.0) precise; urgency=low
 
+  * [logging] Use eventfd instead of semaphore
+  * [dsme-server] Write --help to stdout
+  * [batterytracker] Track battery state via MCE D-Bus interface. JB#41302
+  * [batterytracker] Expose charger state within DSME. Fixes JB#41302
+  * [batterytracker] Expose battery level within DSME. JB#41302
+  * [state] Allow cancellation of battery empty shutdown. JB#41302
+  * [batterytracker] Block battery empty shutdown during bootup. JB#41302
+  * [logging] Fix typo
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 10 Apr 2018 21:55:58 +0300
+
+dsme (0.79.0) precise; urgency=low
+
   * [dsme] Make dsme message type identifiers unique. JB#38500
 
  -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 04 Apr 2018 08:51:13 +0300
