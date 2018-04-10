@@ -1,4 +1,10 @@
-dsme (0.79.0) precise; urgency=low
+dsme (0.79.2) precise; urgency=low
+
+  * [batterytracker] Fix logging format strings. JB#41302
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 10 Apr 2018 22:13:39 +0300
+
+dsme (0.79.1) precise; urgency=low
 
   * [logging] Use eventfd instead of semaphore
   * [dsme-server] Write --help to stdout
