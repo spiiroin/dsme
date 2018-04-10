@@ -410,7 +410,7 @@ static volatile guint read_count_pvt  = 0;
 /** Flag for: logger thread enabled
  *
  * This initialized to non-zero value and should be cleared only
- * when either the whole dsne server process or logging thread is
+ * when either the whole dsme server process or logging thread is
  * about to exit.
  */
 static volatile int thread_enabled = 1;
