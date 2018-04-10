@@ -771,7 +771,7 @@ static void config_load(void)
         /* Must define at least "min_level" and "polling time".
          */
         if( values < 2 ) {
-            dsme_log(LOG_ERR, PFIX"%s:%d: %s: not enough data",
+            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: not enough data",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i]);
             goto EXIT;
@@ -792,7 +792,7 @@ static void config_load(void)
          * Polling times should also make sense  10-1000s
          */
         if( temp[i].polling_time < 10 || temp[i].polling_time > 1000 ) {
-            dsme_log(LOG_ERR, PFIX"%s:%d: %s: invalid polling_time=%d",
+            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: invalid polling_time=%d",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i],
                      temp[i].polling_time);
@@ -800,7 +800,7 @@ static void config_load(void)
         }
 
         if( temp[i].min_level < 0 || temp[i].min_level > 100 ) {
-            dsme_log(LOG_ERR, PFIX"%s:%d: %s: invalid min_level=%d",
+            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: invalid min_level=%d",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i],
                      temp[i].min_level);
@@ -808,7 +808,7 @@ static void config_load(void)
         }
 
         if( (i > 0) && temp[i-1].min_level <= temp[i].min_level ) {
-            dsme_log(LOG_ERR, PFIX"%s:%d: %s: min_level=%d is not descending",
+            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: min_level=%d is not descending",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i],
                      temp[i].min_level);
