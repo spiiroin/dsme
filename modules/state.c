@@ -107,8 +107,6 @@
  */
 #define DSME_MINIMUM_BATTERY_TO_USER    3
 
-#define BATTERY_LEVEL_PATH   "/run/state/namespaces/Battery/ChargePercentage"
-
 typedef enum {
     CHARGER_STATE_UNKNOWN,
     CHARGER_CONNECTED,
@@ -129,6 +127,13 @@ static bool     reboot_requested       = false;
 static bool     test                   = false;
 static bool     actdead_switch_done    = false;
 static bool     user_switch_done       = false;
+
+/* The current battery level percentage
+ *
+ * Is initialized to -1, which blocks bootup from act dead to user
+ * until actual battery level gets reported.
+ */
+static dsme_battery_level_t dsme_battery_level = DSME_BATTERY_LEVEL_UNKNOWN;
 
 /* the overall dsme state which was selected based on the above bits */
 static dsme_state_t current_state = DSME_STATE_NOT_SET;
@@ -174,7 +179,6 @@ static void stop_charger_disconnect_timer(void);
 static bool rd_mode_enabled(void);
 
 static void runlevel_switch_ind(const DsmeDbusMessage* ind);
-static int  get_battery_level(void);
 
 static const struct {
     int         value;
@@ -416,10 +420,10 @@ static void try_to_change_state(dsme_state_t new_state)
           /* We are in actdead and user state is wanted
            * We don't allow that to happen if battery level is too low
            */
-          if (get_battery_level() < DSME_MINIMUM_BATTERY_TO_USER ) {
+          if (dsme_battery_level < DSME_MINIMUM_BATTERY_TO_USER ) {
               dsme_log(LOG_WARNING,
                  PFIX"Battery level %d%% too low for %s state",
-                 get_battery_level(),
+                 dsme_battery_level,
                  state_name(new_state));
 #ifdef DSME_VIBRA_FEEDBACK
               /* Indicate by vibra that boot is not possible */
@@ -1023,6 +1027,14 @@ static void start_battery_empty_timer(void)
   }
 }
 
+DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_LEVEL, conn, battery)
+{
+    dsme_log(LOG_INFO, PFIX"battery level=%d received",
+             battery->level);
+
+    dsme_battery_level = battery->level;
+}
+
 DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
 {
   dsme_log(LOG_NOTICE,
@@ -1038,6 +1050,10 @@ DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
 
       /* then set up a delayed shutdown */
       start_battery_empty_timer();
+  }
+  else {
+      /* Cancel delayed shutdown */
+      stop_battery_empty_timer();
   }
 }
 
@@ -1151,6 +1167,7 @@ module_fn_info_t message_handlers[] = {
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_THERMAL_STATUS),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_EMERGENCY_CALL_STATE),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_BATTERY_STATE),
+      DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_BATTERY_LEVEL),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
       {0}
@@ -1281,27 +1298,6 @@ static void set_initial_state_bits(const char* bootstate)
           dsme_log(LOG_NOTICE, PFIX"R&D mode enabled, not entering MALF '%s'", p);
       }
   }
-}
-
-static int  get_battery_level(void)
-{
-    FILE* f;
-    bool ok = false;
-    int batterylevel;
-
-
-    f = fopen(BATTERY_LEVEL_PATH, "r");
-    if (f) {
-        if (fscanf(f, "%d", &batterylevel) == 1) {
-            ok = true;
-        }
-        fclose(f);
-    }
-    if (!ok) {
-        dsme_log(LOG_ERR, PFIX"FAILED to read %s", BATTERY_LEVEL_PATH);
-        batterylevel = DSME_MINIMUM_BATTERY_TO_USER; /* return fake, don't block state change */
-    }
-    return batterylevel;
 }
 
 void module_init(module_t* handle)

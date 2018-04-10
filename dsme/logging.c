@@ -30,6 +30,8 @@
 
 #include "../include/dsme/logging.h"
 
+#include <sys/eventfd.h>
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,7 +45,6 @@
 #include <linux/netlink.h>
 
 #include <pthread.h>
-#include <semaphore.h>
 #include <fnmatch.h>
 
 #include <glib.h>
@@ -351,6 +352,7 @@ static void log_to_stderr(const log_entry_t *entry)
             entry->file,
             entry->func,
             entry->text);
+    fflush(stderr);
 }
 
 /*
@@ -383,32 +385,174 @@ static void (*dsme_log_routine)(const log_entry_t *entry) = log_to_stderr;
 /** Ring buffer for queueing logging messages */
 static log_entry_t ring_buffer[DSME_LOG_ENTRY_COUNT];
 
-/** Semaphore for waking up the logger thread */
-static sem_t ring_buffer_sem;
+/** Eventfd for waking up the logger thread */
+static volatile int ring_buffer_event_fd = -1;
+
+/** Worker thread id */
+static pthread_t worker_tid = 0;
 
 /** Ring buffer write position
  *
  * This is modified from main thread only.
+ *
+ * Access only via read_count_get() / read_count_inc() functions.
  */
-static volatile unsigned write_count = 0;
+static volatile guint write_count_pvt = 0;
 
 /** Ring buffer read position
  *
  * This is modified from logger thread only.
+ *
+ * Access only via write_count_get() / write_count_inc() functions.
  */
-static volatile unsigned read_count  = 0;
+static volatile guint read_count_pvt  = 0;
 
 /** Flag for: logger thread enabled
  *
- * This is modified from main thread only.
+ * This initialized to non-zero value and should be cleared only
+ * when either the whole dsne server process or logging thread is
+ * about to exit.
  */
-static volatile int thread_enabled = 0;
+static volatile int thread_enabled = 1;
 
 /** Flag for: logger thread running
  *
  * This is modified from logger thread only.
  */
 static volatile int thread_running = 0;
+
+/** Atomic access to logging ring buffer read count
+ *
+ * If glib atomic helpers can be assumed provide
+ * atomic access and use of hw-only memory barrier,
+ * they are used.
+ *
+ * Otherwise we prefer hitting issues arising from
+ * non-atomic access etc over chances of hitting
+ * priority inversions due the use of mutexes.
+ *
+ * @return number of messages written to logging ring buffer.
+ */
+static inline guint read_count_get(void)
+{
+# ifdef G_ATOMIC_LOCK_FREE
+    return g_atomic_int_get(&read_count_pvt);
+# else
+    return read_count_pvt;
+# endif
+}
+
+/** Atomic increase of logging ring buffer read count
+ *
+ * @sa #read_count_get()
+ */
+static inline void read_count_inc(void)
+{
+# ifdef G_ATOMIC_LOCK_FREE
+    g_atomic_int_inc(&read_count_pvt);
+# else
+    ++read_count_pvt;
+# endif
+}
+
+/** Atomic access to logging ring buffer write count
+ *
+ * @sa #read_count_get()
+ *
+ * @return number of messages read from logging ring buffer.
+ */
+static inline guint write_count_get(void)
+{
+# ifdef G_ATOMIC_LOCK_FREE
+    return g_atomic_int_get(&write_count_pvt);
+# else
+    return write_count_pvt;
+# endif
+}
+
+/** Atomic increase of logging ring buffer write count
+ *
+ * @sa #read_count_get()
+ */
+static inline void write_count_inc(void)
+{
+# ifdef G_ATOMIC_LOCK_FREE
+    g_atomic_int_inc(&write_count_pvt);
+# else
+    ++write_count_pvt;
+# endif
+}
+
+/** Number of messages currently stored in logging ring buffer
+ *
+ * @return number of messages available for reading in logging ring buffer.
+ */
+static inline guint buffered_count(void)
+{
+    return write_count_get() - read_count_get();
+}
+
+/** Notify logger thread about new entry in ring buffer
+ *
+ * @param entry  logging entry pointer
+ *
+ * Expected usage:
+ *
+ * @li Entry is "allocated" at slot read_count_get()
+ * @li Entry data is filled in via log_entry_format()
+ * @li Buffered count is updated via Write_count_inc()
+ * @li Then this function is called
+ *
+ * Assumptions built in:
+ *
+ * @li All logging occurs only from one (= the main) thread
+ *
+ * @note The entry pointer itself is not used except in situations where
+ *       the worker thread is not available for one or another reason.
+ */
+static void
+dsme_log_notify_worker(log_entry_t *entry)
+{
+    const uint64_t one = 1;
+    bool           ack = false;
+
+    if( thread_enabled ) {
+        if( ring_buffer_event_fd == -1 ) {
+            /* Logging functionality was used before dsme_log_init().
+             *
+             * Mostly harmless, but make some noise anyway.
+             */
+            static bool reported = false;
+            if( !reported ) {
+                reported = true;
+                fprintf(stderr, "*** DSME LOGGER USED BEFORE INIT\n");
+                fflush(stderr);
+            }
+        }
+        else if( write(ring_buffer_event_fd, &one, sizeof one) == -1 ) {
+            /* Disable logging thread - this and all future logging
+             * will be handled from main thread.
+             *
+             * As this makes dsme server process suspectible to get
+             * frozen / blocked by problems syslogd/journald might
+             * be having - which in turn can lead to dsme wdd process
+             * to stop feeding the watchdog devices - which can lead
+             * to wd reboot -> make some noise about this.
+             */
+            thread_enabled = 0;
+            fprintf(stderr, "*** DSME LOGGER THREAD DISABLED\n");
+            fflush(stderr);
+        }
+        else {
+            ack = true;
+        }
+    }
+
+    if( !ack ) {
+        /* Handle from main thread */
+        dsme_log_routine(entry);
+    }
+}
 
 /** Queue a logging message to logging ringbuffer
  *
@@ -434,7 +578,7 @@ dsme_log_queue(int prio, const char *file, const char *func, const char* fmt, ..
     log_entry_t *entry;
 
     /* Handle ring buffer overflows */
-    unsigned buffered = write_count - read_count;
+    unsigned buffered = buffered_count();
 
     if( buffered >= DSME_LOG_ENTRY_COUNT ) {
         overflow = true;
@@ -450,24 +594,26 @@ dsme_log_queue(int prio, const char *file, const char *func, const char* fmt, ..
         }
 
         /* Add log entry about the overflow itself */
-        entry = &ring_buffer[write_count++ % DSME_LOG_ENTRY_COUNT];
+        entry = &ring_buffer[write_count_get() % DSME_LOG_ENTRY_COUNT];
         log_entry_format(entry, LOG_ERR, __FILE__, __FUNCTION__,
                          "logging ringbuffer overflow; %u messages lost", skipped);
-        sem_post(&ring_buffer_sem);
+        write_count_inc();
+        dsme_log_notify_worker(entry);
 
         overflow = false;
         skipped = 0;
     }
 
     /* Add log entry to the ring buffer */
-    entry = &ring_buffer[write_count++ % DSME_LOG_ENTRY_COUNT];
+    entry = &ring_buffer[write_count_get() % DSME_LOG_ENTRY_COUNT];
 
     va_list va;
     va_start(va, fmt);
     log_entry_vformat(entry, prio, file, func, fmt, va);
     va_end(va);
 
-    sem_post(&ring_buffer_sem);
+    write_count_inc();
+    dsme_log_notify_worker(entry);
 
 EXIT:
     return;
@@ -485,28 +631,59 @@ dsme_log_thread(void* param)
 
     thread_running = 1;
 
-    for( ;; ) {
-        if( !thread_enabled )
-            break;
+    /* Deny thread cancellation */
+    pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
+    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, 0);
 
-        if( sem_wait(&ring_buffer_sem) == -1) {
-            if( errno == EINTR || errno == EAGAIN )
-                continue;
-            break;
+    for( ;; ) {
+        uint64_t cnt = 0;
+
+        /* Arrange a cancelation point at eventfd read() */
+        pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, 0);
+        ssize_t rc = read(ring_buffer_event_fd, &cnt, sizeof cnt);
+        pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, 0);
+
+        /* Ignore i/o error if we have been asked to exit */
+        if( !thread_enabled )
+            goto EXIT;
+
+        /* Make noise if exiting due to i/o error */
+        if( rc == -1 ) {
+            static const char m[] = "*** DSME LOGGER READ ERROR\n";
+            if( write(STDERR_FILENO, m, sizeof m - 1) == -1 ) {
+                // dontcare
+            }
+            goto EXIT;
         }
 
-        if( !thread_enabled )
-            break;
+        for( ; cnt; --cnt ) {
+            /* While it should not be possible; if it looks like ring buffer
+             * bookkeeping is out of sync, make some noise, exit logger
+             * thread, and switch to log-from-main-thread logic.
+             */
+            if( buffered_count() == 0 ) {
+                static const char m[] = "*** DSME LOGGER OUT OF SYNC\n";
+                if( write(STDERR_FILENO, m, sizeof m - 1) == -1 ) {
+                    // dontcare
+                }
+                goto EXIT;
+            }
 
-        if( read_count == write_count )
-            continue;
+            /* Pop entry from ring buffer and process it */
+            log_entry_t *entry = &ring_buffer[read_count_get() % DSME_LOG_ENTRY_COUNT];
+            dsme_log_routine(entry);
+            read_count_inc();
 
-        log_entry_t *entry = &ring_buffer[read_count % DSME_LOG_ENTRY_COUNT];
-        dsme_log_routine(entry);
-        ++read_count;
+            /* Stop processing if we have been asked to exit */
+            if( !thread_enabled )
+                goto EXIT;
+        }
     }
-
+EXIT:
     thread_running = 0;
+
+    /* Disable ring buffering (if we exit without getting cancelled) */
+    thread_enabled = 0;
 
     return 0;
 }
@@ -675,6 +852,37 @@ dsme_log_p_(int prio, const char *file, const char *func)
  * Logging Start/Stop
  * ========================================================================= */
 
+/** Initialize logging ring buffer
+ *
+ * After this function has been called, messages can be queued to
+ * ring buffer.
+ *
+ * Worker thread is started from dsme_log_open() i.e. when also the
+ * logging target has been defined.
+ *
+ * @return true on success, or false on failure
+ */
+bool
+dsme_log_init(void)
+{
+    bool ack = false;
+
+    if( (ring_buffer_event_fd = eventfd(0, EFD_CLOEXEC)) == -1 ) {
+        fprintf(stderr, "eventfd: %s\n", strerror(errno));
+        goto EXIT;
+    }
+
+    /* Using dsme_log() & co is ok once ring_buffer_event_fd is set, but
+     * note that default verbosity and logging target is effective until
+     * also dsme_log_open() is called.
+     */
+
+    ack = true;
+
+EXIT:
+    return ack;
+}
+
 /** Initialize logging
  *
  * @param method    logging method
@@ -729,14 +937,7 @@ dsme_log_open(log_method  method,
         return false;
     }
 
-    /* initialize the ring buffer semaphore */
-    if (sem_init(&ring_buffer_sem, 0, 0) == -1) {
-        fprintf(stderr, "sem_init: %s\n", strerror(errno));
-        return false;
-    }
-
     /* create the logging thread */
-    thread_enabled = 1;
     pthread_attr_t     tattr;
     pthread_t          tid;
     struct sched_param param;
@@ -756,6 +957,15 @@ dsme_log_open(log_method  method,
         return false;
     }
 
+    worker_tid = tid;
+
+    /* Report whether true or merely assumed to be atomic
+     * operations are used for bookkeeping. */
+# ifdef G_ATOMIC_LOCK_FREE
+    dsme_log(LOG_DEBUG, "using glib atomic helper functions");
+# else
+    dsme_log(LOG_WARNING, "not using glib atomic helper functions");
+# endif
     return true;
 }
 
@@ -767,11 +977,14 @@ dsme_log_open(log_method  method,
 void
 dsme_log_close(void)
 {
+    // Free rule data
+    dsme_log_clear_rules();
+
     // Deny queue processing from logging thread
     dsme_log_stop();
 
     // Flush remaining messages from main thread
-    for( unsigned at = read_count; at != write_count; ++at ) {
+    for( guint at = read_count_get(); at != write_count_get(); ++at ) {
         log_entry_t *entry = &ring_buffer[at % DSME_LOG_ENTRY_COUNT];
         dsme_log_routine(entry);
     }
@@ -794,8 +1007,6 @@ dsme_log_close(void)
     default:
         break;
     }
-
-    dsme_log_clear_rules();
 }
 
 /** Stop logging worker thread
@@ -810,11 +1021,37 @@ dsme_log_close(void)
 void
 dsme_log_stop(void)
 {
-    if( thread_enabled ) {
-        thread_enabled = 0;
-        sem_post(&ring_buffer_sem);
+    /* Disable ring buffering and tell logger to exit */
+    thread_enabled = 0;
+
+    /* Closing eventfd denies logger from going to sleep */
+    int fd = ring_buffer_event_fd;
+    if( fd != -1 ) {
+        ring_buffer_event_fd = -1;
+        close(fd);
     }
 
+    /* Wait upto 3 seconds for logger to exit */
+    pthread_t tid = worker_tid;
+    if( tid != 0 ) {
+        worker_tid = 0;
+        int err = pthread_cancel(tid);
+        if( err ) {
+            fprintf(stderr, "*** FAILED TO STOP DSME LOGGER, err=%s\n", strerror(err));
+            fflush(stderr);
+        }
+        else {
+            void *ret = 0;
+            struct timespec tmo = { };
+            clock_gettime(CLOCK_REALTIME, &tmo);
+            tmo.tv_sec += 3;
+            err = pthread_timedjoin_np(tid, &ret, &tmo);
+            if( err ) {
+                fprintf(stderr, "*** FAILED TO JOIN DSME LOGGER, err=%s\n", strerror(err));
+                fflush(stderr);
+            }
+        }
+    }
 }
 
 /* ========================================================================= *

@@ -78,6 +78,7 @@ enum
 };
 
 /* Logging functionality */
+bool dsme_log_init(void);
 bool dsme_log_open(log_method method, int verbosity, int usetime,
                    const char *prefix, int facility, int option,
                    const char *filename);

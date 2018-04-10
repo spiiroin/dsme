@@ -73,21 +73,21 @@ static void usage(const char *  progname);
 */
 static void usage(const char *  progname)
 {
-  fprintf(stderr, "USAGE: %s -p <startup-module> "
-                    "[-p <optional-module>] [...] options\n",
+  printf("USAGE: %s -p <startup-module> "
+	 "[-p <optional-module>] [...] options\n",
          progname);
-  fprintf(stderr, "Valid options:\n");
-  fprintf(stderr, " -l  --logging     "
-                    "Logging type (syslog, stderr, none)\n");
-  fprintf(stderr, " -v  --verbosity   Log verbosity (3..7)\n");
-  fprintf(stderr, " -t  --log-include   <file-pattern>:<func-pattern>\n");
-  fprintf(stderr, " -e  --log-exclude   <file-pattern>:<func-pattern>\n");
+  printf("Valid options:\n");
+  printf(" -l  --logging     "
+	 "Logging type (syslog, stderr, none)\n");
+  printf(" -v  --verbosity   Log verbosity (3..7)\n");
+  printf(" -t  --log-include   <file-pattern>:<func-pattern>\n");
+  printf(" -e  --log-exclude   <file-pattern>:<func-pattern>\n");
 #ifdef DSME_SYSTEMD_ENABLE
-  fprintf(stderr, " -s  --systemd     "
-                    "Signal systemd when initialization is done\n");
+  printf(" -s  --systemd     "
+	 "Signal systemd when initialization is done\n");
 #endif
-  fprintf(stderr, "     --valgrind    Enable running with valgrind\n");
-  fprintf(stderr, " -h  --help        Help\n");
+  printf("     --valgrind    Enable running with valgrind\n");
+  printf(" -h  --help        Help\n");
 }
 
 
@@ -256,7 +256,11 @@ EXIT:
   */
 int main(int argc, char *argv[])
 {
+  int exit_code = EXIT_FAILURE;
   GSList* module_names = 0;
+
+  if( !dsme_log_init() )
+      goto EXIT;
 
   signal(SIGINT,  signal_handler);
   signal(SIGTERM, signal_handler);
@@ -293,7 +297,7 @@ int main(int argc, char *argv[])
 
   if (!module_names) {
       usage(argv[0]);
-      return EXIT_FAILURE;
+      goto EXIT;
   }
 
   dsme_log_open(logging_method,
@@ -307,22 +311,20 @@ int main(int argc, char *argv[])
   /* load modules */
   if (!modulebase_init(module_names)) {
       g_slist_free(module_names);
-      dsme_log_close();
-      return EXIT_FAILURE;
+      goto EXIT;
   }
   g_slist_free(module_names);
 
   /* init socket communication */
   if (dsmesock_listen(receive_and_queue_message) == -1) {
       dsme_log(LOG_CRIT, "Error creating DSM socket: %s", strerror(errno));
-      dsme_log_close();
-      return EXIT_FAILURE;
+      goto EXIT;
   }
 
   /* set running directory */
   if (chdir("/") == -1) {
       dsme_log(LOG_CRIT, "chdir failed: %s", strerror(errno));
-      return EXIT_FAILURE;
+      goto EXIT;
   }
 #ifdef DSME_SYSTEMD_ENABLE
   /* Inform main process that we are ready 
@@ -342,7 +344,9 @@ int main(int argc, char *argv[])
 
   modulebase_shutdown();
 
-  dsme_log_close();
+  exit_code = dsme_main_loop_exit_code();
 
-  return dsme_main_loop_exit_code();
+EXIT:
+  dsme_log_close();
+  return exit_code;
 }
