@@ -148,6 +148,14 @@ static int         symbol_lookup_val(const symbol_t *lut, const char *key, int d
 static const char *symbol_lookup_key(const symbol_t *lut, int val, const char *def);
 
 /* ------------------------------------------------------------------------- *
+ * init_done
+ * ------------------------------------------------------------------------- */
+
+static void                    init_done_set      (bool reached);
+static void                    init_done_probe    (void);
+static void                    init_done_signal_cb(const DsmeDbusMessage* ind);
+
+/* ------------------------------------------------------------------------- *
  * dsme_usb_cable_state
  * ------------------------------------------------------------------------- */
 
@@ -355,6 +363,47 @@ symbol_lookup_key(const symbol_t *lut, int val, const char *def)
     }
 
     return key;
+}
+
+/* ========================================================================= *
+ * init_done
+ * ========================================================================= */
+
+/** Flag for: init_done has been reached i.e. bootup has finished */
+static bool init_done = false;
+
+static void
+init_done_set(bool reached)
+{
+    if( init_done == reached )
+        goto EXIT;
+
+    dsme_log(LOG_INFO, PFIX"init_done: %s -> %s",
+             bool_repr(init_done),
+             bool_repr(reached));
+    init_done = reached;
+
+    battery_empty_schedule_rethink();
+
+EXIT:
+    return;
+}
+
+static void
+init_done_probe(void)
+{
+    /* If dsme was restarted after bootup is finished, init-done signal
+     * is not going to come again -> check flag file for initial state */
+    if( access("/run/systemd/boot-status/init-done", F_OK) == 0 )
+        init_done_set(true);
+}
+
+/** Callback for handling incoming init_done signals
+ */
+static void
+init_done_signal_cb(const DsmeDbusMessage* ind)
+{
+    init_done_set(true);
 }
 
 /* ========================================================================= *
@@ -879,6 +928,15 @@ static int battery_empty_rethink_cb(void *aptr)
         if( !request_shutdown && condition_level_is_critical() ) {
             request_shutdown = true;
             dsme_log(LOG_INFO, PFIX"Battery level keeps dropping - must shutdown");
+        }
+
+        /* In any case we must not change direction in the middle
+         * of bootup - say, when user has pressed power key and
+         * is ready to connect charger on first signs of life in
+         * attempt to bypass act dead mode */
+        if( request_shutdown && !init_done ) {
+            request_shutdown = false;
+            dsme_log(LOG_DEBUG, PFIX"Mid boot up - must not shutdown");
         }
     }
 
@@ -1762,6 +1820,7 @@ static const dsme_dbus_signal_binding_t dbus_signals_array[] =
     { xmce_charger_state_signal_cb,   MCE_SIGNAL_IF,  MCE_CHARGER_STATE_SIG   },
     { xmce_battery_status_signal_cb,  MCE_SIGNAL_IF,  MCE_BATTERY_STATUS_SIG  },
     { xmce_battery_level_signal_cb,   MCE_SIGNAL_IF,  MCE_BATTERY_LEVEL_SIG   },
+    { init_done_signal_cb,            "com.nokia.startup.signal", "init_done" },
     { 0, 0 }
 };
 
@@ -1919,6 +1978,9 @@ module_init(module_t *handle)
 
     /* Cache module handle */
     this_module = handle;
+
+    /* Check if init-done has already been reached */
+    init_done_probe();
 
     /* Load configuration files */
     config_load();
