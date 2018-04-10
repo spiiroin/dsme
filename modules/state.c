@@ -1051,6 +1051,10 @@ DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
       /* then set up a delayed shutdown */
       start_battery_empty_timer();
   }
+  else {
+      /* Cancel delayed shutdown */
+      stop_battery_empty_timer();
+  }
 }
 
 
