@@ -129,7 +129,7 @@ usbtracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 usbtracker_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
 
 iphb_la_SOURCES = iphb.c
-iphb_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
+iphb_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
 iphb_la_CPPFLAGS = $(AM_CPPFLAGS)
 iphb_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
 
@@ -170,7 +170,7 @@ endif
 
 if WANT_BATTERY_TRACKER
 batterytracker_la_SOURCES = batterytracker.c
-batterytracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
+batterytracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
 batterytracker_la_LIBADD = $(GLIB_LIBS)
 endif
 

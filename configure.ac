@@ -206,6 +206,9 @@ AM_PROG_CC_C_O()
 PKG_CHECK_MODULES(GLIB, glib-2.0)
 PKG_CHECK_MODULES(DBUS, dbus-1)
 PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1)
+PKG_CHECK_MODULES(MCE_DEV, mce,
+		  [],
+		  AC_MSG_ERROR(Development files for mce are missing. Install mce-headers / mce-dev.))
 if test "x$enable_vibra_feedback" != xno; then
 PKG_CHECK_MODULES(LIBNGF, libngf0 >= 0.24)
 fi
