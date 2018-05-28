@@ -41,6 +41,7 @@
 #include <dsme/protocol.h>
 #include "../include/dsme/logging.h"
 #include <dsme/messages.h>
+#include <dsme/processwd.h>
 #include "../include/dsme/oom.h"
 
 #include <glib.h>
@@ -223,6 +224,12 @@ static bool receive_and_queue_message(dsmesock_connection_t* conn)
 
     if( !(msg = dsmesock_receive(conn)) )
         goto EXIT;
+
+    if( msg->type_ == DSM_MSGTYPE_PROCESSWD_PING_ID_ ) {
+	dsme_log(LOG_WARNING, "got unexpected PING; "
+		 "assuming it os PONG from old client");
+	msg->type_ = DSM_MSGTYPE_PROCESSWD_PONG_ID_;
+    }
 
     broadcast_internally_from_socket(msg, conn);
 
