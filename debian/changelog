@@ -1,3 +1,9 @@
+dsme (0.79.3) precise; urgency=low
+
+  * [configure] Add an explicit check for mce-dev. Fixes MER#1903
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 07 Jun 2018 08:41:08 +0300
+
 dsme (0.79.2) precise; urgency=low
 
   * [batterytracker] Fix logging format strings. JB#41302
