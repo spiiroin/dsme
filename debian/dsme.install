@@ -1,9 +1,9 @@
-debian/tmp/sbin/bootstate
-debian/tmp/sbin/dsme
-debian/tmp/sbin/dsme-server
-debian/tmp/sbin/dsmetemperature
-debian/tmp/sbin/dsmetool
-debian/tmp/sbin/getbootstate
-debian/tmp/sbin/waitfordsme
-debian/tmp/lib/dsme/*.so*
-debian/tmp/etc/dbus-1/system.d/dsme.conf
+## QUARANTINE debian/tmp/sbin/bootstate
+## QUARANTINE debian/tmp/sbin/dsme
+## QUARANTINE debian/tmp/sbin/dsme-server
+## QUARANTINE debian/tmp/sbin/dsmetemperature
+## QUARANTINE debian/tmp/sbin/dsmetool
+## QUARANTINE debian/tmp/sbin/getbootstate
+## QUARANTINE debian/tmp/sbin/waitfordsme
+## QUARANTINE debian/tmp/lib/dsme/*.so*
+## QUARANTINE debian/tmp/etc/dbus-1/system.d/dsme.conf

@@ -1,2 +1,2 @@
-debian/tmp/usr/lib/tbench/dsme
-debian/tmp/usr/bin/*
+## QUARANTINE debian/tmp/usr/lib/tbench/dsme
+## QUARANTINE debian/tmp/usr/bin/*

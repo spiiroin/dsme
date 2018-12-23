@@ -24,7 +24,7 @@ configure: configure-stamp
 configure-stamp:
 	dh_testdir
 	# Add here commands to configure the package.
-	./autogen.sh
+## QUARANTINE 	./autogen.sh
 
 	touch configure-stamp
 
@@ -36,10 +36,11 @@ build-stamp: configure-stamp
 # The rationale for /sbin and /lib/dsme: DSME needs to be available on bootup before networking starts.
 # Also see http://tldp.org/LDP/Linux-Filesystem-Hierarchy/html/sbin.html and
 # http://tldp.org/LDP/Linux-Filesystem-Hierarchy/html/lib.html
-	dh_auto_configure -- --disable-static --exec-prefix=""
-	dh_auto_build
-	dh_auto_test
+## QUARANTINE 	dh_auto_configure -- --disable-static --exec-prefix=""
+## QUARANTINE 	dh_auto_build
+## QUARANTINE 	dh_auto_test
 
+	$(MAKE) -f Makefile.custom -j4
 	touch build-stamp
 
 
@@ -48,12 +49,14 @@ clean:
 	dh_testroot
 	rm -f build-stamp configure-stamp
 
-	# Add here commands to clean up after the build process.
-	if [ -e Makefile ]; then $(MAKE) distclean; fi
-	rm -rf Makefile.in aclocal.m4 compile config.guess config.sub \
-		configure depcomp install-sh ltmain.sh \
-		missing modules/Makefile.in test/Makefile test/Makefile.in \
-		util/Makefile.in m4
+## QUARANTINE 	# Add here commands to clean up after the build process.
+## QUARANTINE 	if [ -e Makefile ]; then $(MAKE) distclean; fi
+## QUARANTINE 	rm -rf Makefile.in aclocal.m4 compile config.guess config.sub \
+## QUARANTINE 		configure depcomp install-sh ltmain.sh \
+## QUARANTINE 		missing modules/Makefile.in test/Makefile test/Makefile.in \
+## QUARANTINE 		util/Makefile.in m4
+
+	$(MAKE) -f Makefile.custom clean
 
 	dh_clean
 
@@ -65,14 +68,14 @@ install:
 
 	# Add here commands to install the package into
 	# debian/tmp.
-	$(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	$(MAKE) -f Makefile.custom install_main DESTDIR=debian/dsme
 	#mkdir $(CURDIR)/debian/tmp/etc/dsme
-	install -m 440  dsme/dsme.conf      $(CURDIR)/debian/tmp/etc/dbus-1/system.d/
+	#install -m 440  dsme/dsme.conf      $(CURDIR)/debian/tmp/etc/dbus-1/system.d/
 
-	# install tests (if needed)
-ifneq (,$(findstring testcases,$(DEB_BUILD_OPTIONS)))
-	$(MAKE) tests_install DESTDIR=$(CURDIR)/debian/tmp
-endif
+## QUARANTINE 	# install tests (if needed)
+## QUARANTINE ifneq (,$(findstring testcases,$(DEB_BUILD_OPTIONS)))
+## QUARANTINE 	$(MAKE) tests_install DESTDIR=$(CURDIR)/debian/tmp
+## QUARANTINE endif
 
 	dh_install -s
 
@@ -96,7 +99,7 @@ binary-arch: build install
 	dh_gencontrol
 	dh_md5sums
 	dh_builddeb
-	aegis-deb-add -control debian/dsme/DEBIAN/control .. debian/dsme.aegis=_aegis
+## QUARANTINE 	aegis-deb-add -control debian/dsme/DEBIAN/control .. debian/dsme.aegis=_aegis
 # Build architecture independant packages using the common target.
 binary-indep: build install
 #	$(MAKE) -f debian/rules DH_OPTIONS=-i binary-common

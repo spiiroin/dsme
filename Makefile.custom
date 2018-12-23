@@ -140,7 +140,7 @@ CPPFLAGS += -D_FORTIFY_SOURCE=2
 #CPPFLAGS += -DDSME_SUPPORT_DIRECT_USER_ACTDEAD
 
 # Configuration: can support systemd start notification
-CPPFLAGS += -DDSME_SYSTEMD_ENABLE
+#CPPFLAGS += -DDSME_SYSTEMD_ENABLE
 
 # Configuration: where dsme sbin binaries are installed
 CPPFLAGS += -DDSME_SBIN_PATH='"$(DSME_SBIN_PATH)"'
@@ -167,7 +167,7 @@ CPPFLAGS += -DDSME_PWRKEY_MONITOR
 #CPPFLAGS += -DDSME_VALIDATOR_LISTENER
 
 # Enable option: shutdown/reboot vibrate feedback
-CPPFLAGS += -DDSME_VIBRA_FEEDBACK
+#CPPFLAGS += -D DSME_VIBRA_FEEDBACK
 
 # Enable plugin: runlevel
 CPPFLAGS += -DDSME_WANT_LIBRUNLEVEL
@@ -216,10 +216,10 @@ PKG_NAMES += dsme
 PKG_NAMES += dsme_dbus_if
 PKG_NAMES += thermalmanager_dbus_if
 PKG_NAMES += libiphb
-PKG_NAMES += systemd
-PKG_NAMES += libsystemd
-PKG_NAMES += libngf0
-PKG_NAMES += libcryptsetup
+## QUARANTINE PKG_NAMES += systemd
+## QUARANTINE PKG_NAMES += libsystemd
+## QUARANTINE PKG_NAMES += libngf0
+## QUARANTINE PKG_NAMES += libcryptsetup
 
 maintenance  = normalize clean distclean mostlyclean protos-post
 intersection = $(strip $(foreach w,$1, $(filter $w,$2)))
@@ -290,9 +290,10 @@ modules/powerontimer.so          : modules/powerontimer.pic.o modules/powerontim
 modules/processwd.so             : modules/processwd.pic.o
 modules/pwrkeymonitor.so         : modules/pwrkeymonitor.pic.o
 modules/runlevel.so              : modules/runlevel.pic.o
-modules/shutdownfeedback.so      : modules/shutdownfeedback.pic.o modules/vibrafeedback.pic.o
+# if DSME_VIBRA_FEEDBACK
+#modules/shutdownfeedback.so      : modules/shutdownfeedback.pic.o modules/vibrafeedback.pic.o
 modules/startup.so               : modules/startup.pic.o
-modules/state.so                 : modules/state.pic.o modules/vibrafeedback.pic.o
+modules/state.so                 : modules/state.pic.o # modules/vibrafeedback.pic.o
 modules/thermalflagger.so        : modules/thermalflagger.pic.o
 modules/thermalmanager.so        : modules/thermalmanager.pic.o modules/thermalobject.pic.o
 modules/thermalsensor_generic.so : modules/thermalsensor_generic.pic.o
