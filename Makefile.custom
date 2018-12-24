@@ -65,9 +65,12 @@ TARGETS_PLUGIN += modules/usbtracker.so
 # TARGETS_PLUGIN += modules/validatorlistener.so
 TARGETS_PLUGIN += modules/wlanloader.so
 
+TARGETS_PLUGIN += modules/lifeguard.so
+
 TARGETS_SBIN += util/bootstate
 # TARGETS_SBIN += util/dsmereboot
 TARGETS_SBIN += util/dsmetool
+TARGETS_SBIN += util/dsme-exec-helper
 # TARGETS_SBIN += util/kicker
 # TARGETS_SBIN += util/kick_wd
 TARGETS_SBIN += util/waitfordsme
@@ -177,6 +180,9 @@ CPPFLAGS += -DDSME_WANT_LIBRUNLEVEL
 
 # Enable plugin: wlanloader
 CPPFLAGS += -DDSME_WLAN_LOADER
+
+# Enable plugin: lifeguard
+CPPFLAGS += -DDSME_LIFEGUARD
 
 # AutoXXX compatibility
 CPPFLAGS += -DPRG_VERSION=$(VERSION)
@@ -303,6 +309,8 @@ modules/wlanloader.so            : modules/wlanloader.pic.o
 
 modules/validatorlistener.so     : modules/validatorlistener.pic.o
 
+modules/lifeguard.so             : modules/lifeguard.pic.o modules/spawn.pic.o
+
 # FIXME: vibrafeedback code is included in two plugins - why?
 
 # ----------------------------------------------------------------------------
@@ -316,6 +324,7 @@ util/kicker:      util/kicker.o
 util/kick_wd:     util/kick_wd.o
 util/waitfordsme: util/waitfordsme.o
 
+util/dsme-exec-helper: util/dsme-exec-helper.o dsme/oom.o dsme/logging.o
 getbootstate/getbootstate: getbootstate/getbootstate.o
 
 # ----------------------------------------------------------------------------
@@ -415,6 +424,11 @@ DIRTY_HEADERS += test/stub_dsme_dbus.h
 DIRTY_HEADERS += test/stub_timers.h
 DIRTY_HEADERS += test/testdriver.h
 DIRTY_HEADERS += test/utils_misc.h
+
+DIRTY_SOURCES += modules/lifeguard.c
+DIRTY_HEADERS += modules/lifeguard.h
+DIRTY_SOURCES += modules/spawn.c
+DIRTY_HEADERS += modules/spawn.h
 
 # Files that will not pass preprocessor / compiler ...
 

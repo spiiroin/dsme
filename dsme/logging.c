@@ -548,11 +548,43 @@ dsme_log_notify_worker(log_entry_t *entry)
         }
     }
 
-    if( !ack ) {
+    if( !ack && entry ) {
         /* Handle from main thread */
         dsme_log_routine(entry);
     }
 }
+
+void
+dsme_log_wakeup(void)
+{
+    dsme_log_notify_worker(0);
+}
+
+static void (*dsme_log_cb)(void) = 0;
+
+void
+dsme_log_cb_attach(void (*cb)(void))
+{
+    if( dsme_log_cb == 0 ) {
+	dsme_log_cb = cb;
+	dsme_log(LOG_WARNING, "attached logging callback: %p", cb);
+    }
+    else {
+	dsme_log(LOG_WARNING, "failed to attach logging callback: %p", cb);
+    }
+}
+
+void
+dsme_log_cb_detach(void (*cb)(void))
+{
+    if( dsme_log_cb == cb ) {
+	dsme_log(LOG_WARNING, "detached logging callback: %p", cb);
+    }
+    else {
+	dsme_log(LOG_WARNING, "failed to detach logging callback: %p", cb);
+    }
+}
+
 
 /** Queue a logging message to logging ringbuffer
  *
@@ -656,17 +688,38 @@ dsme_log_thread(void* param)
             goto EXIT;
         }
 
+	if( cnt == 0 ) {
+            static const char m[] = "*** DSME LOGGER ZERO EVENTS\n";
+            if( write(STDERR_FILENO, m, sizeof m - 1) == -1 ) {
+                // dontcare
+            }
+	    continue;
+	}
+
+	if( dsme_log_cb ) {
+// QUARANTINE             static const char m[] = "*** DSME LOGGER EXEC CALLBACK\n";
+// QUARANTINE             if( write(STDERR_FILENO, m, sizeof m - 1) == -1 ) {
+// QUARANTINE                 // dontcare
+// QUARANTINE             }
+	    dsme_log_cb();
+	}
+
         for( ; cnt; --cnt ) {
             /* While it should not be possible; if it looks like ring buffer
              * bookkeeping is out of sync, make some noise, exit logger
              * thread, and switch to log-from-main-thread logic.
              */
             if( buffered_count() == 0 ) {
+#if 0
                 static const char m[] = "*** DSME LOGGER OUT OF SYNC\n";
                 if( write(STDERR_FILENO, m, sizeof m - 1) == -1 ) {
                     // dontcare
                 }
                 goto EXIT;
+#else
+		/* logging callback usage can cause excess wakeups */
+		break;
+#endif
             }
 
             /* Pop entry from ring buffer and process it */

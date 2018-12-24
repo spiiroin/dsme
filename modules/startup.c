@@ -84,6 +84,9 @@ const char *modules[] = {
     "state.so",              // state depends on malf, dbusproxy & init
     "iphb.so",
     "processwd.so",
+#ifdef DSME_LIFEGUARD
+    "lifeguard.so",
+#endif
     "alarmtracker.so",
 #ifdef DSME_BOOTREASON_LOGGER
     "bootreasonlogger.so",

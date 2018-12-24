@@ -28,6 +28,7 @@
  * License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../modules/lifeguard.h"
 #include "../modules/dbusproxy.h"
 #include "../modules/state-internal.h"
 #include "../include/dsme/logging.h"
@@ -49,6 +50,7 @@
 #include <time.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <signal.h>
 
 #define STRINGIFY(x)  STRINGIFY2(x)
 #define STRINGIFY2(x) #x
@@ -90,6 +92,7 @@ static void               dsmeipc_disconnect(void);
 static void               dsmeipc_send_full(const void *msg, const void *data, size_t size);
 static void               dsmeipc_send(const void *msg);
 static void               dsmeipc_send_with_string(const void *msg, const char *str);
+static void               dsmeipc_send_with_extra(const void *msg, size_t size, const void *extra);
 static bool               dsmeipc_wait(int64_t *tmo);
 static dsmemsg_generic_t *dsmeipc_read(void);
 
@@ -109,6 +112,17 @@ static void               xdsme_request_loglevel(unsigned level);
 static void               xdsme_request_log_include(const char *pattern);
 static void               xdsme_request_log_exclude(const char *pattern);
 static void               xdsme_request_log_defaults(void);
+
+static int                xdsme_request_process_start(const char*       command,
+                                                      process_actions_t action,
+                                                      int               maxcount,
+                                                      int               maxperiod,
+                                                      uid_t             uid,
+                                                      gid_t             gid,
+                                                      int               nice,
+                                                      int               oom_adj);
+
+static int                xdsme_request_process_stop(const char* command, int signal);
 
 /* ------------------------------------------------------------------------- *
  * RTC_OPTIONS
@@ -233,6 +247,12 @@ static void dsmeipc_send(const void *msg)
 static void dsmeipc_send_with_string(const void *msg, const char *str)
 {
     dsmeipc_send_full(msg, str, strlen(str) + 1);
+}
+
+static void
+dsmeipc_send_with_extra(const void* msg, size_t size, const void *extra)
+{
+    dsmeipc_send_full(msg, extra, size);
 }
 
 static bool dsmeipc_wait(int64_t *tmo)
@@ -415,6 +435,129 @@ static void xdsme_request_log_defaults(void)
     dsmeipc_send(&req);
 }
 
+static int
+xdsme_request_process_start(const char*       command,
+                            process_actions_t action,
+                            int               maxcount,
+                            int               maxperiod,
+                            uid_t             uid,
+                            gid_t             gid,
+                            int               nice,
+                            int               oom_adj)
+{
+    DSM_MSGTYPE_PROCESS_START        msg =
+        DSME_MSG_INIT(DSM_MSGTYPE_PROCESS_START);
+    DSM_MSGTYPE_PROCESS_STARTSTATUS* retmsg;
+    fd_set rfds;
+    int    ret;
+
+    msg.action         = action;
+    msg.restart_limit  = maxcount;
+    msg.restart_period = maxperiod;
+    msg.uid            = uid;
+    msg.gid            = gid;
+    msg.nice           = nice;
+    msg.oom_adj        = oom_adj;
+    dsmeipc_send_with_extra(&msg, strlen(command) + 1, command);
+
+    while (dsmeipc_conn) {
+        FD_ZERO(&rfds);
+        FD_SET(dsmeipc_conn->fd, &rfds);
+
+        ret = select(dsmeipc_conn->fd+1, &rfds, NULL, NULL, NULL);
+        if (ret == -1) {
+            printf("Error in select()\n");
+            return -1;
+        }
+
+        retmsg = (DSM_MSGTYPE_PROCESS_STARTSTATUS*)dsmesock_receive(dsmeipc_conn);
+
+        if (DSMEMSG_CAST(DSM_MSGTYPE_CLOSE, retmsg)) {
+            printf("Dsme closed socket\n");
+            free(retmsg);
+            return -1;
+        }
+
+        if (DSMEMSG_CAST(DSM_MSGTYPE_PROCESS_STARTSTATUS, retmsg) == 0) {
+            printf("Received invalid message (type: %i)\n",
+                   dsmemsg_id((dsmemsg_generic_t*)retmsg));
+            free(retmsg);
+            continue;
+        }
+
+        /* printf("PID=%d, startval=%d\n", retmsg->pid, retmsg->return_value); */
+
+        ret = retmsg->status;
+        free(retmsg);
+
+        return ret;
+    }
+
+    return -1;
+}
+
+static int
+xdsme_request_process_stop(const char* command, int signal)
+{
+    DSM_MSGTYPE_PROCESS_STOP        msg =
+        DSME_MSG_INIT(DSM_MSGTYPE_PROCESS_STOP);
+    DSM_MSGTYPE_PROCESS_STOPSTATUS* retmsg;
+    fd_set rfds;
+    int    ret;
+
+    msg.signal = signal;
+    dsmeipc_send_with_extra(&msg, strlen(command) + 1, command);
+
+    while (dsmeipc_conn) {
+        FD_ZERO(&rfds);
+        FD_SET(dsmeipc_conn->fd, &rfds);
+        struct timeval tv;
+
+        tv.tv_sec  = 5;
+        tv.tv_usec = 0;
+
+        ret = select(dsmeipc_conn->fd+1, &rfds, NULL, NULL, &tv);
+        if (ret == -1) {
+            printf("Error in select()\n");
+            return -1;
+        }
+        if (ret == 0) {
+            printf("Timeout waiting for process stop status from DSME\n");
+            dsmeipc_disconnect();
+            return -1;
+        }
+
+        retmsg = (DSM_MSGTYPE_PROCESS_STOPSTATUS*)dsmesock_receive(dsmeipc_conn);
+
+        if (DSMEMSG_CAST(DSM_MSGTYPE_CLOSE, retmsg)) {
+            printf("Dsme closed socket\n");
+            free(retmsg);
+            return -1;
+        }
+
+        if (DSMEMSG_CAST(DSM_MSGTYPE_PROCESS_STOPSTATUS, retmsg) == 0) {
+            printf("Received invalid message (type: %i)\n",
+                   dsmemsg_id((dsmemsg_generic_t*)retmsg));
+            free(retmsg);
+            continue;
+        }
+
+        if (retmsg->killed) {
+            ret = EXIT_SUCCESS;
+        } else {
+            printf("Process not killed: %s\n",
+                   (const char*)DSMEMSG_EXTRA(retmsg));
+            ret = EXIT_FAILURE;
+        }
+
+        free(retmsg);
+
+        return ret;
+    }
+
+    return -1;
+}
+
 /* ========================================================================= *
  * RTC_OPTIONS
  * ========================================================================= */
@@ -555,6 +698,35 @@ static void output_usage(const char *name)
 "  -d --start-dbus                 Start DSME's D-Bus services\n"
 "  -s --stop-dbus                  Stop DSME's D-Bus services\n"
 "\n"
+
+           /* lifeguard */
+"  -r --start-reset=<cmd>          Start a process\n"
+"                                   (on process exit, do SW reset)\n"
+"  -t --start-restart=<cmd>        Start a process\n"
+"                                   (on process exit, restart max N times,\n"
+"                                    then do SW reset)\n"
+"  -f --start-restart-fail=<cmd>   Start a process\n"
+"                                   (on process exit, restart max N times,\n"
+"                                    then stop trying)\n"
+"  -o --start-once=<cmd>           Start a process only once\n"
+"  -c --max-count=N                Restart process only maximum N times\n"
+"                                   in defined period of time\n"
+"                                   (the default is 10 times in 60 s)\n"
+"  -T --count-time=N               Set period for restart check\n"
+"                                   (default 60 s)\n"
+"  -k --stop=<cmd>                 Stop a process started with cmd\n"
+"                                   (if started with dsme)\n"
+"  -S --signal=N                   Set used signal for stopping processes\n"
+"  -u --uid=N                      Set used uid for started process\n"
+"  -U --user=<username>            Set used uid for started process\n"
+"                                   from username\n"
+"  -g --gid=N                      Set used gid for started process\n"
+"  -G --group=<groupname>          Set used gid for started process\n"
+"                                   from groupname\n"
+"  -n --nice=N                     Set used nice value (priority)\n"
+"                                   for started process\n"
+"  -m --oom-adj=N                  Set oom_adj value for started process\n"
+
           );
 }
 
@@ -566,23 +738,44 @@ int main(int argc, char *argv[])
 {
     const char *program_name  = argv[0];
     int         retval        = EXIT_FAILURE;
-    const char *short_options = "hdsbvact:l:guoVi:e:L";
+    const char *short_options =
+	//"hdsbvact:l:guoVi:e:L"
+	"hdsbval:Vi:e:L"
+	"r:t:f:o:c:T:k:S:u:g:U:G:n:m:"
+	;
     const struct option long_options[] = {
         {"help",         no_argument,       NULL, 'h'},
         {"start-dbus",   no_argument,       NULL, 'd'},
         {"stop-dbus",    no_argument,       NULL, 's'},
         {"reboot",       no_argument,       NULL, 'b'},
         {"version",      no_argument,       NULL, 'v'},
-        {"clear-rtc",    no_argument,       NULL, 'c'},
-        {"get-state",    no_argument,       NULL, 'g'},
-        {"powerup",      no_argument,       NULL, 'u'},
-        {"shutdown",     no_argument,       NULL, 'o'},
-        {"telinit",      required_argument, NULL, 't'},
+        {"clear-rtc",    no_argument,       NULL, 'c'|0x100},
+        {"get-state",    no_argument,       NULL, 'g'|0x100},
+        {"powerup",      no_argument,       NULL, 'u'|0x100},
+        {"shutdown",     no_argument,       NULL, 'o'|0x100},
+        {"telinit",      required_argument, NULL, 't'|0x100},
         {"loglevel",     required_argument, NULL, 'l'},
         {"log-include",  required_argument, NULL, 'i'},
         {"log-exclude",  required_argument, NULL, 'e'},
         {"log-defaults", no_argument,       NULL, 'L'},
         {"verbose",      no_argument,       NULL, 'V'},
+
+        /* lifeguard */
+        {"start-reset",        1, NULL, 'r'},
+        {"start-restart",      1, NULL, 't'}, //
+        {"start-restart-fail", 1, NULL, 'f'},
+        {"start-once",         1, NULL, 'o'}, //
+        {"max-count",          1, NULL, 'c'}, //
+        {"count-time",         1, NULL, 'T'},
+        {"stop",               1, NULL, 'k'},
+        {"signal",             1, NULL, 'S'},
+        {"uid",                1, NULL, 'u'}, //
+        {"gid",                1, NULL, 'g'}, //
+        {"user",               1, NULL, 'U'},
+        {"group",              1, NULL, 'G'},
+        {"nice",               1, NULL, 'n'},
+        {"oom-adj",            1, NULL, 'm'},
+
         {0, 0, 0, 0}
     };
 
@@ -591,6 +784,21 @@ int main(int argc, char *argv[])
         output_usage(program_name);
         goto DONE;
     }
+
+    /* Lifeguard values */
+    int         maxcount      = 10;
+    int         countperiod   = 60;
+    int         signum        = SIGTERM;
+    uid_t       uid           = getuid();
+    gid_t       gid           = getgid();
+    int         group_set     = 0;
+    const char* username      = 0;
+    const char* group         = 0;
+    int         nice          = 0;
+    int         oom_adj       = 0;
+    enum { NONE, START, STOP } action = NONE;
+    const char* program       = "";
+    process_actions_t policy  = ONCE;
 
     /* Handle options */
     for( ;; ) {
@@ -612,11 +820,11 @@ int main(int argc, char *argv[])
             xdsme_request_reboot();
             break;
 
-        case 'u':
+        case 'u'|0x100:
             xdsme_request_powerup();
             break;
 
-        case 'o':
+        case 'o'|0x100:
             xdsme_request_shutdown();
             break;
 
@@ -624,11 +832,11 @@ int main(int argc, char *argv[])
             xdsme_query_version(false);
             break;
 
-        case 't':
+        case 't'|0x100:
             xdsme_request_runlevel(parse_runlevel(optarg));
             break;
 
-        case 'g':
+        case 'g'|0x100:
             xdsme_query_runlevel();
             break;
 
@@ -648,7 +856,7 @@ int main(int argc, char *argv[])
             xdsme_request_log_defaults();
             break;
 
-        case 'c':
+        case 'c'|0x100:
             if( !rtc_clear_alarm() )
                 goto EXIT;
             break;
@@ -664,6 +872,65 @@ int main(int argc, char *argv[])
         case '?':
             fprintf(stderr, "(use --help for instructions)\n");
             goto EXIT;
+
+            /* - - - - - - - - - - - - - - - - - - - *
+             * lifeguard
+             * - - - - - - - - - - - - - - - - - - - */
+
+        case 'k':
+            program = optarg;
+            action = STOP;
+            break;
+        case 'S':
+            signum = atoi(optarg);
+            break;
+        case 'u':
+            uid = atoi(optarg);
+            break;
+        case 'U':
+            username = optarg;
+            break;
+        case 'g':
+            gid = atoi(optarg);
+            group_set = 1;
+            break;
+        case 'G':
+            group = optarg;
+            group_set = 1;
+            break;
+        case 'n':
+            nice = atoi(optarg);
+            break;
+        case 'm':
+            oom_adj = atoi(optarg);
+            break;
+        case 'c':
+            maxcount = atoi(optarg);
+            break;
+        case 'T':
+            countperiod = atoi(optarg);
+            break;
+        case 'r':
+            program = optarg;
+            policy = RESET;
+            action = START;
+            break;
+        case 't':
+            program = optarg;
+            policy = RESPAWN;
+            action = START;
+            break;
+        case 'f':
+            program = optarg;
+            policy = RESPAWN_FAIL;
+            action = START;
+            break;
+        case 'o':
+            program = optarg;
+            policy = ONCE;
+            action = START;
+            break;
+
         }
     }
 
@@ -672,6 +939,62 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: unknown argument\n", argv[optind]);
         fprintf(stderr, "(use --help for instructions)\n");
         goto EXIT;
+    }
+
+    /* Lifeguard */
+    if (username != 0) {
+        struct passwd *pw_entry = getpwnam(username);
+
+        if (uid != getuid())
+            printf("warning, username overrides specified uid\n");
+
+        if (!pw_entry) {
+            printf("Can't get a UID for username: %s\n", username);
+            return EXIT_FAILURE;
+        }
+        uid = pw_entry->pw_uid;
+    }
+
+    if (group != 0) {
+        struct group* gr_entry = getgrnam(group);
+
+        if (gid != getgid())
+            printf("warning, group overrides specified gid\n");
+
+        if (!gr_entry) {
+            printf("Can't get a GID for groupname: %s\n", group);
+            return EXIT_FAILURE;
+        }
+        gid = gr_entry->gr_gid;
+    }
+
+    if (uid != getuid() && !group_set) {
+        struct passwd *pw_entry = getpwuid(uid);
+        if (!pw_entry) {
+            printf("Can't get pwentry for UID: %d\n", uid);
+            return EXIT_FAILURE;
+        }
+        if (pw_entry->pw_gid)
+            gid = pw_entry->pw_gid;
+        else
+            printf("Default group not found for UID: %d. Using current one.\n", uid);
+    }
+
+    if( action == START ) {
+        int rc = xdsme_request_process_start(program,
+                                             policy,
+                                             maxcount,
+                                             countperiod,
+                                             uid,
+                                             gid,
+                                             nice,
+                                             oom_adj);
+        if( rc != 0 )
+            goto EXIT;
+    } else if (action == STOP) {
+        int rc = xdsme_request_process_stop(program, signum);
+        if( rc != 0 )
+            goto EXIT;
     }
 
 DONE:
