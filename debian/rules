@@ -88,6 +88,7 @@ binary-arch: build install
 	dh_installchangelogs
 	dh_installdocs -XREADME
 	dh_installexamples
+	dh_installinit --no-start --name=dsme
 	dh_installman
 	dh_link
 	dh_strip --dbg-package=dsme

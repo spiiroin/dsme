@@ -1,0 +1,45 @@
+#!/sbin/openrc-run
+
+description="Device state manager entity"
+
+depend() {
+	after bootmisc rsyslog
+}
+
+start() {
+	if [ -f "/var/lib/dsme/saved_state" ]
+	then
+		export BOOTSTATE=`cat /var/lib/dsme/saved_state`
+	else
+		export BOOTSTATE="USER"
+	fi
+
+	touch /tmp/$BOOTSTATE
+	echo $BOOTSTATE > /tmp/STATE
+
+	ebegin "About to exec dsme in state '$BOOTSTATE'."
+	/usr/sbin/dsme -d -- -lsyslog -v7 -p /usr/lib/dsme/startup.so
+	#/sbin/dsme -d -p /usr/lib/dsme/libstartup.so
+	#/sbin/dsme -d -l stderr -v 7 -p /usr/lib/dsme/libstartup.so
+}
+
+start_post() {
+	until waitfordsme; do
+		sleep 1
+	done
+
+	OMITDIR=/run/sendsigs.omit.d
+	mkdir -p $OMITDIR
+## QUARANTINE 	pidof dsme > $OMITDIR/dsme.pid
+	pidof dsme-server > $OMITDIR/dsme-server.pid
+}
+
+stop() {
+	DSME_PID=$(pidof dsme)
+	if [ -z "$DSME_PID" ]; then
+	  eend "Already stopped dsme"
+        else
+	  eend "Stopping dsme"
+	  kill -TERM $DSME_PID
+        fi
+}
