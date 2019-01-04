@@ -81,7 +81,7 @@ static void usage(const char *  progname)
   printf(" -l  --logging     "
 	 "Logging type (syslog, stderr, none)\n");
   printf(" -v  --verbosity   Log verbosity (3..7)\n");
-  printf(" -t  --log-include   <file-pattern>:<func-pattern>\n");
+  printf(" -i  --log-include   <file-pattern>:<func-pattern>\n");
   printf(" -e  --log-exclude   <file-pattern>:<func-pattern>\n");
 #ifdef DSME_SYSTEMD_ENABLE
   printf(" -s  --systemd     "
