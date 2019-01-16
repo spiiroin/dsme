@@ -31,7 +31,6 @@ BuildRequires:  automake
 %description
 Device State Management Entity (with debug symbols). This package contains the Device State Management Entity which provides state management features such as service monitoring, process watchdog and inactivity tracking.
 
-
 %package tests
 Summary:    DSME test cases
 Group:      Development/System
@@ -89,17 +88,15 @@ systemctl daemon-reload || :
 %dir %{_libdir}/dsme
 %{_libdir}/dsme/*
 %attr(755,root,root)%{_sbindir}/*
-%dir %{_sysconfdir}/dsme/
+%dir %{_sysconfdir}/dsme
 %config %{_sysconfdir}/dbus-1/system.d/dsme.conf
-%doc debian/copyright COPYING
+%license debian/copyright COPYING
 /lib/systemd/system/%{name}.service
 /lib/systemd/system/multi-user.target.wants/%{name}.service
 /var/lib/dsme
 %config(noreplace) /var/lib/dsme/alarm_queue_status
-%dir /etc/profile.d
 /etc/profile.d/reboot-via-dsme.sh
 
 %files tests
 %defattr(-,root,root,-)
-/opt/tests/dsme-tests/*
-
+/opt/tests/dsme-tests
