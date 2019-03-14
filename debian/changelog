@@ -1,3 +1,11 @@
+dsme (0.79.4) precise; urgency=low
+
+  * [packaging] Use %license for license files. Contributes to JB#24199
+  * [dsme] Remove statefs dependency. Contributes to JB#36088
+  * [dsme] Remove statefs dependency. Contributes to JB#36088
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 14 Mar 2019 11:56:18 +0200
+
 dsme (0.79.3) precise; urgency=low
 
   * [configure] Add an explicit check for mce-dev. Fixes MER#1903
