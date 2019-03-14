@@ -9,7 +9,6 @@ Source0:    %{name}-%{version}.tar.gz
 Source1:    dsme.service
 Source2:    dsme-rpmlintrc
 Requires:   systemd
-Requires:   statefs
 Requires:   ngfd
 Requires:   libdsme >= 0.66.0
 Requires(preun): systemd
