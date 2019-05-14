@@ -26,6 +26,7 @@ BuildRequires:  python
 BuildRequires:  autoconf
 BuildRequires:  libtool
 BuildRequires:  automake
+BuildRequires:  pkgconfig(libcryptsetup)
 
 %description
 Device State Management Entity (with debug symbols). This package contains the Device State Management Entity which provides state management features such as service monitoring, process watchdog and inactivity tracking.

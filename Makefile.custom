@@ -219,6 +219,7 @@ PKG_NAMES += libiphb
 PKG_NAMES += systemd
 PKG_NAMES += libsystemd
 PKG_NAMES += libngf0
+PKG_NAMES += libcryptsetup
 
 maintenance  = normalize clean distclean mostlyclean protos-post
 intersection = $(strip $(foreach w,$1, $(filter $w,$2)))
@@ -263,6 +264,7 @@ dsme-server-OBJS += dsme/mainloop.o
 dsme-server-OBJS += dsme/modulebase.o
 dsme-server-OBJS += dsme/oom.o
 dsme-server-OBJS += dsme/timers.o
+dsme-server-OBJS += dsme/utility.o
 
 dsme/dsme-server : LDFLAGS += -rdynamic
 
@@ -324,6 +326,7 @@ getbootstate/getbootstate: getbootstate/getbootstate.o
 CLEAN_SOURCES += dsme/dsme-rd-mode.c
 CLEAN_SOURCES += dsme/dsmesock.c
 CLEAN_SOURCES += dsme/timers.c
+CLEAN_SOURCES += dsme/utility.c
 CLEAN_SOURCES += modules/abootsettings.c
 CLEAN_SOURCES += modules/batterytracker.c
 CLEAN_SOURCES += modules/dbusautoconnector.c
@@ -345,6 +348,7 @@ CLEAN_SOURCES += util/dsmetool.c
 CLEAN_HEADERS += dsme/dsme-wdd-wd.h
 CLEAN_HEADERS += dsme/dsme-wdd.h
 CLEAN_HEADERS += dsme/dsme-server.h
+CLEAN_HEADERS += dsme/utility.h
 CLEAN_HEADERS += dsme/dsme-rd-mode.h
 CLEAN_HEADERS += modules/powerontimer_backend.h
 CLEAN_HEADERS += modules/thermalmanager.h

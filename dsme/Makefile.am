@@ -38,15 +38,17 @@ dsme_LDADD = $(LIBSYSTEMD_LIBS)
 # dsme-server
 #
 dsme_server_SOURCES = dsme-server.c modulebase.c timers.c logging.c oom.c \
-                      mainloop.c dsmesock.c dsme-rd-mode.c
+                      mainloop.c dsmesock.c dsme-rd-mode.c utility.c
+
 dsme_server_LDFLAGS = $(AM_LDFLAGS) -rdynamic `pkg-config --libs gthread-2.0` -Wl,--as-needed
-dsme_server_CPPFLAGS = $(CPP_GENFLAGS) $(GLIB_CFLAGS)
-dsme_server_LDADD = $(GLIB_LIBS) -ldsme -ldl
+dsme_server_CPPFLAGS = $(CPP_GENFLAGS) $(GLIB_CFLAGS) $(LIBCRYPTSETUP_CFLAGS)
+dsme_server_LDADD = $(GLIB_LIBS) $(LIBCRYPTSETUP_LIBS) -ldsme -ldl
 
 #
 # Headers used by all
 #
 noinst_HEADERS = dsme-rd-mode.h \
+                 utility.h \
                  ../include/dsme/mainloop.h \
                  ../include/dsme/modulebase.h \
                  ../include/dsme/modules.h \
@@ -54,7 +56,6 @@ noinst_HEADERS = dsme-rd-mode.h \
                  ../include/dsme/logging.h \
                  ../include/dsme/oom.h \
                  ../include/dsme/timers.h
-
 
 #
 # Data

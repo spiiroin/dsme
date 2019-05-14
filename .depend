@@ -124,6 +124,16 @@ dsme/timers.pic.o:\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 
+dsme/utility.o:\
+	dsme/utility.c\
+	include/dsme/logging.h\
+	dsme/utility.h\
+
+dsme/utility.pic.o:\
+	dsme/utility.c\
+	include/dsme/logging.h\
+	dsme/utility.h\
+
 getbootstate/getbootstate.o:\
 	getbootstate/getbootstate.c\
 
@@ -167,6 +177,8 @@ modules/alarmtracker.pic.o:\
 modules/batterytracker.o:\
 	modules/batterytracker.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\
@@ -175,6 +187,8 @@ modules/batterytracker.o:\
 modules/batterytracker.pic.o:\
 	modules/batterytracker.c\
 	include/dsme/logging.h\
+	include/dsme/modulebase.h\
+	include/dsme/modules.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
 	modules/dbusproxy.h\
