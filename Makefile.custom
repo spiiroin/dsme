@@ -220,7 +220,7 @@ PKG_NAMES += systemd
 PKG_NAMES += libsystemd
 PKG_NAMES += libngf0
 
-maintenance  = normalize clean distclean mostlyclean
+maintenance  = normalize clean distclean mostlyclean protos-post
 intersection = $(strip $(foreach w,$1, $(filter $w,$2)))
 ifneq ($(call intersection,$(maintenance),$(MAKECMDGOALS)),)
 PKG_CONFIG   ?= true
@@ -442,16 +442,31 @@ endif
 endif
 
 # ----------------------------------------------------------------------------
-# AUTOMATIC PROTOTYPE GENERFATION
+# AUTOMATIC PROTOTYPE GENERATION
 # ----------------------------------------------------------------------------
 
-.SUFFIXES: .q .p
+.SUFFIXES: .q .p .g
+.PRECIOUS: .q
 
-%.q : %.c ; $(CC) -o $@ -E $< $(CPPFLAGS) $(MCE_CFLAGS)
-%.p : %.q ; cproto -s < $< | prettyproto.py # sed -e 's/_Bool/bool/g'
+PROTO_SOURCES += $(CLEAN_SOURCES) $(DIRTY_SOURCES)
+PROTO_SOURCES := $(filter-out modules/powerontimer%,$(PROTO_SOURCES))
 
+%.q : CPPFLAGS += $(PROTO_CPPFLAGS)
+%.q : %.c
+	$(CC) -o $@ -E $< $(CPPFLAGS) -O
+%.p : %.q prettyproto.groups
+	cproto -s < $< | prettyproto.py > $@
+%.g : %.q prettyproto.groups
+	 cproto    < $< | prettyproto.py > $@
 clean::
-	$(RM) *.[qp] modules/*.[qp] tools/*.[qp]
+	$(RM) *.[qpg] */*.[qpg]
+
+protos-pre: $(patsubst %.c,%.q,$(PROTO_SOURCES))
+	touch $@
+protos-post: $(patsubst %.c,%.p,$(PROTO_SOURCES)) $(patsubst %.c,%.g,$(PROTO_SOURCES))
+	touch $@
+clean::
+	$(RM) protos-pre protos-post
 
 # ----------------------------------------------------------------------------
 # REMOVE FLUFF LEFT BY MB2 BUILDS
