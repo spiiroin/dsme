@@ -26,6 +26,8 @@
 #ifndef  DSME_UTILITY_H_
 # define DSME_UTILITY_H_
 
+# include <dsme/state.h>
+
 # include <stdbool.h>
 
 /* ========================================================================= *
@@ -36,6 +38,7 @@
  * UTILITY
  * ------------------------------------------------------------------------- */
 
-bool dsme_home_is_encrypted(void);
+bool        dsme_home_is_encrypted(void);
+const char *dsme_state_repr       (dsme_state_t state);
 
 #endif /* DSME_UTILITY_H_ */

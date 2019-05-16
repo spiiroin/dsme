@@ -160,6 +160,7 @@ modules/abootsettings.pic.o:\
 
 modules/alarmtracker.o:\
 	modules/alarmtracker.c\
+	dsme/utility.h\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
@@ -168,6 +169,7 @@ modules/alarmtracker.o:\
 
 modules/alarmtracker.pic.o:\
 	modules/alarmtracker.c\
+	dsme/utility.h\
 	include/dsme/logging.h\
 	include/dsme/modules.h\
 	include/dsme/timers.h\
@@ -176,6 +178,7 @@ modules/alarmtracker.pic.o:\
 
 modules/batterytracker.o:\
 	modules/batterytracker.c\
+	dsme/utility.h\
 	include/dsme/logging.h\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\
@@ -186,6 +189,7 @@ modules/batterytracker.o:\
 
 modules/batterytracker.pic.o:\
 	modules/batterytracker.c\
+	dsme/utility.h\
 	include/dsme/logging.h\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\

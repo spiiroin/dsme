@@ -44,6 +44,7 @@
 #include "../include/dsme/timers.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
+#include "../dsme/utility.h"
 
 #include <dsme/state.h>
 #include <dsme/protocol.h>
@@ -102,6 +103,14 @@ static int  alarmtracker_alarmstate_evaluate_cb      (void *aptr);
 static void alarmtracker_alarmstate_evaluate         (void);
 
 /* ------------------------------------------------------------------------- *
+ * ALARMTRACKER_DSMESTATE
+ * ------------------------------------------------------------------------- */
+
+static dsme_state_t alarmtracker_dsmestate_get   (void);
+static void         alarmtracker_dsmestate_update(dsme_state_t state);
+static void         alarmtracker_dsmestate_query (void);
+
+/* ------------------------------------------------------------------------- *
  * ALARMTRACKER_DBUS
  * ------------------------------------------------------------------------- */
 
@@ -145,6 +154,9 @@ static bool alarmtracker_alarmstate_current = false;
  * For switching from: alarm in distant future -> alarm is about to trigger
  */
 static dsme_timer_t alarmtracker_alarmstate_evaluate_id = 0;
+
+/** Cached dsme state */
+static dsme_state_t alarmtracker_dsmestate_current = DSME_STATE_NOT_SET;
 
 /* ========================================================================= *
  * UTILITY
@@ -425,7 +437,14 @@ alarmtracker_alarmstate_evaluate(void)
     /* stop pending re-evaluation timer */
     alarmtracker_alarmstate_cancel_evaluate();
 
-    if( alarmtime == 0 ) {
+    if( alarmtracker_dsmestate_get() == DSME_STATE_ACTDEAD &&
+        dsme_home_is_encrypted() ) {
+        /* encrypted home is not available in act-dead,
+         * alarms can't be shown and must be ignored even
+         * if timed would be reporting them. */
+        alarm_set = false;
+    }
+    else if( alarmtime == 0 ) {
         /* there are no alarms */
         alarm_set = false;
     }
@@ -453,6 +472,48 @@ alarmtracker_alarmstate_evaluate(void)
     }
 
     alarmtracker_alarmstate_broadcast();
+}
+
+/* ========================================================================= *
+ * ALARMTRACKER_DSMESTATE
+ * ========================================================================= */
+
+/** Get cached dsme state
+ *
+ * @return return the last reported dsme state
+ */
+static dsme_state_t
+alarmtracker_dsmestate_get(void)
+{
+  return alarmtracker_dsmestate_current;
+}
+
+/** Update cached dsme state
+ *
+ * @param state  dsme state from change notification
+ */
+static void
+alarmtracker_dsmestate_update(dsme_state_t state)
+{
+    if( alarmtracker_dsmestate_current != state ) {
+        dsme_log(LOG_DEBUG, PFIX"dsme_state: %s -> %s",
+                 dsme_state_repr(alarmtracker_dsmestate_current),
+                 dsme_state_repr(state));
+        alarmtracker_dsmestate_current = state;
+        alarmtracker_alarmstate_evaluate();
+    }
+}
+
+/** Send internal to dsme query for dsme state
+ *
+ * This function should be called on module load to obtain initial state.
+ */
+static void
+alarmtracker_dsmestate_query(void)
+{
+    /* get dsme state so that we can report it over D-Bus if asked to */
+    DSM_MSGTYPE_STATE_QUERY req_state = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
+    broadcast_internally(&req_state);
 }
 
 /* ========================================================================= *
@@ -492,6 +553,12 @@ static bool dbus_signals_bound = false;
  * DSME message handlers
  * ========================================================================= */
 
+DSME_HANDLER(DSM_MSGTYPE_STATE_CHANGE_IND, server, msg)
+{
+    /* Change notification / reply to alarmtracker_dsmestate_query() */
+    alarmtracker_dsmestate_update(msg->state);
+}
+
 DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
 {
     /* Wakeup scheduled from alarmtracker_alarmtime_schedule_save() */
@@ -522,6 +589,7 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_QUERY, client, req)
 
 module_fn_info_t message_handlers[] =
 {
+    DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_CHANGE_IND),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_WAKEUP),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
     DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
@@ -545,6 +613,7 @@ module_init(module_t *handle)
     dsme_log(LOG_DEBUG, PFIX"loading plugin");
 
     alarmtracker_alarmtime_load();
+    alarmtracker_dsmestate_query();
 }
 
 /** Handle module unload time actions

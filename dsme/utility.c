@@ -42,6 +42,7 @@
 static void                 dsme_free_crypt_device        (struct crypt_device *cdev);
 static struct crypt_device *dsme_get_crypt_device_for_home(void);
 bool                        dsme_home_is_encrypted        (void);
+const char                 *dsme_state_repr               (dsme_state_t state);
 
 /* ========================================================================= *
  * Probing for encrypted home partition
@@ -103,4 +104,35 @@ dsme_home_is_encrypted(void)
     }
 
     return is_encrypted;
+}
+
+/* ========================================================================= *
+ * Debug helpers
+ * ========================================================================= */
+
+/** Human readable dsme_state_t represenation for debugging purposes
+ *
+ * @param state State enumeration value
+ *
+ * @return human readable representation of the enumeration value
+ */
+const char *
+dsme_state_repr(dsme_state_t state)
+{
+    const char *repr = "UNKNOWN";
+
+    switch( state ) {
+    case DSME_STATE_SHUTDOWN:   repr = "SHUTDOWN"; break;
+    case DSME_STATE_USER:       repr = "USER";     break;
+    case DSME_STATE_ACTDEAD:    repr = "ACTDEAD";  break;
+    case DSME_STATE_REBOOT:     repr = "REBOOT";   break;
+    case DSME_STATE_BOOT:       repr = "BOOT";     break;
+    case DSME_STATE_NOT_SET:    repr = "NOT_SET";  break;
+    case DSME_STATE_TEST:       repr = "TEST";     break;
+    case DSME_STATE_MALF:       repr = "MALF";     break;
+    case DSME_STATE_LOCAL:      repr = "LOCAL";    break;
+    default: break;
+    }
+
+    return repr;
 }
