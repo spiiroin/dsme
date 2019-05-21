@@ -1,3 +1,13 @@
+dsme (0.79.5) precise; urgency=low
+
+  * [maintenance] Update prototype scanning rules
+  * [utility] Add functions for probing encrypted home
+  * [iphb] Skip wakeup alarm programming if home is encrypted. JB#45727
+  * [alarmtracker] Refactor alarm state tracking functionality
+  * [alarmtracker] Ignore alarms in act dead if home is encrypted. Fixes JB#45727
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 21 May 2019 12:56:54 +0300
+
 dsme (0.79.4) precise; urgency=low
 
   * [packaging] Use %license for license files. Contributes to JB#24199
