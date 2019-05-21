@@ -5,7 +5,7 @@
    issue warnings. If battery level goes below safe limit, make shutdown
 
    <p>
-   Copyright (C) 2013-2017 Jolla Oy.
+   Copyright (C) 2013-2019 Jolla Oy.
 
    @author Pekka Lundstrom <pekka.lundstrom@jolla.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
@@ -32,6 +32,7 @@
 #include "../include/dsme/timers.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
+#include "../dsme/utility.h"
 
 #include <dsme/state.h>
 #include <dsme/protocol.h>
@@ -190,7 +191,6 @@ static void                    dsme_battery_level_set    (dsme_battery_level_t l
  * dsme_state
  * ------------------------------------------------------------------------- */
 
-static const char             *dsme_state_repr           (dsme_state_t state);
 static void                    dsme_state_set            (dsme_state_t state);
 
 /* ------------------------------------------------------------------------- *
@@ -600,27 +600,6 @@ EXIT:
 /* ========================================================================= *
  * dsme_state
  * ========================================================================= */
-
-static const char *
-dsme_state_repr(dsme_state_t state)
-{
-    const char *repr = "UNKNOWN";
-
-    switch( state ) {
-    case DSME_STATE_SHUTDOWN:   repr = "SHUTDOWN"; break;
-    case DSME_STATE_USER:       repr = "USER";     break;
-    case DSME_STATE_ACTDEAD:    repr = "ACTDEAD";  break;
-    case DSME_STATE_REBOOT:     repr = "REBOOT";   break;
-    case DSME_STATE_BOOT:       repr = "BOOT";     break;
-    case DSME_STATE_NOT_SET:    repr = "NOT_SET";  break;
-    case DSME_STATE_TEST:       repr = "TEST";     break;
-    case DSME_STATE_MALF:       repr = "MALF";     break;
-    case DSME_STATE_LOCAL:      repr = "LOCAL";    break;
-    default: break;
-    }
-
-    return repr;
-}
 
 static dsme_state_t dsme_state = DSME_STATE_NOT_SET;
 

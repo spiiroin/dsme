@@ -7,7 +7,7 @@
 
    <p>
    Copyright (C) 2010 Nokia. All rights reserved.
-   Copyright (C) 2013-2017 Jolla Ltd.
+   Copyright (C) 2013-2019 Jolla Ltd.
 
    @author Raimo Vuonnala <raimo.vuonnala@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
@@ -43,6 +43,7 @@
 #include "../include/dsme/timers.h"
 #include "../dsme/dsme-wdd-wd.h"
 #include "../dsme/dsme-server.h"
+#include "../dsme/utility.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -1460,6 +1461,12 @@ static void rtc_set_alarm_powerup(void)
     /* do not program alarms that we cant serve */
     if( rtc < SHUTDOWN_TIME_ESTIMATE_SECS )
 	rtc = 0;
+
+    /* encrypted home implies: act dead alarms are not supported */
+    if( rtc && dsme_home_is_encrypted() ) {
+	dsme_log(LOG_WARNING, PFIX"home encrypted; skip wakeup alarm");
+	rtc = 0;
+    }
 
     /* always log the state we leave rtc wakeup on dsme exit */
     log_time_t(LOG_WARNING, PFIX"powerup via RTC", rtc ? sys+rtc : 0, sys);

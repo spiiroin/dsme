@@ -219,8 +219,9 @@ PKG_NAMES += libiphb
 PKG_NAMES += systemd
 PKG_NAMES += libsystemd
 PKG_NAMES += libngf0
+PKG_NAMES += libcryptsetup
 
-maintenance  = normalize clean distclean mostlyclean
+maintenance  = normalize clean distclean mostlyclean protos-post
 intersection = $(strip $(foreach w,$1, $(filter $w,$2)))
 ifneq ($(call intersection,$(maintenance),$(MAKECMDGOALS)),)
 PKG_CONFIG   ?= true
@@ -263,6 +264,7 @@ dsme-server-OBJS += dsme/mainloop.o
 dsme-server-OBJS += dsme/modulebase.o
 dsme-server-OBJS += dsme/oom.o
 dsme-server-OBJS += dsme/timers.o
+dsme-server-OBJS += dsme/utility.o
 
 dsme/dsme-server : LDFLAGS += -rdynamic
 
@@ -324,7 +326,9 @@ getbootstate/getbootstate: getbootstate/getbootstate.o
 CLEAN_SOURCES += dsme/dsme-rd-mode.c
 CLEAN_SOURCES += dsme/dsmesock.c
 CLEAN_SOURCES += dsme/timers.c
+CLEAN_SOURCES += dsme/utility.c
 CLEAN_SOURCES += modules/abootsettings.c
+CLEAN_SOURCES += modules/alarmtracker.c
 CLEAN_SOURCES += modules/batterytracker.c
 CLEAN_SOURCES += modules/dbusautoconnector.c
 CLEAN_SOURCES += modules/dbusproxy.c
@@ -345,6 +349,7 @@ CLEAN_SOURCES += util/dsmetool.c
 CLEAN_HEADERS += dsme/dsme-wdd-wd.h
 CLEAN_HEADERS += dsme/dsme-wdd.h
 CLEAN_HEADERS += dsme/dsme-server.h
+CLEAN_HEADERS += dsme/utility.h
 CLEAN_HEADERS += dsme/dsme-rd-mode.h
 CLEAN_HEADERS += modules/powerontimer_backend.h
 CLEAN_HEADERS += modules/thermalmanager.h
@@ -370,7 +375,6 @@ DIRTY_SOURCES += dsme/mainloop.c
 DIRTY_SOURCES += dsme/modulebase.c
 DIRTY_SOURCES += dsme/oom.c
 DIRTY_SOURCES += getbootstate/getbootstate.c
-DIRTY_SOURCES += modules/alarmtracker.c
 DIRTY_SOURCES += modules/bootreasonlogger.c
 DIRTY_SOURCES += modules/emergencycalltracker.c
 DIRTY_SOURCES += modules/iphb.c
@@ -442,16 +446,31 @@ endif
 endif
 
 # ----------------------------------------------------------------------------
-# AUTOMATIC PROTOTYPE GENERFATION
+# AUTOMATIC PROTOTYPE GENERATION
 # ----------------------------------------------------------------------------
 
-.SUFFIXES: .q .p
+.SUFFIXES: .q .p .g
+.PRECIOUS: .q
 
-%.q : %.c ; $(CC) -o $@ -E $< $(CPPFLAGS) $(MCE_CFLAGS)
-%.p : %.q ; cproto -s < $< | prettyproto.py # sed -e 's/_Bool/bool/g'
+PROTO_SOURCES += $(CLEAN_SOURCES) $(DIRTY_SOURCES)
+PROTO_SOURCES := $(filter-out modules/powerontimer%,$(PROTO_SOURCES))
 
+%.q : CPPFLAGS += $(PROTO_CPPFLAGS)
+%.q : %.c
+	$(CC) -o $@ -E $< $(CPPFLAGS) -O
+%.p : %.q prettyproto.groups
+	cproto -s < $< | prettyproto.py > $@
+%.g : %.q prettyproto.groups
+	 cproto    < $< | prettyproto.py > $@
 clean::
-	$(RM) *.[qp] modules/*.[qp] tools/*.[qp]
+	$(RM) *.[qpg] */*.[qpg]
+
+protos-pre: $(patsubst %.c,%.q,$(PROTO_SOURCES))
+	touch $@
+protos-post: $(patsubst %.c,%.p,$(PROTO_SOURCES)) $(patsubst %.c,%.g,$(PROTO_SOURCES))
+	touch $@
+clean::
+	$(RM) protos-pre protos-post
 
 # ----------------------------------------------------------------------------
 # REMOVE FLUFF LEFT BY MB2 BUILDS
