@@ -1,3 +1,9 @@
+dsme (0.79.6) precise; urgency=low
+
+  * [state] Ignore alarms on shutdown when home is encrypted. Fixes JB#46072
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 12 Jun 2019 18:42:43 +0300
+
 dsme (0.79.5) precise; urgency=low
 
   * [maintenance] Update prototype scanning rules
