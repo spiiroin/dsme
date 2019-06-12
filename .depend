@@ -481,6 +481,7 @@ modules/startup.pic.o:\
 modules/state.o:\
 	modules/state.c\
 	dsme/dsme-rd-mode.h\
+	dsme/utility.h\
 	include/dsme/logging.h\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\
@@ -496,6 +497,7 @@ modules/state.o:\
 modules/state.pic.o:\
 	modules/state.c\
 	dsme/dsme-rd-mode.h\
+	dsme/utility.h\
 	include/dsme/logging.h\
 	include/dsme/modulebase.h\
 	include/dsme/modules.h\

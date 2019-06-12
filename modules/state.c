@@ -48,6 +48,7 @@
 #include <dsme/state.h>
 
 #include "../dsme/dsme-rd-mode.h"
+#include "../dsme/utility.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -365,9 +366,12 @@ static dsme_state_t select_state(void)
           /* favor normal shutdown over reboot over actdead */
           if (shutdown_requested &&
               (charger_state == CHARGER_DISCONNECTED) &&
-              !alarm_set)
+              (!alarm_set || dsme_home_is_encrypted()))
           {
-              dsme_log(LOG_NOTICE, PFIX"Normal shutdown");
+              dsme_log(LOG_NOTICE, PFIX"Normal shutdown%s",
+                       alarm_set
+                       ? " (alarm set, but ignored due to encrypted home)"
+                       : "");
               state = DSME_STATE_SHUTDOWN;
           } else if (reboot_requested) {
               dsme_log(LOG_NOTICE, PFIX"Reboot");
