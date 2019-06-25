@@ -22,7 +22,6 @@ BuildRequires:  pkgconfig(dsme) >= 0.66.0
 BuildRequires:  pkgconfig(libsystemd)
 BuildRequires:  pkgconfig(mce) >= 1.12.3
 BuildRequires:  pkgconfig(libngf0) >= 0.24
-BuildRequires:  python
 BuildRequires:  autoconf
 BuildRequires:  libtool
 BuildRequires:  automake
