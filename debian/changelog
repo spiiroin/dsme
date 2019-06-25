@@ -1,3 +1,9 @@
+dsme (0.79.7) precise; urgency=low
+
+  * [dsme] Remove python dependency. Contributes to JB#45853
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Tue, 25 Jun 2019 09:57:57 +0300
+
 dsme (0.79.6) precise; urgency=low
 
   * [state] Ignore alarms on shutdown when home is encrypted. Fixes JB#46072
