@@ -59,6 +59,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <sys/types.h>
 
 #ifdef DSME_VIBRA_FEEDBACK
@@ -249,7 +250,7 @@ static bool need_to_use_reboot(dsme_state_t target_state)
     int  input_fd   = -1;
     int  output_fd  = -1;
 
-    char input_path[256];
+    char input_path[PATH_MAX];
     char param[256];
 
     /* Determine path for dsme reboot param config file */
