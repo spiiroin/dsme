@@ -1,3 +1,9 @@
+dsme (0.79.8) precise; urgency=low
+
+  * [dsme] Work around snprintf() warnings. Contributes to JB#46923
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 06 Sep 2019 10:33:20 +0300
+
 dsme (0.79.7) precise; urgency=low
 
   * [dsme] Remove python dependency. Contributes to JB#45853
