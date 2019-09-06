@@ -33,7 +33,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 /**
  * @defgroup modules DSME Modules
  */
@@ -42,7 +41,7 @@
  * @defgroup startup Startup
  * @ingroup modules
  *
- * Startup module loads other modules on DSME startup. 
+ * Startup module loads other modules on DSME startup.
  */
 
 #include <dsme/messages.h>
@@ -53,6 +52,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <libgen.h>
+#include <limits.h>
 
 #define STRINGIFY(x)  STRINGIFY2(x)
 #define STRINGIFY2(x) #x
@@ -64,7 +64,6 @@
  * was loaded.
  */
 #define MODULES_CONF "/etc/dsme/modules.conf"
-
 
 /**
  * @ingroup startup
@@ -123,7 +122,6 @@ const char *modules[] = {
     NULL
 };
 
-
 DSME_HANDLER(DSM_MSGTYPE_GET_VERSION, client, ind)
 {
 	static const char*       version = STRINGIFY(PRG_VERSION);
@@ -134,7 +132,6 @@ DSME_HANDLER(DSM_MSGTYPE_GET_VERSION, client, ind)
 	endpoint_send_with_extra(client, &msg, strlen(version) + 1, version);
 }
 
-
 module_fn_info_t message_handlers[] = {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_GET_VERSION),
   {0}
@@ -142,48 +139,52 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t *handle)
 {
-    dsme_log(LOG_DEBUG, "DSME %s starting up", STRINGIFY(PRG_VERSION));
+	dsme_log(LOG_DEBUG, "DSME %s starting up", STRINGIFY(PRG_VERSION));
 
-    char * modulename;
-    char * path;
-    char name[1024];  /* TODO more dynamic length */
-    const char **names;
-    FILE *conffile = fopen(MODULES_CONF, "r");
+	FILE       *conffile   = 0;
+	char       *modulename = 0;
+	const char *moduledir  = 0;
+	char        modulepath[PATH_MAX];
 
-        modulename = strdup(module_name(handle));
-	if (!modulename) {
+	if( !(modulename = strdup(module_name(handle))) ) {
 		dsme_log(LOG_CRIT, "strdup failed");
 		exit(EXIT_FAILURE);
 	}
+	moduledir = dirname(modulename);
 
-    path = dirname(modulename);
-
-	if (!conffile) {
+	if( !(conffile = fopen(MODULES_CONF, "r")) ) {
 		dsme_log(LOG_DEBUG, "Unable to read conffile (%s), using compiled-in startup list", MODULES_CONF);
-		for (names = modules ; *names ; names++) {
-			snprintf(name, sizeof(name), "%s/%s", path, *names);
-			if(load_module(name, 0) == NULL) {
-				dsme_log(LOG_ERR, "error loading module %s", name);
+
+		for( size_t i = 0; modules[i]; ++i ) {
+			int rc = snprintf(modulepath, sizeof modulepath, "%s/%s", moduledir, modules[i]);
+			if( rc < 0 || rc >= sizeof modulepath ) {
+				/* Skip on error / truncate */
+				continue;
+			}
+			if( !load_module(modulepath, 0) ) {
+				dsme_log(LOG_ERR, "error loading module %s", modulepath);
 			}
 		}
-	} else {
-		size_t len = 0;
-		char * line = NULL;
-		
+	}
+	else {
 		dsme_log(LOG_DEBUG, "Conf file exists, reading modulenames from %s", MODULES_CONF);
-
-		while (getline(&line, &len, conffile) > 0) { 
-			snprintf(name, sizeof(name), "%s/%s", path, line);
-			name[strlen(name) - 1] = '\0'; /* Remove newline */
-			if (load_module(name, 0) == NULL) {
-				dsme_log(LOG_ERR, "error loading module %s", name);
+		size_t size = 0;
+		char  *line = NULL;
+		while( getline(&line, &size, conffile) > 0 ) {
+			line[strcspn(line, "\r\n")] = 0;
+			int rc = snprintf(modulepath, sizeof modulepath, "%s/%s", moduledir, line);
+			if( rc < 0 || rc >= sizeof modulepath ) {
+				/* Skip on error / truncate */
+				continue;
 			}
-		} 
-		if (line)
-			free(line);
+			if (!load_module(modulepath, 0) ) {
+				dsme_log(LOG_ERR, "error loading module %s", modulepath);
+			}
+		}
+		free(line);
 		fclose(conffile);
 	}
 
 	free(modulename);
-    dsme_log(LOG_DEBUG, "Module loading finished.");
+	dsme_log(LOG_DEBUG, "Module loading finished.");
 }

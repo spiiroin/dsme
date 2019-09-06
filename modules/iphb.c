@@ -102,6 +102,10 @@
 /** Where to persistently store alarm state data received from timed */
 #define XTIMED_STATE_FILE     "/var/lib/dsme/timed_state"
 
+
+/** Maximum expected lenght of human readable time stamp */
+#define TIMESTAMP_MAX 64
+
 /* ------------------------------------------------------------------------- *
  * Custom types
  * ------------------------------------------------------------------------- */
@@ -304,7 +308,9 @@ static void log_time_t(int lev, const char *title, time_t t, time_t now)
 	goto cleanup;
     }
 
-    snprintf(left, sizeof left, " (T%+ld)", (long)(now - t));
+    if( snprintf(left, sizeof left, " (T%+ld)", (long)(now - t)) < 0 ) {
+	// dontcare - diagnostic logging
+    }
 
     memset(&tm, 0, sizeof tm);
     gmtime_r(&t, &tm);
@@ -402,14 +408,16 @@ static void wakelock_lock(const char *name, int ms)
     dsme_log(LOG_DEBUG, PFIX"LOCK: %s %d", name, ms);
     if( wakelock_supported() ) {
 	char tmp[256];
+	int rc = -1;
 	if( ms < 0 ) {
-	    snprintf(tmp, sizeof tmp, "%s\n", name);
+	    rc = snprintf(tmp, sizeof tmp, "%s\n", name);
 	}
 	else {
 	    long long ns = ms * 1000000LL;
-	    snprintf(tmp, sizeof tmp, "%s %lld\n", name, ns);
+	    rc = snprintf(tmp, sizeof tmp, "%s %lld\n", name, ns);
 	}
-	wakelock_write(lock_path, tmp, -1);
+	if( rc > 0 && rc < sizeof tmp )
+	    wakelock_write(lock_path, tmp, -1);
     }
 }
 
@@ -424,9 +432,10 @@ static void wakelock_unlock(const char *name)
     dsme_log(LOG_DEBUG, PFIX"UNLK: %s", name);
     if( wakelock_supported() ) {
 	char tmp[256];
-	snprintf(tmp, sizeof tmp, "%s\n", name);
+	int rc = snprintf(tmp, sizeof tmp, "%s\n", name);
 	/* assume EINVAL == the wakelock did not exist */
-	wakelock_write(unlock_path, tmp, EINVAL);
+	if( rc > 0 && rc < sizeof tmp )
+	    wakelock_write(unlock_path, tmp, EINVAL);
     }
 }
 
@@ -789,7 +798,7 @@ static void linux_alarm_set(time_t delay)
     if( linux_alarm_timerfd == -1 )
 	goto cleanup;
 
-    char tmp[32];
+    char tmp[TIMESTAMP_MAX];
 
     struct timespec now = { .tv_sec = 0, .tv_nsec = 0 };
 
@@ -884,7 +893,7 @@ static void android_alarm_set(time_t delay)
     if( android_alarm_fd == -1 )
 	goto cleanup;
 
-    char tmp[32];
+    char tmp[TIMESTAMP_MAX];
 
     int get_time = ANDROID_ALARM_GET_TIME(ANDROID_ALARM_RTC);
     if( ioctl(android_alarm_fd, get_time, &now) != 0 ) {
@@ -1018,7 +1027,7 @@ static void deltatime_set(time_t delta)
     char tmp[32];
     int len = snprintf(tmp, sizeof tmp, "%ld\n", (long)delta);
 
-    if( len > 0 && write(fd, tmp, len) == -1 ) {
+    if( len > 0 && len < sizeof tmp && write(fd, tmp, len) == -1 ) {
         dsme_log(LOG_ERR, PFIX"%s: %s: %m", DELTATIME_CACHE_FILE, "write");
         goto cleanup;
     }
@@ -1069,14 +1078,18 @@ cleanup:
  */
 static char *tm_repr(const struct tm *tm, char *buff, size_t size)
 {
-    snprintf(buff, size, "%04d-%02d-%02d %02d:%02d:%02d %s",
-	     tm->tm_year  + 1900,
-	     tm->tm_mon   + 1,
-	     tm->tm_mday  + 0,
-	     tm->tm_hour,
-	     tm->tm_min,
-	     tm->tm_sec,
-	     tm->tm_zone ?: "???");
+    int rc = snprintf(buff, size, "%04d-%02d-%02d %02d:%02d:%02d %s",
+		      tm->tm_year  + 1900,
+		      tm->tm_mon   + 1,
+		      tm->tm_mday  + 0,
+		      tm->tm_hour,
+		      tm->tm_min,
+		      tm->tm_sec,
+		      tm->tm_zone ?: "???");
+    if( rc < 0 ) {
+	// dontcare - diagnostic logging
+    }
+
     return buff;
 }
 
@@ -1403,7 +1416,7 @@ static bool rtc_set_alarm_after(time_t delay)
     time_t alm = sys + delay;
 
     struct tm tm;
-    char tmp[32];
+    char tmp[TIMESTAMP_MAX];
 
     dsme_log(LOG_INFO, PFIX"wakeup delay %d", (int)delay);
     dsme_log(LOG_INFO, PFIX"system : %s", t_repr(sys, tmp, sizeof tmp));
@@ -2298,10 +2311,15 @@ static char *time_minus(const struct timeval *tv, char *buff, size_t size)
     add(n);
     if( d )
     {
-	snprintf(tmp, sizeof tmp, "%ld days, ", d);
+	if( snprintf(tmp, sizeof tmp, "%ld days, ", d) < 0 ) {
+	    // dontcare - diagnostic logging
+	}
 	add(tmp);
     }
-    snprintf(tmp, sizeof tmp, "%02ld:%02ld:%02ld.%03ld", h, m, s, ms);
+    if( snprintf(tmp, sizeof tmp, "%02ld:%02ld:%02ld.%03ld",
+		 h, m, s, ms) < 0 ) {
+	// dontcare - diagnostic logging
+    }
     add(tmp);
     return *pos = 0, buff;
 }
@@ -3140,7 +3158,7 @@ static time_t mintime_fetch(void)
     time_t    t_release = get_mtime(IMAGE_TIME_STAMP_FILE);
     time_t    t_saved   = get_mtime(SAVED_TIME_FILE);
     time_t    t_system  = time(0);
-    char      tmp[32];
+    char      tmp[TIMESTAMP_MAX];
 
     dsme_log(LOG_INFO, PFIX"builtin %s", t_repr(t_builtin, tmp, sizeof tmp));
     dsme_log(LOG_INFO, PFIX"release %s", t_repr(t_release, tmp, sizeof tmp));
@@ -3171,7 +3189,7 @@ static void mintime_store(void)
 
 static void systemtime_init(void)
 {
-    char tmp[32];
+    char tmp[TIMESTAMP_MAX];
     struct tm tm;
 
     /* Get current state */

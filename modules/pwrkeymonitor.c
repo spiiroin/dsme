@@ -510,7 +510,7 @@ start_pwrkey_monitor(void)
     DIR *dir = 0;
     int  cnt = 0;
 
-    char path[256];
+    char path[PATH_MAX];
     struct dirent *de;
 
     if( !(dir = opendir(base)) )
@@ -526,7 +526,12 @@ start_pwrkey_monitor(void)
             continue;
         }
 
-        snprintf(path, sizeof path, "%s/%s", base, de->d_name);
+	int rc = snprintf(path, sizeof path, "%s/%s", base, de->d_name);
+	if( rc < 0 || rc >= sizeof path )
+	{
+	    /* Skip on error / truncate */
+	    continue;
+	}
 
         if( probe_evdev_device(path) )
         {

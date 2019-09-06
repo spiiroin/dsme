@@ -76,8 +76,6 @@ static const char *possible_pwrup_strings[] = {
   0
 };
 
-static char pwrup_reason[80];
-
 static const struct {
     int         value;
     const char* name;
@@ -110,7 +108,7 @@ static bool sw_update_running(void)
 static bool system_still_booting(void)
 {
     /* Once system boot is over, init-done flag is set */
-    /* If file is not there, we are still booting */ 
+    /* If file is not there, we are still booting */
     return (access("/run/systemd/boot-status/init-done", F_OK) != 0);
 }
 
@@ -132,7 +130,8 @@ static const char * get_timestamp(void)
         ((timeinfo = localtime(&raw_time)) != NULL) &&
         (strftime(date_time, sizeof(date_time), "%Y%m%d_%H%M%S", timeinfo) > 0)) {
             timestamp = date_time;
-    } else 
+    }
+    else
         dsme_log(LOG_ERR, PFIX"failed to get timestamp");
 
     return timestamp;
@@ -157,74 +156,77 @@ static void write_log(const char *state, const char *reason)
     }
 }
 
-
 static int get_cmd_line_value(char* get_value, int max_len, const char* key)
 {
-    FILE*       cmdline_file;
-    char        cmdline[MAX_CMDLINE_LEN];
-    int         ret = -1;
-    int         keylen;
-    char*       key_and_value;
-    char*       value;
+    static const char path[] = "/proc/cmdline";
 
-    cmdline_file = fopen("/proc/cmdline", "r");
-    if(!cmdline_file) {
-        dsme_log(LOG_ERR, PFIX"Could not open /proc/cmdline");
-        return -1;
+    int   ret  = -1;
+    FILE *file = 0;
+
+    if( !(file = fopen(path, "r")) ) {
+        dsme_log(LOG_ERR, PFIX"Could not open %s: %m", path);
+        goto EXIT;
     }
 
-    if (fgets(cmdline, MAX_CMDLINE_LEN, cmdline_file)) {
-        key_and_value = strtok(cmdline, " ");
-        keylen = strlen(key);
-        while (key_and_value != NULL) {
-            if(!strncmp(key_and_value, key, keylen)) {
-                value = strtok(key_and_value, "=");
-                value = strtok(NULL, "=");
-                if (value) {
-                    snprintf(get_value, max_len, "%s", value);
-                    ret = strlen(get_value);
-                }
-                break;
+    char cmdline[MAX_CMDLINE_LEN];
+    if( !fgets(cmdline, sizeof cmdline, file) ) {
+        dsme_log(LOG_ERR, PFIX"Could not read %s: %m", path);
+        goto EXIT;
+    }
+
+    for( char *parse = cmdline; parse; ) {
+        char *value = strsep(&parse, " \n");
+        char *entry = strsep(&value, "=");
+        if( !strcmp(entry, key) ) {
+            if( snprintf(get_value, max_len, "%s", value ?: "") >= max_len ) {
+                // dontcare - if it does not fit, we want it truncated
             }
-            key_and_value = strtok(NULL, " ");
+            ret = strlen(get_value);
+            break;
         }
     }
-    fclose(cmdline_file);
+
+EXIT:
+    if( file )
+        fclose(file);
     return ret;
 }
 
 static char * get_powerup_reason_str(void)
 {
-    char *env;
-    const char *search_key;
-    int i = 0;
-    char cmdvalue[80];
-
-    /* set default */
-    snprintf(pwrup_reason, sizeof(pwrup_reason), "Reason Unknown");
-
     /* Powerup reason is either in enviroment or in kernel commandline
      * we will look both and use first match
      */
 
-    while ((search_key = possible_pwrup_strings[i])) {
-        if ((env = getenv(search_key))) {
-            snprintf(pwrup_reason, sizeof(pwrup_reason),"%s=%s", search_key, env);
-            break;
-        } else if ((get_cmd_line_value(cmdvalue, sizeof(cmdvalue), search_key)) > 0) {
-            snprintf(pwrup_reason, sizeof(pwrup_reason),"%s=%s", search_key, cmdvalue);
-            break;
+    char *pwrup_reason = 0;
+    const char *search_key;
+    for( int i = 0; (search_key = possible_pwrup_strings[i]); ++i ) {
+        const char *env;
+        if( (env = getenv(search_key)) ) {
+            if( asprintf(&pwrup_reason, "%s=%s", search_key, env) < 0 )
+                pwrup_reason = 0;
+            else
+                break;
         }
-        i++;
+
+        char cmdvalue[80];
+        if( (get_cmd_line_value(cmdvalue, sizeof cmdvalue, search_key) ) > 0) {
+            if( asprintf(&pwrup_reason, "%s=%s", search_key, cmdvalue) < 0 )
+                pwrup_reason = 0;
+            else
+                break;
+        }
     }
     return pwrup_reason;
 }
 
-
 static void log_startup(void)
 {
-    if (system_still_booting())
-        write_log("Startup: ", get_powerup_reason_str());
+    if (system_still_booting()) {
+        char *pwrup_reason = get_powerup_reason_str();
+        write_log("Startup: ", pwrup_reason ?: "Reason Unknown");
+        free(pwrup_reason);
+    }
     else {
         /* System has already booted. We are here because
          * dsme daemon has been restarted
@@ -263,7 +265,8 @@ DSME_HANDLER(DSM_MSGTYPE_SET_THERMAL_STATUS, conn, msg)
     if (msg->status == DSM_THERMAL_STATUS_OVERHEATED) {
         temp_status = "overheated";
         overheated = true;
-    } else if (msg->status == DSM_THERMAL_STATUS_LOWTEMP)
+    }
+    else if (msg->status == DSM_THERMAL_STATUS_LOWTEMP)
         temp_status = "low warning";
     else
         temp_status = "normal";
@@ -325,7 +328,6 @@ module_fn_info_t message_handlers[] = {
     DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_CHANGE_IND),
     {0}
 };
-
 
 void module_init(module_t* handle)
 {
