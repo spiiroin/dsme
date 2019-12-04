@@ -1,3 +1,9 @@
+dsme (0.80.0) precise; urgency=low
+
+  * [dsme] Sandbox the dsme service. JB#44449, JB#37897
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Wed, 04 Dec 2019 13:59:38 +0200
+
 dsme (0.79.8) precise; urgency=low
 
   * [dsme] Work around snprintf() warnings. Contributes to JB#46923
