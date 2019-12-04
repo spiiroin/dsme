@@ -19,6 +19,22 @@ RestartSec=1
 StartLimitInterval=600
 StartLimitBurst=3
 StartLimitAction=reboot
+# Sandboxing
+CapabilityBoundingSet=CAP_BLOCK_SUSPEND CAP_DAC_OVERRIDE CAP_DAC_READ_SEARCH CAP_FOWNER CAP_IPC_LOCK CAP_SYS_NICE CAP_SYS_RESOURCE CAP_SYS_TIME CAP_WAKE_ALARM
+# System update uses /tmp/os-update-running which should be relocated
+PrivateTmp=no
+PrivateNetwork=true
+ProtectHome=yes
+ProtectSystem=full
+DevicePolicy=closed
+DeviceAllow=char-rtc rw
+DeviceAllow=/dev/alarm rw
+DeviceAllow=char-input r
+DeviceAllow=/dev/watchdog rw
+DeviceAllow=/dev/watchdog0 rw
+DeviceAllow=/dev/watchdog1 rw
+DeviceAllow=/dev/twl4030_wdt rw
+DeviceAllow=/dev/console rw
 
 [Install]
 WantedBy=multi-user.target
