@@ -267,6 +267,13 @@ int main(int argc, char *argv[])
   signal(SIGHUP,  signal_handler);
   signal(SIGPIPE, signal_handler);
 
+  parse_options(argc, argv, &module_names);
+
+  if (!module_names) {
+      usage(argv[0]);
+      goto EXIT;
+  }
+
   /* protect DSME from oom; notice that this must be done before any
    * calls to pthread_create() in order to have all threads protected
    */
@@ -291,13 +298,6 @@ int main(int argc, char *argv[])
   /* Set nice value for cases when dsme-server is not under RT-scheduling*/
   if (setpriority(PRIO_PROCESS, 0, DSME_PRIORITY) != 0) {
       fprintf(stderr, ME "Couldn't set dynamic priority: %s\n", strerror(errno));
-  }
-
-  parse_options(argc, argv, &module_names);
-
-  if (!module_names) {
-      usage(argv[0]);
-      goto EXIT;
   }
 
   dsme_log_open(logging_method,
