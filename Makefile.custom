@@ -187,6 +187,10 @@ CPPFLAGS += -DDSME_LIFEGUARD
 # AutoXXX compatibility
 CPPFLAGS += -DPRG_VERSION=$(VERSION)
 
+# Maemo-leste hacking
+
+CPPFLAGS += -D""MAEMO_LESTE
+
 # ----------------------------------------------------------------------------
 # Compiler options
 # ----------------------------------------------------------------------------

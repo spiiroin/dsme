@@ -29,7 +29,15 @@
 
 #include <string.h>
 
-#include <libcryptsetup.h>
+#ifdef MAEMO_LESTE
+# define ENCRYPTION_SUPPORT 0
+#else
+# define ENCRYPTION_SUPPORT 1
+#endif
+
+#if ENCRYPTION_SUPPORT
+# include <libcryptsetup.h>
+#endif
 
 /* ========================================================================= *
  * Prototypes
@@ -39,8 +47,10 @@
  * UTILITY
  * ------------------------------------------------------------------------- */
 
+#if ENCRYPTION_SUPPORT
 static void                 dsme_free_crypt_device        (struct crypt_device *cdev);
 static struct crypt_device *dsme_get_crypt_device_for_home(void);
+#endif
 bool                        dsme_home_is_encrypted        (void);
 const char                 *dsme_state_repr               (dsme_state_t state);
 
@@ -48,6 +58,7 @@ const char                 *dsme_state_repr               (dsme_state_t state);
  * Probing for encrypted home partition
  * ========================================================================= */
 
+#if ENCRYPTION_SUPPORT
 static const char homeLuksContainer[] = "/dev/sailfish/home";
 
 static void
@@ -105,6 +116,13 @@ dsme_home_is_encrypted(void)
 
     return is_encrypted;
 }
+#else /* !ENCRYPTION_SUPPORT */
+bool
+dsme_home_is_encrypted(void)
+{
+    return false;
+}
+#endif /* ENCRYPTION_SUPPORT */
 
 /* ========================================================================= *
  * Debug helpers
