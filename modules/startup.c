@@ -161,7 +161,7 @@ void module_init(module_t *handle)
 				/* Skip on error / truncate */
 				continue;
 			}
-			if( !load_module(modulepath, 0) ) {
+			if( !modulebase_load_module(modulepath, 0) ) {
 				dsme_log(LOG_ERR, "error loading module %s", modulepath);
 			}
 		}
@@ -177,7 +177,7 @@ void module_init(module_t *handle)
 				/* Skip on error / truncate */
 				continue;
 			}
-			if (!load_module(modulepath, 0) ) {
+			if (!modulebase_load_module(modulepath, 0) ) {
 				dsme_log(LOG_ERR, "error loading module %s", modulepath);
 			}
 		}

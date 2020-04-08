@@ -11,6 +11,8 @@ ACLOCAL_AMFLAGS = -I m4
 #
 dbusdir = @sysconfdir@/dbus-1/system.d
 pkgsysconfdir = @sysconfdir@/@PACKAGE@
+dsmeplugindir = $(includedir)/dsme-plugin
+pkgconfigdir = $(libdir)/pkgconfig
 
 #
 # Binaries
@@ -49,15 +51,21 @@ dsme_server_LDADD = $(GLIB_LIBS) $(LIBCRYPTSETUP_LIBS) -ldsme -ldl
 #
 noinst_HEADERS = dsme-rd-mode.h \
                  utility.h \
-                 ../include/dsme/mainloop.h \
-                 ../include/dsme/modulebase.h \
-                 ../include/dsme/modules.h \
                  ../include/dsme/dsmesock.h \
-                 ../include/dsme/logging.h \
-                 ../include/dsme/oom.h \
-                 ../include/dsme/timers.h
+                 ../include/dsme/oom.h
+
+dsmeplugin_HEADERS = ../include/dsme/logging.h \
+                     ../include/dsme/modulebase.h \
+                     ../include/dsme/modules.h \
+                     ../include/dsme/timers.h \
+                     ../include/dsme/mainloop.h
 
 #
 # Data
 #
 dist_dbus_DATA = dsme.conf
+
+#
+# dsme-plugin pkgconfig
+#
+dist_pkgconfig_DATA = ../dsme-plugin.pc

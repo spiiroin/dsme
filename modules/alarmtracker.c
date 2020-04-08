@@ -203,7 +203,7 @@ alarmtracker_alarmtime_schedule_save(void)
     msg.data        = 0;
 
     dsme_log(LOG_DEBUG, PFIX"scheduled status save");
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 }
 
 /** Load persistently cached alarm time
@@ -364,7 +364,7 @@ alarmtracker_alarmstate_broadcast(void)
                  alarmtracker_alarmstate_current ? "set" : "not set");
 
         /* inform state module about changed alarm state */
-        broadcast_internally(&msg);
+        modules_broadcast_internally(&msg);
 
         /* inform clients about the change in upcoming alarms */
         dsmesock_broadcast(&msg);
@@ -513,7 +513,7 @@ alarmtracker_dsmestate_query(void)
 {
     /* get dsme state so that we can report it over D-Bus if asked to */
     DSM_MSGTYPE_STATE_QUERY req_state = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
-    broadcast_internally(&req_state);
+    modules_broadcast_internally(&req_state);
 }
 
 /* ========================================================================= *

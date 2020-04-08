@@ -224,7 +224,7 @@ static bool receive_and_queue_message(dsmesock_connection_t* conn)
     if( !(msg = dsmesock_receive(conn)) )
         goto EXIT;
 
-    broadcast_internally_from_socket(msg, conn);
+    modules_broadcast_internally_from_socket(msg, conn);
 
     if( DSMEMSG_CAST(DSM_MSGTYPE_CLOSE, msg) ) {
         keep_connection = false;
@@ -335,7 +335,7 @@ int main(int argc, char *argv[])
   }
 #endif
   dsme_log(LOG_DEBUG, "Entering main loop");
-  dsme_main_loop_run(process_message_queue);
+  dsme_main_loop_run(modulebase_process_message_queue);
 
   /* To eaze shutdown analysis, always log when dsme exits */
   dsme_log(LOG_WARNING, "Exited main loop, quitting");

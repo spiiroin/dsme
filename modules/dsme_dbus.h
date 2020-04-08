@@ -35,8 +35,6 @@
 #include <stdbool.h>
 #include <dbus/dbus.h>
 
-#define DBUS_FAILED_FILE "/run/systemd/boot-status/dbus-failed"
-
 typedef struct DsmeDbusMessage DsmeDbusMessage;
 
 #define DSME_DBUS_MESSAGE_DUMMY ((DsmeDbusMessage *)(0xaffe0000))

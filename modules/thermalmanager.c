@@ -419,10 +419,10 @@ thermal_manager_schedule_object_poll(thermal_object_t *thermal_object)
      * this function can end up being called from events
      * dispatched at other modules, we need to maintain
      * the context manually ... */
-    const module_t *from_module = current_module();
-    enter_module(this_module);
-    broadcast_internally(&msg);
-    enter_module(from_module);
+    const module_t *from_module = modulebase_current_module();
+    modulebase_enter_module(this_module);
+    modules_broadcast_internally(&msg);
+    modulebase_enter_module(from_module);
 
     /* ... wait for DSM_MSGTYPE_WAKEUP ...
      * -> thermal_manager_request_object_update()
@@ -802,7 +802,7 @@ thermal_manager_broadcast_status_dsme(THERMAL_STATUS status,
     msg.temperature = temperature;
     strncat(msg.sensor_name, sensor_name, sizeof msg.sensor_name - 1);
 
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 
 EXIT:
     return;

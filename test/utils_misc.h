@@ -124,8 +124,8 @@ static module_t* load_module_under_test(const char* path)
       perror(path);
       fatal("realpath() failed");
   } else {
-      if (!(module = load_module(canonical, 0))) {
-          fatal("load_module() failed");
+      if (!(module = modulebase_load_module(canonical, 0))) {
+          fatal("modulebase_load_module() failed");
       }
       free(canonical);
   }
@@ -136,8 +136,8 @@ static module_t* load_module_under_test(const char* path)
 static void unload_module_under_test(module_t* module)
 {
   fprintf(stderr, "\n[UNLOADING MODULE]\n");
-  if (!unload_module(module)) {
-      fatal("unload_module() failed");
+  if (!modulebase_unload_module(module)) {
+      fatal("modulebase_unload_module() failed");
   }
 }
 

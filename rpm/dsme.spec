@@ -2,7 +2,6 @@ Name:       dsme
 Summary:    Device State Management Entity
 Version:    0.80.0
 Release:    0
-Group:      System/System Control
 License:    LGPLv2+
 URL:        https://github.com/nemomobile/dsme
 Source0:    %{name}-%{version}.tar.gz
@@ -30,9 +29,14 @@ BuildRequires:  pkgconfig(libcryptsetup)
 %description
 Device State Management Entity (with debug symbols). This package contains the Device State Management Entity which provides state management features such as service monitoring, process watchdog and inactivity tracking.
 
+%package plugin-devel
+Summary:  Header files required by DSME plugins
+
+%description plugin-devel
+Development header files for DSME plugins.
+
 %package tests
 Summary:    DSME test cases
-Group:      Development/System
 BuildArch:  noarch
 Requires:   %{name} = %{version}-%{release}
 Requires:   dbus
@@ -95,6 +99,12 @@ systemctl daemon-reload || :
 /var/lib/dsme
 %config(noreplace) /var/lib/dsme/alarm_queue_status
 /etc/profile.d/reboot-via-dsme.sh
+
+%files plugin-devel
+%defattr(-,root,root,-)
+%dir %{_includedir}/dsme-plugin
+%{_includedir}/dsme-plugin/*.h
+%{_libdir}/pkgconfig/dsme-plugin.pc
 
 %files tests
 %defattr(-,root,root,-)

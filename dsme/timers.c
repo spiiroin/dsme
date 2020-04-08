@@ -69,9 +69,9 @@ timergate_timeout_cb(gpointer aptr)
     dsme_log(LOG_DEBUG, "dispatch %ums timer at module: %s",
              self->tg_interval, module_name(self->tg_module) ?: "unknown");
 
-    const module_t *cur = enter_module(self->tg_module);
+    const module_t *cur = modulebase_enter_module(self->tg_module);
     int rc = self->tg_callback(self->tg_data);
-    enter_module(cur);
+    modulebase_enter_module(cur);
 
     return rc != 0;
 }
@@ -86,7 +86,7 @@ timergate_create(gint priority,
 
     timergate_t *self = g_slice_alloc0(sizeof *self);
 
-    self->tg_module   = current_module();
+    self->tg_module   = modulebase_current_module();
     self->tg_interval = interval;
     self->tg_callback = callback;
     self->tg_data     = data;

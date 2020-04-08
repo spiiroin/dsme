@@ -26,6 +26,7 @@
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modulebase.h"
+#include "../include/dsme/mainloop.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -154,7 +155,7 @@ static void shutdown(dsme_runlevel_t runlevel)
 
 fail_and_exit:
   dsme_log(LOG_CRIT, "Closing to clean-up!");
-  dsme_exit(EXIT_FAILURE);
+  dsme_main_loop_quit(EXIT_FAILURE);
 }
 
 

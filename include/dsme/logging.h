@@ -98,6 +98,4 @@ void dsme_log_queue(int level, const char *file, const char *func, const char *f
          }\
      }while(0)
 
-char* pid2text(pid_t pid);
-
 #endif /* DSME_LOGGING_H */

@@ -130,9 +130,9 @@ static void loader_needed_cb(DBusPendingCall *pending, void *user_data)
                                                     err.name, err.message);
     } else {
         /* We got the reply without error, so the service exists */
-        const module_t *restore = enter_module(this_module);
+        const module_t *restore = modulebase_enter_module(this_module);
         dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
-        enter_module(restore);
+        modulebase_enter_module(restore);
         dsme_log(LOG_DEBUG, "wlanloader: activated");
     }
 

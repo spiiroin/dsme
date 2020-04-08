@@ -103,7 +103,7 @@ connect_request(void)
 {
     DSM_MSGTYPE_DBUS_CONNECT msg = DSME_MSG_INIT(DSM_MSGTYPE_DBUS_CONNECT);
 
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 }
 
 /* ------------------------------------------------------------------------- *
@@ -188,7 +188,7 @@ static inline void *lea(const void *base, ssize_t offs)
 static gboolean
 systembus_watcher_cb(GIOChannel *src, GIOCondition cnd, gpointer dta)
 {
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
     bool keep_watching = false;
     bool update = false;
 
@@ -243,7 +243,7 @@ EXIT:
         systembus_watcher_stop();
     }
 
-    enter_module(caller);
+    modulebase_enter_module(caller);
     return keep_watching;
 }
 

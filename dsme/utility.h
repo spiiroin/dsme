@@ -41,4 +41,6 @@
 bool        dsme_home_is_encrypted(void);
 const char *dsme_state_repr       (dsme_state_t state);
 
+char* dsme_pid2text(pid_t pid);
+
 #endif /* DSME_UTILITY_H_ */

@@ -115,12 +115,12 @@ pwrkey_trigger(void *data)
     msg = DSME_MSG_NEW_WITH_EXTRA(DSM_MSGTYPE_TELINIT, sizeof(runlevel));
     buf = ((char *)msg) + sizeof(DSM_MSGTYPE_TELINIT);
     strcpy(buf, runlevel);
-    broadcast_internally(msg);
+    modules_broadcast_internally(msg);
     free(msg);
 #else
     /* Use the "normal" shutdown request */
     DSM_MSGTYPE_SHUTDOWN_REQ msg = DSME_MSG_INIT(DSM_MSGTYPE_SHUTDOWN_REQ);
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 #endif
 
     /* No repeats */
@@ -345,7 +345,7 @@ static
 gboolean
 process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
 {
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
     gboolean keep_going = TRUE;
 
     struct input_event buf[32];
@@ -418,7 +418,7 @@ process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
         watchlist_remove(chan);
     }
 
-    enter_module(caller);
+    modulebase_enter_module(caller);
 
     return keep_going;
 }
