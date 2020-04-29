@@ -32,6 +32,10 @@
 #include "../include/dsme/modulebase.h"
 #include "../include/dsme/logging.h"
 
+#ifndef __GLIBC__
+#include "../include/dsme/temp-failure-retry.h"
+#endif
+
 #include <dsme/state.h>
 
 #include <glib.h>

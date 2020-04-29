@@ -55,6 +55,10 @@
 #include <time.h>
 #include <mntent.h>
 
+#ifndef __GLIBC__
+#include <paths.h>
+#endif
+
 #include <glib.h>
 
 /* ========================================================================= *
