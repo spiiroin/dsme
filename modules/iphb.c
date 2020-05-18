@@ -1441,9 +1441,9 @@ static bool rtc_set_alarm_after(time_t delay)
 	android_alarm_clear();
 	linux_alarm_clear();
     }
-
-    if( !rtc_set_alarm_tm(&tm, enabled) )
-	goto cleanup;
+    if (linux_alarm_timerfd == -1 && android_alarm_fd == -1)
+	    if( !rtc_set_alarm_tm(&tm, enabled) )
+		goto cleanup;
 
     result = true;
 
@@ -1461,6 +1461,7 @@ static void rtc_set_alarm_powerup(void)
 {
     time_t sys = time(0);
     time_t rtc = alarm_powerup;
+    struct tm tm;
 
     /* how far in the future the next poweup alarm is */
     if( rtc > sys )
@@ -1484,7 +1485,10 @@ static void rtc_set_alarm_powerup(void)
     /* always log the state we leave rtc wakeup on dsme exit */
     log_time_t(LOG_WARNING, PFIX"powerup via RTC", rtc ? sys+rtc : 0, sys);
 
-    rtc_set_alarm_after(rtc);
+    if( rtc_get_time_tm(&tm) != (time_t)-1 ) {
+      	tm.tm_sec += rtc;
+	rtc_set_alarm_tm(&tm, (rtc == 0) ? false: true);
+    }
 }
 
 /** Flag for: update system time on rtc interrupt */
@@ -3372,12 +3376,12 @@ void module_fini(void)
     /* stop timerfd alarm */
     linux_alarm_quit();
 
+    /* close android alarm device */
+    android_alarm_quit();
+
     /* set wakeup alarm before closing the rtc */
     rtc_set_alarm_powerup();
     rtc_detach();
-
-    /* close android alarm device */
-    android_alarm_quit();
 
     /* cleanup rest of what is in the epoll set */
     listenfd_quit();
