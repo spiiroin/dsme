@@ -260,4 +260,4 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  dsme.init])
 
-AC_OUTPUT
+AC_OUTPUT(dsme-plugin.pc)

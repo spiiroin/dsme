@@ -1,8 +1,8 @@
-prefix=/usr
-includedir=${prefix}/include
+prefix=@prefix@
+includedir=@includedir@
 
 Name: dsme-plugin-devel
 Description: Header files for building DSME plugins
-Version: 0.80.0
+Version: @VERSION@
 Requires:
 Cflags: -I${includedir}/dsme-plugin
