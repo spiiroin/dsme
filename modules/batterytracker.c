@@ -1077,7 +1077,7 @@ xmce_name_owner_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusHandlerResult res = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
@@ -1123,7 +1123,7 @@ cleanup:
 
     dbus_error_free(&err);
 
-    enter_module(caller);
+    modulebase_enter_module(caller);
     return res;
 }
 
@@ -1137,7 +1137,7 @@ xmce_name_owner_reply_cb(DBusPendingCall *pc, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusMessage *rsp = 0;
     const char  *dta = 0;
@@ -1175,7 +1175,7 @@ cleanup:
     if( rsp ) dbus_message_unref(rsp);
 
     dbus_error_free(&err);
-    enter_module(caller);
+    modulebase_enter_module(caller);
 }
 
 /** Cancel pending mce name owner query
@@ -1266,7 +1266,7 @@ xmce_usb_cable_state_reply_cb(DBusPendingCall *pc, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusMessage *rsp = 0;
     const char  *arg = 0;
@@ -1306,7 +1306,7 @@ cleanup:
         dbus_message_unref(rsp);
 
     dbus_error_free(&err);
-    enter_module(caller);
+    modulebase_enter_module(caller);
 }
 
 /** Cancel pending usb cable state query
@@ -1386,7 +1386,7 @@ xmce_charger_state_reply_cb(DBusPendingCall *pc, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusMessage *rsp = 0;
     const char  *arg = 0;
@@ -1426,7 +1426,7 @@ cleanup:
         dbus_message_unref(rsp);
 
     dbus_error_free(&err);
-    enter_module(caller);
+    modulebase_enter_module(caller);
 }
 
 /** Cancel pending charger state query
@@ -1506,7 +1506,7 @@ xmce_battery_status_reply_cb(DBusPendingCall *pc, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusMessage *rsp = 0;
     const char  *arg = 0;
@@ -1546,7 +1546,7 @@ cleanup:
         dbus_message_unref(rsp);
 
     dbus_error_free(&err);
-    enter_module(caller);
+    modulebase_enter_module(caller);
 }
 
 /** Cancel pending battery status query
@@ -1626,7 +1626,7 @@ xmce_battery_level_reply_cb(DBusPendingCall *pc, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusMessage *rsp = 0;
     dbus_int32_t arg = 0;
@@ -1666,7 +1666,7 @@ cleanup:
         dbus_message_unref(rsp);
 
     dbus_error_free(&err);
-    enter_module(caller);
+    modulebase_enter_module(caller);
 }
 
 /** Cancel pending battery level query
@@ -1865,7 +1865,7 @@ send_charger_state(bool charging)
 
     DSM_MSGTYPE_SET_CHARGER_STATE msg = DSME_MSG_INIT(DSM_MSGTYPE_SET_CHARGER_STATE);
     prev = msg.connected = charging;
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 
 cleanup:
 
@@ -1881,7 +1881,7 @@ send_battery_state(bool empty)
     DSM_MSGTYPE_SET_BATTERY_STATE msg =
         DSME_MSG_INIT(DSM_MSGTYPE_SET_BATTERY_STATE);
     msg.empty = empty;
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 }
 
 static void
@@ -1893,7 +1893,7 @@ send_battery_level(dsme_battery_level_t level)
     DSM_MSGTYPE_SET_BATTERY_LEVEL msg =
         DSME_MSG_INIT(DSM_MSGTYPE_SET_BATTERY_LEVEL);
     msg.level = level;
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 }
 
 static void
@@ -1902,7 +1902,7 @@ send_dsme_state_query(void)
     dsme_log(LOG_DEBUG, PFIX"query: dsme_state");
 
     DSM_MSGTYPE_STATE_QUERY query = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
-    broadcast_internally(&query);
+    modules_broadcast_internally(&query);
 }
 
 /* ========================================================================= *

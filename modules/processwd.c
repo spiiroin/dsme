@@ -216,7 +216,7 @@ static void subscribe_to_wakeup(void)
     msg.req.pid     = 0;
     msg.data        = 0;
 
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 }
 
 /**

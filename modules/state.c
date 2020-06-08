@@ -45,6 +45,7 @@
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modulebase.h"
+#include "../include/dsme/mainloop.h"
 #include <dsme/state.h>
 
 #include "../dsme/dsme-rd-mode.h"
@@ -528,7 +529,7 @@ static void change_state(dsme_state_t new_state)
         DSME_MSG_INIT(DSM_MSGTYPE_SAVE_DATA_IND);
 
       dsme_log(LOG_DEBUG, PFIX"sending SAVE_DATA");
-      broadcast(&save_msg);
+      modules_broadcast(&save_msg);
   }
 
   DSM_MSGTYPE_STATE_CHANGE_IND ind_msg =
@@ -536,7 +537,7 @@ static void change_state(dsme_state_t new_state)
 
   ind_msg.state = new_state;
   dsme_log(LOG_DEBUG, PFIX"STATE_CHANGE_IND sent (%s)", state_name(new_state));
-  broadcast(&ind_msg);
+  modules_broadcast(&ind_msg);
 
   dsme_log(LOG_NOTICE, PFIX"new state: %s", state_name(new_state));
   current_state = new_state;
@@ -567,7 +568,7 @@ static void deny_state_change_request(dsme_state_t denied_state,
       DSME_MSG_INIT(DSM_MSGTYPE_STATE_REQ_DENIED_IND);
 
   ind.state = denied_state;
-  broadcast_with_extra(&ind, strlen(reason) + 1, reason);
+  modules_broadcast_with_extra(&ind, strlen(reason) + 1, reason);
   dsme_log(LOG_CRIT,
            PFIX"%s denied due to: %s",
            (denied_state == DSME_STATE_SHUTDOWN ? "shutdown" : "reboot"),
@@ -584,7 +585,7 @@ static void start_delayed_shutdown_timer(unsigned seconds)
                                                                NULL)))
       {
           dsme_log(LOG_CRIT, PFIX"Could not create a shutdown timer; exit!");
-          dsme_exit(EXIT_FAILURE);
+          dsme_main_loop_quit(EXIT_FAILURE);
           return;
       }
       dsme_log(LOG_NOTICE, PFIX"Shutdown or reboot in %i seconds", seconds);
@@ -595,7 +596,7 @@ static int delayed_shutdown_fn(void* unused)
 {
   DSM_MSGTYPE_SHUTDOWN msg = DSME_MSG_INIT(DSM_MSGTYPE_SHUTDOWN);
   msg.runlevel = state2runlevel(current_state);
-  broadcast_internally(&msg);
+  modules_broadcast_internally(&msg);
 
   delayed_shutdown_timer = 0;
   return 0; /* stop the interval */
@@ -611,7 +612,7 @@ static bool start_delayed_actdead_timer(unsigned seconds)
                                                               NULL)))
       {
           dsme_log(LOG_CRIT, PFIX"Could not create an actdead timer; exit!");
-          dsme_exit(EXIT_FAILURE);
+          dsme_main_loop_quit(EXIT_FAILURE);
           return false;
       }
       success = true;
@@ -641,7 +642,7 @@ static bool start_delayed_user_timer(unsigned seconds)
                                                            NULL)))
       {
           dsme_log(LOG_CRIT, PFIX"Could not create a user timer; exit!");
-          dsme_exit(EXIT_FAILURE);
+          dsme_main_loop_quit(EXIT_FAILURE);
           return false;
       }
       success = true;
@@ -664,7 +665,7 @@ static void change_runlevel(dsme_state_t state)
 {
   DSM_MSGTYPE_CHANGE_RUNLEVEL msg = DSME_MSG_INIT(DSM_MSGTYPE_CHANGE_RUNLEVEL);
   msg.runlevel = state2runlevel(state);
-  broadcast_internally(&msg);
+  modules_broadcast_internally(&msg);
 }
 
 static void stop_delayed_runlevel_timers(void)
@@ -1051,7 +1052,7 @@ DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
       DSM_MSGTYPE_BATTERY_EMPTY_IND battery_empty_ind =
           DSME_MSG_INIT(DSM_MSGTYPE_BATTERY_EMPTY_IND);
 
-      broadcast(&battery_empty_ind);
+      modules_broadcast(&battery_empty_ind);
 
       /* then set up a delayed shutdown */
       start_battery_empty_timer();
@@ -1220,11 +1221,11 @@ static void enter_malf(const char* reason,
   malf.component       = strdup(component);
 
   if (malf_details) {
-      broadcast_internally_with_extra(&malf,
-                                      strlen(malf_details) + 1,
-                                      malf_details);
+      modules_broadcast_internally_with_extra(&malf,
+                                              strlen(malf_details) + 1,
+                                              malf_details);
   } else {
-      broadcast_internally(&malf);
+      modules_broadcast_internally(&malf);
   }
 }
 

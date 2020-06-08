@@ -48,7 +48,7 @@ static gboolean emit_heartbeat_message(GIOChannel*  source,
                                        GIOCondition condition,
                                        gpointer     data)
 {
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
     bool keep_going = false;
 
     // handle errors
@@ -81,7 +81,7 @@ static gboolean emit_heartbeat_message(GIOChannel*  source,
 
     // send the heartbeat message
     const DSM_MSGTYPE_HEARTBEAT beat = DSME_MSG_INIT(DSM_MSGTYPE_HEARTBEAT);
-    broadcast_internally(&beat);
+    modules_broadcast_internally(&beat);
 
     keep_going = true;
 
@@ -92,7 +92,7 @@ cleanup:
         dsme_main_loop_quit(EXIT_FAILURE);
     }
 
-    enter_module(caller);
+    modulebase_enter_module(caller);
     return keep_going;
 }
 

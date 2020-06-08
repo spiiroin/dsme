@@ -28,6 +28,12 @@
 #include "../include/dsme/logging.h"
 
 #include <string.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include <libcryptsetup.h>
 
@@ -43,6 +49,7 @@ static void                 dsme_free_crypt_device        (struct crypt_device *
 static struct crypt_device *dsme_get_crypt_device_for_home(void);
 bool                        dsme_home_is_encrypted        (void);
 const char                 *dsme_state_repr               (dsme_state_t state);
+static char                *dsme_pid2exe                  (pid_t pid);
 
 /* ========================================================================= *
  * Probing for encrypted home partition
@@ -135,4 +142,65 @@ dsme_state_repr(dsme_state_t state)
     }
 
     return repr;
+}
+
+/** Map process identifier to process name
+ *
+ * @param pid process identifier
+ *
+ * @return process name
+ */
+static char *dsme_pid2exe(pid_t pid)
+{
+    char *res = 0;
+    int   fd  = -1;
+    int   rc;
+    char  path[128];
+    char  temp[128];
+
+    snprintf(path, sizeof path, "/proc/%ld/cmdline", (long)pid);
+
+    if( (fd = open(path, O_RDONLY)) == -1 )
+        goto EXIT;
+
+    if( (rc = read(fd, temp, sizeof temp - 1)) <= 0 )
+        goto EXIT;
+
+    temp[rc] = 0;
+    res = strdup(temp);
+
+EXIT:
+    if( fd != -1 ) close(fd);
+
+    return res;
+}
+
+/** Map process identifier to IPC process identifier
+ *
+ * @param pid peer process or 0 for dsme itself
+ *
+ * @return string containing both pid and process name
+ */
+char *dsme_pid2text(pid_t pid)
+{
+    static unsigned id = 0;
+
+    char *str = 0;
+    char *exe = 0;
+
+    if( pid == 0 ) {
+        str = strdup("<internal>");
+        goto EXIT;
+    }
+
+    exe = dsme_pid2exe(pid);
+
+    if( asprintf(&str, "external-%u/%ld (%s)", ++id,
+                 (long)pid, exe ?: "unknown") < 0 )
+        str = 0;
+
+EXIT:
+    free(exe);
+
+    return str ?: strdup("error");
 }

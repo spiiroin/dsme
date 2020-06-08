@@ -21,17 +21,19 @@ pkglib_LTLIBRARIES = startup.la              \
                      diskmonitor.la          \
                      dbusautoconnector.la
 
-noinst_HEADERS = dsme_dbus.h \
-                 runlevel.h \
+noinst_HEADERS = runlevel.h \
                  heartbeat.h \
-                 dbusproxy.h \
                  thermalmanager.h \
                  state-internal.h
+
+dsmeplugin_HEADERS = dbusproxy.h \
+                     dsme_dbus.h
 
 #
 ## Additional dirs
 #
 pkgsysconfdir = @sysconfdir@
+dsmeplugindir = $(includedir)/dsme-plugin
 
 if WANT_GENERIC_THERMAL_MGMT
 pkglib_LTLIBRARIES += thermalsensor_generic.la

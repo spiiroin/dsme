@@ -27,6 +27,7 @@
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modulebase.h"
+#include "../include/dsme/mainloop.h"
 
 #include <stdlib.h>
 #include <errno.h>
@@ -68,7 +69,7 @@ static bool enter_malf(DSME_MALF_REASON reason,
     };
     if ((pid = fork()) < 0) {
         dsme_log(LOG_CRIT, "fork failed, exiting");
-        dsme_exit(EXIT_FAILURE);
+        dsme_main_loop_quit(EXIT_FAILURE);
         return false;
     } else if (pid == 0) {
         execv("/usr/sbin/enter_malf", args);
@@ -101,7 +102,7 @@ DSME_HANDLER(DSM_MSGTYPE_ENTER_MALF, conn, malf)
         DSM_MSGTYPE_SHUTDOWN msg = DSME_MSG_INIT(DSM_MSGTYPE_SHUTDOWN);
         msg.runlevel = DSME_RUNLEVEL_SHUTDOWN;
 
-        broadcast_internally(&msg);
+        modules_broadcast_internally(&msg);
     }
 }
 

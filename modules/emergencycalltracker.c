@@ -48,7 +48,7 @@ static void send_emergency_call_status(bool ongoing)
 
     msg.ongoing = ongoing;
 
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 }
 
 static void mce_call_state_ind(const DsmeDbusMessage* ind)

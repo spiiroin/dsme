@@ -85,7 +85,7 @@ static void go_to_malf(const char* component, const char* details)
     malf.reason          = DSME_MALF_SECURITY;
     malf.component       = component;
 
-    broadcast_internally_with_extra(&malf, strlen(details) + 1, details);
+    modules_broadcast_internally_with_extra(&malf, strlen(details) + 1, details);
 }
 
 
@@ -194,7 +194,7 @@ static gboolean handle_validator_message(GIOChannel*  source,
                                          GIOCondition condition,
                                          gpointer     data)
 {
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     dsme_log(LOG_DEBUG, "Activity on Validator socket");
 
@@ -271,7 +271,7 @@ static gboolean handle_validator_message(GIOChannel*  source,
         stop_listening_to_validator();
     }
 
-    enter_module(caller);
+    modulebase_enter_module(caller);
     return keep_listening;
 }
 

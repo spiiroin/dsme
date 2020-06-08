@@ -113,6 +113,12 @@ install_main::
 	install -d -m 755 $(DESTDIR)/etc/dbus-1/system.d
 	install -m 644 dsme/dsme.conf $(DESTDIR)/etc/dbus-1/system.d/
 
+	# devel headers dir
+	install -d -m 755 $(DESTDIR)/$(_INCLUDEDIR)/dsme-plugin
+
+	# dsme-plugin pkg-config file
+	install -D -m 644 dsme-plugin.pc $(DESTDIR)/$(_LIBDIR)/pkgconfig/dsme-plugin.pc
+
 	# tests
 	install -d -m 755 $(DESTDIR)/opt/tests/dsme-tests
 	install -m 644 tests/tests.xml $(DESTDIR)/opt/tests/dsme-tests

@@ -167,12 +167,6 @@ bool               dsme_log_open              (log_method method, int verbosity,
 void               dsme_log_close             (void);
 void               dsme_log_stop              (void);
 
-/* ------------------------------------------------------------------------- *
- * Misc
- * ------------------------------------------------------------------------- */
-
-static char       *pid2exe                    (pid_t pid);
-char              *pid2text                   (pid_t pid);
 
 /* ========================================================================= *
  * Dynamic Configuration
@@ -1052,69 +1046,4 @@ dsme_log_stop(void)
             }
         }
     }
-}
-
-/* ========================================================================= *
- * Misc
- * ========================================================================= */
-
-/** Map process identifier to process name
- *
- * @param pid process identifier
- *
- * @return process name
- */
-static char *pid2exe(pid_t pid)
-{
-    char *res = 0;
-    int   fd  = -1;
-    int   rc;
-    char  path[128];
-    char  temp[128];
-
-    snprintf(path, sizeof path, "/proc/%ld/cmdline", (long)pid);
-
-    if( (fd = open(path, O_RDONLY)) == -1 )
-        goto EXIT;
-
-    if( (rc = read(fd, temp, sizeof temp - 1)) <= 0 )
-        goto EXIT;
-
-    temp[rc] = 0;
-    res = strdup(temp);
-
-EXIT:
-    if( fd != -1 ) close(fd);
-
-    return res;
-}
-
-/** Map process identifier to IPC process identifier
- *
- * @param pid peer process or 0 for dsme itself
- *
- * @return string containing both pid and process name
- */
-char* pid2text(pid_t pid)
-{
-    static unsigned id = 0;
-
-    char *str = 0;
-    char *exe = 0;
-
-    if( pid == 0 ) {
-        str = strdup("<internal>");
-        goto EXIT;
-    }
-
-    exe = pid2exe(pid);
-
-    if( asprintf(&str, "external-%u/%ld (%s)", ++id,
-                 (long)pid, exe ?: "unknown") < 0 )
-        str = 0;
-
-EXIT:
-    free(exe);
-
-    return str ?: strdup("error");
 }

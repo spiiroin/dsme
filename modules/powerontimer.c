@@ -106,7 +106,7 @@ static void poweron_update_cb(void)
   msg.req.pid     = 0;
   msg.data        = 0;
 
-  broadcast_internally(&msg);
+  modules_broadcast_internally(&msg);
 }
 
 /* ========================================================================= *

@@ -48,6 +48,8 @@
 #include <string.h>
 #include <stdio.h>
 
+#define DBUS_FAILED_FILE "/run/systemd/boot-status/dbus-failed"
+
 /* HACK: make sure also unused code gets a compilation attempt */
 //#define DEAD_CODE
 
@@ -1187,7 +1189,7 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
     /* Dispatching context can/should be defined in methdo call and
      * signal handler configuration. If not, make sure we default to
      * "core" module context. */
-    const module_t *caller = enter_module(0);
+    const module_t *caller = modulebase_enter_module(0);
 
     DBusHandlerResult result = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
@@ -1221,7 +1223,7 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
 
             /* issue reboot request */
             DSM_MSGTYPE_REBOOT_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_REBOOT_REQ);
-            broadcast_internally(&req);
+            modules_broadcast_internally(&req);
         }
         else {
             manager_handle_signal(self, msg);
@@ -1246,7 +1248,7 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
         break;
     }
 
-    enter_module(caller);
+    modulebase_enter_module(caller);
     return result;;
 }
 
@@ -1710,16 +1712,16 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
         DsmeDbusMessage  message;
         message_ctor(&message, connection, req, false);
 
-        const module_t *restore = current_module();
+        const module_t *restore = modulebase_current_module();
 
         dsme_log(LOG_DEBUG, "dispatch method %s.%s @ %s",
                  interface_name, member,
                  module ? module_name(module) : "(current");
 
         if( module )
-            enter_module(module);
+            modulebase_enter_module(module);
         bindings->method(&message, &reply);
-        enter_module(restore);
+        modulebase_enter_module(restore);
 
         if( !dbus_message_get_no_reply(req) ) {
             if( !reply ) {
@@ -1787,16 +1789,16 @@ manager_handle_signal(DsmeDbusManager *self, DBusMessage *sig)
             DsmeDbusMessage  message;
             message_ctor(&message, connection, sig, false);
 
-            const module_t *restore = current_module();
+            const module_t *restore = modulebase_current_module();
 
             dsme_log(LOG_DEBUG, "dispatch signal %s.%s @ %s",
                      interface, member,
                      module ? module_name(module) : "(current");
 
             if( module )
-                enter_module(module);
+                modulebase_enter_module(module);
             bindings->handler(&message);
-            enter_module(restore);
+            modulebase_enter_module(restore);
 
             message_dtor(&message);
         }
@@ -1813,7 +1815,7 @@ EXIT:
 static const char *
 dsme_dbus_calling_module_name(void)
 {
-    return module_name(current_module()) ?: "UNKNOWN";
+    return module_name(modulebase_current_module()) ?: "UNKNOWN";
 }
 
 static bool
@@ -2033,7 +2035,7 @@ dsme_dbus_bind_methods(bool                      *bound,
 
     /* Bind methods to interface
      */
-    manager_set_module(the_manager, bindings, current_module());
+    manager_set_module(the_manager, bindings, modulebase_current_module());
     interface_set_members(interface, bindings);
 
 EXIT:
@@ -2130,7 +2132,7 @@ dsme_dbus_bind_signals(bool                             *bound,
 
     dsme_log(LOG_DEBUG, "binding handlers for interface:  %s", bindings->interface);
 
-    manager_set_module(the_manager, bindings, current_module());
+    manager_set_module(the_manager, bindings, modulebase_current_module());
     manager_add_handlers_array(the_manager, bindings);
 
 EXIT:
@@ -2188,7 +2190,7 @@ dsme_dbus_connect(void)
 
     if( (connected = manager_connect(the_manager)) ) {
         DSM_MSGTYPE_DBUS_CONNECTED msg = DSME_MSG_INIT(DSM_MSGTYPE_DBUS_CONNECTED);
-        broadcast_internally(&msg);
+        modules_broadcast_internally(&msg);
     }
 
 EXIT:

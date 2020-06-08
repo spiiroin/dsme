@@ -192,7 +192,7 @@ send_usb_status(bool mounted_to_pc)
     dsme_log(LOG_DEBUG, PFIX"broadcasting usb state:%s mounted to PC",
              msg.mounted_to_pc ? "" : " not");
 
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 
 cleanup:
 
@@ -337,7 +337,7 @@ xusbmoded_query_mode_cb(DBusPendingCall *pending, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusMessage *rsp = 0;
     const char  *dta = 0;
@@ -364,7 +364,7 @@ cleanup:
     if( rsp ) dbus_message_unref(rsp);
 
     dbus_error_free(&err);
-    enter_module(caller);
+    modulebase_enter_module(caller);
 }
 
 /** Initiate async query to find out current usb mode
@@ -463,7 +463,7 @@ xusbmoded_query_owner_cb(DBusPendingCall *pending, void *aptr)
 
     dsme_log(LOG_DEBUG, PFIX"usb_moded runstate reply");
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusMessage *rsp = 0;
     const char  *dta = 0;
@@ -490,7 +490,7 @@ cleanup:
     if( rsp ) dbus_message_unref(rsp);
 
     dbus_error_free(&err);
-    enter_module(caller);
+    modulebase_enter_module(caller);
 }
 
 /** Verify that a usbmoded exists via an asynchronous GetNameOwner method call
@@ -554,7 +554,7 @@ xusbmoded_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
 {
     (void) aptr; // not used
 
-    const module_t *caller = enter_module(this_module);
+    const module_t *caller = modulebase_enter_module(this_module);
 
     DBusHandlerResult res = DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
 
@@ -600,7 +600,7 @@ cleanup:
 
     dbus_error_free(&err);
 
-    enter_module(caller);
+    modulebase_enter_module(caller);
     return res;
 }
 

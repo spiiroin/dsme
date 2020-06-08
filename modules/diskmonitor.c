@@ -508,8 +508,8 @@ diskuse_evaluate(diskuse_t *self, unsigned check_tag)
 
     DSM_MSGTYPE_DISK_SPACE msg = DSME_MSG_INIT(DSM_MSGTYPE_DISK_SPACE);
     msg.diskspace_state = curr;
-    broadcast_internally_with_extra(&msg, strlen(self->mntpoint) + 1,
-                                    self->mntpoint);
+    modules_broadcast_internally_with_extra(&msg, strlen(self->mntpoint) + 1,
+                                            self->mntpoint);
 
 EXIT:
     return;
@@ -689,7 +689,7 @@ diskmon_schedule_wakeup(void)
     dsme_log(LOG_DEBUG, LOGPFIX"schedule next wakeup in: %d ... %d seconds",
              msg.req.mintime, msg.req.maxtime);
 
-    broadcast_internally(&msg);
+    modules_broadcast_internally(&msg);
 
 EXIT:
     return;

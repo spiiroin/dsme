@@ -99,7 +99,7 @@ static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
   free(sender);
 
   DSM_MSGTYPE_POWERUP_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_POWERUP_REQ);
-  broadcast_internally(&req);
+  modules_broadcast_internally(&req);
 }
 
 static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
@@ -111,7 +111,7 @@ static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
   free(sender);
 
   DSM_MSGTYPE_REBOOT_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_REBOOT_REQ);
-  broadcast_internally(&req);
+  modules_broadcast_internally(&req);
 }
 
 static void req_shutdown(const DsmeDbusMessage* request,
@@ -125,7 +125,7 @@ static void req_shutdown(const DsmeDbusMessage* request,
 
   DSM_MSGTYPE_SHUTDOWN_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_SHUTDOWN_REQ);
 
-  broadcast_internally(&req);
+  modules_broadcast_internally(&req);
 }
 
 /** Flag for: dbus broadcast info has been installed */
@@ -377,11 +377,11 @@ void module_init(module_t* handle)
 {
   /* get dsme version so that we can report it over D-Bus if asked to */
   DSM_MSGTYPE_GET_VERSION req_version = DSME_MSG_INIT(DSM_MSGTYPE_GET_VERSION);
-  broadcast_internally(&req_version);
+  modules_broadcast_internally(&req_version);
 
   /* get dsme state so that we can report it over D-Bus if asked to */
   DSM_MSGTYPE_STATE_QUERY req_state = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
-  broadcast_internally(&req_state);
+  modules_broadcast_internally(&req_state);
 
   /* Enable dbus functionality */
   dsme_dbus_startup();

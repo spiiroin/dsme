@@ -64,7 +64,7 @@ int modulebase_shutdown(void);
 
    @return Module handle, or NULL pointer if loading was unsuccessful.
 */
-module_t* load_module(const char* filename, int priority);
+module_t* modulebase_load_module(const char* filename, int priority);
 
 
 /**
@@ -74,36 +74,19 @@ module_t* load_module(const char* filename, int priority);
    @c module_fini, it is assumed to be function of type @c module_fini_fn_t
    and called before module is unloaded.
 
-   @param module  Module handle returned by call to load_module.
+   @param module  Module handle returned by call to modulebase_load_module.
    @return On success, true; on error false.
 */
-bool unload_module(module_t* module);
+bool modulebase_unload_module(module_t* module);
 
 /**
    Passes messages in queue to message handlers.
 */
-void process_message_queue(void);
+void modulebase_process_message_queue(void);
 
-const module_t* current_module(void);
-const module_t* enter_module(const module_t* module);
+const module_t* modulebase_current_module(void);
+const module_t* modulebase_enter_module(const module_t* module);
 
-/**
-   Adds a message to list of handlers
-
-   @param msg_type  Type of the message to be registered
-   @param callback Function to be called when given msg_type is handled
-   @param owner    Pointer to the module module who owns this callback
-   @return 0 on OK, -1 on error
-*/
-int add_single_handler(u_int32_t       msg_type,
-                       size_t          msg_size,
-                       handler_fn_t*   callback,
-                       const module_t* owner);
-
-/**
-   Wrapper to make dsme process exit cleanly
-*/
-void dsme_exit(int exit_code);
 
 enum {
     /* NOTE: dsme message types are defined in:

@@ -82,6 +82,19 @@ typedef struct {
 } queued_msg_t;
 
 
+/**
+   Adds a message to list of handlers
+
+   @param msg_type  Type of the message to be registered
+   @param callback Function to be called when given msg_type is handled
+   @param owner    Pointer to the module module who owns this callback
+   @return 0 on OK, -1 on error
+*/
+static int modulebase_add_single_handler(u_int32_t       msg_type,
+                                         size_t          msg_size,
+                                         handler_fn_t*   callback,
+                                         const module_t* owner);
+
 static int add_msghandlers(module_t* module);
 
 static void remove_msghandlers(module_t* module);
@@ -184,18 +197,10 @@ static int name_comparator(const module_t* node, const char* name)
 #endif
 
 
-/**
-   Add single hadler in message handlers list
-
-   @param msg_type  Type of the message to be registered
-   @param callback Function to be called when given msg_type is handled
-   @param owner    Pointer to the module module who owns this callback
-   @return 0 on OK, -1 on error
-*/
-int add_single_handler(u_int32_t       msg_type,
-                       size_t          msg_size,
-		       handler_fn_t*   callback,
-	 	       const module_t* owner)
+static int modulebase_add_single_handler(u_int32_t       msg_type,
+                                         size_t          msg_size,
+                                         handler_fn_t*   callback,
+                                         const module_t* owner)
 {
     msg_handler_info_t* handler = 0;
 
@@ -238,7 +243,7 @@ static int add_msghandlers(module_t* module)
 	 msg_handler_ptr && msg_handler_ptr->callback;
 	 msg_handler_ptr++)
     {
-        if (add_single_handler(msg_handler_ptr->msg_type,
+        if (modulebase_add_single_handler(msg_handler_ptr->msg_type,
                                msg_handler_ptr->msg_size,
 			       msg_handler_ptr->callback,
 			       module))
@@ -276,12 +281,12 @@ static void remove_msghandlers(module_t* module)
 
 static const module_t* currently_handling_module = 0;
 
-const module_t* current_module(void)
+const module_t* modulebase_current_module(void)
 {
     return currently_handling_module;
 }
 
-const module_t* enter_module(const module_t* module)
+const module_t* modulebase_enter_module(const module_t* module)
 {
     const module_t *previous = currently_handling_module;
     currently_handling_module = module;
@@ -322,7 +327,7 @@ static void queue_message(const endpoint_t* from,
   newmsg = NULL;
 }
 
-void broadcast_internally_with_extra(const void* msg,
+void modules_broadcast_internally_with_extra(const void* msg,
                                      size_t      extra_size,
                                      const void* extra)
 {
@@ -336,12 +341,12 @@ void broadcast_internally_with_extra(const void* msg,
   queue_message(&from, 0, msg, extra_size, extra);
 }
 
-void broadcast_internally(const void* msg)
+void modules_broadcast_internally(const void* msg)
 {
-  broadcast_internally_with_extra(msg, 0, 0);
+  modules_broadcast_internally_with_extra(msg, 0, 0);
 }
 
-void broadcast_internally_from_socket(const void*            msg,
+void modules_broadcast_internally_from_socket(const void*            msg,
                                       dsmesock_connection_t* conn)
 {
   endpoint_t from = {
@@ -360,7 +365,7 @@ void broadcast_internally_from_socket(const void*            msg,
   queue_message(&from, 0, msg, 0, 0);
 }
 
-void broadcast_with_extra(const void* msg, size_t extra_size, const void* extra)
+void modules_broadcast_with_extra(const void* msg, size_t extra_size, const void* extra)
 {
   endpoint_t from = {
     .module = currently_handling_module,
@@ -372,9 +377,9 @@ void broadcast_with_extra(const void* msg, size_t extra_size, const void* extra)
   dsmesock_broadcast_with_extra(msg, extra_size, extra);
 }
 
-void broadcast(const void* msg)
+void modules_broadcast(const void* msg)
 {
-  broadcast_with_extra(msg, 0, 0);
+  modules_broadcast_with_extra(msg, 0, 0);
 }
 
 static void queue_for_module_with_extra(const module_t* recipient,
@@ -530,7 +535,7 @@ void endpoint_free(endpoint_t* endpoint)
 }
 
 
-void process_message_queue(void)
+void modulebase_process_message_queue(void)
 {
     while (message_queue) {
         queued_msg_t* front = (queued_msg_t*)message_queue->data;
@@ -588,7 +593,7 @@ static int handle_message(endpoint_t*              from,
 }
 
 
-bool unload_module(module_t* module)
+bool modulebase_unload_module(module_t* module)
 {
     bool    unloaded = false;
     GSList* node;
@@ -637,7 +642,7 @@ bool unload_module(module_t* module)
 }
 
 
-module_t* load_module(const char* filename, int priority)
+module_t* modulebase_load_module(const char* filename, int priority)
 {
     void*             dlhandle = 0;
     module_t*         module   = 0;
@@ -718,7 +723,7 @@ bool modulebase_init(const struct _GSList* module_names)
     const GSList* modname;
 
     for (modname = module_names; modname; modname = g_slist_next(modname)) {
-        if (load_module((const char*)modname->data, 0) == NULL) {
+        if (modulebase_load_module((const char*)modname->data, 0) == NULL) {
             dsme_log(LOG_CRIT,
                      "Error loading start-up module: %s",
                      (const char*)modname->data);
@@ -741,18 +746,11 @@ int modulebase_shutdown(void)
         modules = g_slist_reverse(modules);
 
         while (modules) {
-		process_message_queue();
-		unload_module((module_t*)modules->data);
+		modulebase_process_message_queue();
+		modulebase_unload_module((module_t*)modules->data);
 	}
 
-	process_message_queue();
+	modulebase_process_message_queue();
 
 	return 0;
 }
-
-void dsme_exit(int exit_code)
-{
-  dsme_main_loop_quit(exit_code);
-}
-
-
