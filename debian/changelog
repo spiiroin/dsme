@@ -1,3 +1,16 @@
+dsme (0.81.0) precise; urgency=low
+
+  * [packaging] Add dsme-plugin-devel package. Fixes JB#49564
+  * [dsme] Allow custom modules to be loaded. Contributes to JB#49564.
+  * [packaging] Add .pc.in-file for dsme-plugin-devel package. Contributes to JB#49564
+  * [packaging] Add dsme-plugin-devel package. Fixes JB#49564
+  * [dsme] Remove stale dsme_dbus_if package config file
+  * [dsme] Fix include path in dsme-plugin package config file. JB#49564
+  * [dsme] Keep dsme buildable without autotools. JB#49564
+  * [dsme] Update local header dependencies. JB#49564
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Mon, 15 Jun 2020 13:01:59 +0300
+
 dsme (0.80.0) precise; urgency=low
 
   * [dsme] Sandbox the dsme service. JB#44449, JB#37897

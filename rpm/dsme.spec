@@ -1,6 +1,6 @@
 Name:       dsme
 Summary:    Device State Management Entity
-Version:    0.80.0
+Version:    0.81.0
 Release:    0
 License:    LGPLv2+
 URL:        https://github.com/nemomobile/dsme

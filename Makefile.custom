@@ -1,6 +1,6 @@
 # ----------------------------------------------------------- -*- mode: sh -*-
 # Package version
-VERSION   := 0.80.0
+VERSION   := 0.81.0
 
 # Dummy default install dir - override from packaging scripts
 DESTDIR ?= /tmp/dsme-test-install
