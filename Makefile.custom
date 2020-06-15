@@ -75,6 +75,21 @@ TARGETS_SBIN += getbootstate/getbootstate
 
 TARGETS_ALL += $(TARGETS_PLUGIN) $(TARGETS_SBIN) $(TARGETS_BIN)
 
+# DSME "core" features
+PLUGIN_DEVEL_HEADERS += include/dsme/logging.h
+PLUGIN_DEVEL_HEADERS += include/dsme/modulebase.h
+PLUGIN_DEVEL_HEADERS += include/dsme/modules.h
+PLUGIN_DEVEL_HEADERS += include/dsme/timers.h
+PLUGIN_DEVEL_HEADERS += include/dsme/mainloop.h
+
+# Features provided by plugins
+PLUGIN_DEVEL_HEADERS += modules/dbusproxy.h
+PLUGIN_DEVEL_HEADERS += modules/dsme_dbus.h
+
+TARGETS_PLUGIN_DEVEL += dsme-plugin.pc
+
+TARGETS_ALL += $(TARGETS_PLUGIN_DEVEL)
+
 # ----------------------------------------------------------------------------
 # Top level targets
 # ----------------------------------------------------------------------------
@@ -93,7 +108,7 @@ distclean:: clean
 mostlyclean::
 	$(RM) *.o *~ *.bak */*.o */*~ */*.bak
 
-install :: install_main
+install :: install_main install_plugin_devel
 
 install_main::
 	# sbin executables
@@ -113,15 +128,17 @@ install_main::
 	install -d -m 755 $(DESTDIR)/etc/dbus-1/system.d
 	install -m 644 dsme/dsme.conf $(DESTDIR)/etc/dbus-1/system.d/
 
-	# devel headers dir
-	install -d -m 755 $(DESTDIR)/$(_INCLUDEDIR)/dsme-plugin
-
-	# dsme-plugin pkg-config file
-	install -D -m 644 dsme-plugin.pc $(DESTDIR)/$(_LIBDIR)/pkgconfig/dsme-plugin.pc
-
 	# tests
 	install -d -m 755 $(DESTDIR)/opt/tests/dsme-tests
 	install -m 644 tests/tests.xml $(DESTDIR)/opt/tests/dsme-tests
+
+install_plugin_devel::
+	# devel headers dir
+	install -d -m 755 $(DESTDIR)$(_INCLUDEDIR)/dsme-plugin
+	install -m 644 $(PLUGIN_DEVEL_HEADERS) $(DESTDIR)$(_INCLUDEDIR)/dsme-plugin/
+
+	# dsme-plugin pkg-config file
+	install -D -m 644 dsme-plugin.pc $(DESTDIR)$(_LIBDIR)/pkgconfig/dsme-plugin.pc
 
 # ----------------------------------------------------------------------------
 # Build rules
@@ -132,6 +149,11 @@ install_main::
 %.o         : %.c     ; $(CC) -o $@ -c $< $(CPPFLAGS) $(CFLAGS)
 %           : %.o     ; $(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 %.a         :         ; $(AR) ru $@ $^
+%           : %.in
+	sed < $< > $@\
+	 -e 's:@VERSION@:${VERSION}:g'\
+	 -e 's:@prefix@:${_PREFIX}:g'\
+	 -e 's:@includedir@:${_INCLUDEDIR}:g'
 
 # ----------------------------------------------------------------------------
 # Preprocessor options

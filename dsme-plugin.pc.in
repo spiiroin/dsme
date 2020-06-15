@@ -5,4 +5,4 @@ Name: dsme-plugin-devel
 Description: Header files for building DSME plugins
 Version: @VERSION@
 Requires:
-Cflags: -I${includedir}/dsme-plugin
+Cflags: -I${includedir}
