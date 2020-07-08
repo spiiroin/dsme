@@ -1,3 +1,10 @@
+dsme (0.81.1) precise; urgency=low
+
+  * [aarch64] Do not hardcode libdir. Contributes to JB#49681
+  * [aarch64] Fix location of systemd unit files. Contributes to JB#49681
+
+ -- Matti Kosola <matti.kosola@jollamobile.com>  Wed, 08 Jul 2020 09:12:38 +0300
+
 dsme (0.81.0) precise; urgency=low
 
   * [packaging] Add dsme-plugin-devel package. Fixes JB#49564
