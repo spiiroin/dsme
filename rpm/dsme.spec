@@ -3,9 +3,9 @@ Summary:    Device State Management Entity
 Version:    0.81.0
 Release:    0
 License:    LGPLv2+
-URL:        https://github.com/nemomobile/dsme
+URL:        https://git.sailfishos.org/mer-core/dsme
 Source0:    %{name}-%{version}.tar.gz
-Source1:    dsme.service
+Source1:    dsme.service.in
 Source2:    dsme-rpmlintrc
 Requires:   systemd
 Requires:   ngfd
@@ -45,7 +45,7 @@ Requires:   dbus
 Test cases and xml test description for DSME
 
 %prep
-%setup -q -n %{name}-%{version}
+%autosetup -n %{name}-%{version}
 
 %build
 unset LD_AS_NEEDED
@@ -60,7 +60,7 @@ test -e Makefile || (%configure --disable-static \
     --disable-validatorlistener \
     --enable-abootsettings)
 
-make %{?_smp_mflags}
+%make_build
 
 %install
 rm -rf %{buildroot}
@@ -68,9 +68,10 @@ rm -rf %{buildroot}
 
 install -d %{buildroot}%{_sysconfdir}/dsme/
 install -D -m 644 reboot-via-dsme.sh %{buildroot}/etc/profile.d/reboot-via-dsme.sh
-install -D -m 644 %{SOURCE1} %{buildroot}/lib/systemd/system/%{name}.service
-install -d %{buildroot}/lib/systemd/system/multi-user.target.wants/
-ln -s ../%{name}.service %{buildroot}/lib/systemd/system/multi-user.target.wants/%{name}.service
+install -d %{buildroot}%{_unitdir}
+sed -e "s|@LIBDIR@|%{_libdir}|g" %{SOURCE1} > %{buildroot}%{_unitdir}/%{name}.service
+install -d %{buildroot}%{_unitdir}/multi-user.target.wants/
+ln -s ../%{name}.service %{buildroot}%{_unitdir}/multi-user.target.wants/%{name}.service
 install -d %{buildroot}/var/lib/dsme
 [ ! -f %{buildroot}/var/lib/dsme/alarm_queue_status ] && echo 0 > %{buildroot}/var/lib/dsme/alarm_queue_status
 
@@ -94,8 +95,8 @@ systemctl daemon-reload || :
 %dir %{_sysconfdir}/dsme
 %config %{_sysconfdir}/dbus-1/system.d/dsme.conf
 %license debian/copyright COPYING
-/lib/systemd/system/%{name}.service
-/lib/systemd/system/multi-user.target.wants/%{name}.service
+%{_unitdir}/%{name}.service
+%{_unitdir}/multi-user.target.wants/%{name}.service
 /var/lib/dsme
 %config(noreplace) /var/lib/dsme/alarm_queue_status
 /etc/profile.d/reboot-via-dsme.sh
