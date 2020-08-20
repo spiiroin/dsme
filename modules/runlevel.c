@@ -3,9 +3,13 @@
 
    DSME internal runlevel control
    <p>
-   Copyright (C) 2009-2010 Nokia Corporation.
+   Copyright (c) 2009 - 2010 Nokia Corporation.
+   Copyright (c) 2012 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
+   @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
 
    This file is part of Dsme.
 
@@ -38,6 +42,83 @@
 static bool change_runlevel(dsme_runlevel_t runlevel);
 static bool remount_mmc_readonly(void);
 
+/** Wrapper for system() calls
+ *
+ * Executes the command, normalizes the return value
+ * and performs some common diagnostic logging.
+ *
+ * Note: Getting the child process killed with SIGTERM
+ *       is equated with it making exit(0) - this avoids
+ *       some fallback logic assuming that shutdown/reboot
+ *       did not commence because e.g. telinit got killed
+ *       by init due to shutdown/reboot ...
+ *
+ * \param command  command line to execute
+ * \return exit code from child process, or
+ *         -1 if execution fails / child process is killed,
+ */
+static int
+system_wrapper(const char *command)
+{
+    int         result      = -1;
+    int         status      = -1;
+    char        exited[32]  = "";
+    char        trapped[32] = "";
+    const char *dumped      = "";
+
+    dsme_log(LOG_NOTICE, "Executing: %s", command);
+
+    if( (status = system(command)) == -1 ) {
+        snprintf(exited, sizeof exited, " exec=failed");
+    }
+    else {
+        if( WIFSIGNALED(status) ) {
+            snprintf(trapped, sizeof trapped, " signal=%s",
+                     strsignal(WTERMSIG(status)));
+            if( WTERMSIG(status) == SIGTERM )
+                result = 0;
+        }
+
+        if( WCOREDUMP(status) )
+            dumped = " core=dumped";
+
+        if( WIFEXITED(status) ) {
+            result = WEXITSTATUS(status);
+            snprintf(exited, sizeof exited, " exit_code=%d", result);
+        }
+    }
+
+    dsme_log(LOG_NOTICE, "Executed:  %s -%s%s%s result=%d",
+             command, exited, trapped, dumped, result);
+
+    return result;
+}
+
+/** Locate where systemd systemctl binary is installed
+ *
+ * Try currently expected systemctl location first, then where
+ * older systemd versions are known to have kept the binary.
+ *
+ * \return path to systemctl, or NULL in case it is not found
+ */
+static const char *
+locate_systemctl_binary(void)
+{
+    static const char * const lut[] = {
+        "/usr/bin/systemctl",
+        "/bin/systemctl",
+        0
+    };
+    const char *path = 0;
+    for( size_t i = 0; (path = lut[i]); ++i ) {
+        if( access(path, X_OK) == 0 )
+            break;
+    }
+
+    dsme_log(LOG_DEBUG, "systemctl binary = %s", path ?: "unknown");
+    return path;
+}
+
 /**
    This function is used to tell init to change to new runlevel.
    Currently telinit is used.
@@ -56,17 +137,14 @@ static bool change_runlevel(dsme_runlevel_t runlevel)
   } else {
       return false;
   }
-  dsme_log(LOG_NOTICE, "Issuing %s", command);
-
-  if (system(command) != 0) {
+  if (system_wrapper(command) != 0) {
       dsme_log(LOG_CRIT, "failed to change runlevel, trying again in 2s");
       sleep(2);
-      return system(command) == 0;
+      return system_wrapper(command) == 0;
   }
 
   return true;
 }
-
 
 /*
  * This function will do the shutdown or reboot (based on desired runlevel).
@@ -92,17 +170,17 @@ static void shutdown(dsme_runlevel_t runlevel)
                                                 "Malf");
 
   /* If we have systemd, use systemctl commands */
-  if (access("/bin/systemctl", X_OK) == 0) {
+  const char *systemctl;
+  if( (systemctl = locate_systemctl_binary()) ) {
       if (runlevel == DSME_RUNLEVEL_SHUTDOWN) {
-          snprintf(command, sizeof(command), "/bin/systemctl --no-block poweroff");
+          snprintf(command, sizeof command, "%s --no-block poweroff", systemctl);
       } else if (runlevel == DSME_RUNLEVEL_REBOOT) {
-          snprintf(command, sizeof(command), "/bin/systemctl --no-block reboot");
+          snprintf(command, sizeof command, "%s --no-block reboot", systemctl);
       } else {
           dsme_log(LOG_WARNING, "MALF not supported by our systemd implementation");
-	  goto fail_and_exit;
+          goto fail_and_exit;
       }
-      dsme_log(LOG_NOTICE, "Issuing %s", command);
-      if (system(command) != 0) {
+      if (system_wrapper(command) != 0) {
           dsme_log(LOG_WARNING, "command %s failed: %m", command);
           /* We ignore error. No retry or anything else */
       }
@@ -123,12 +201,11 @@ static void shutdown(dsme_runlevel_t runlevel)
           } else {
               snprintf(command, sizeof(command), "/usr/sbin/poweroff");
           }
-          dsme_log(LOG_CRIT, "Issuing %s", command);
-          if (system(command) != 0) {
-	    dsme_log(LOG_ERR, "%s failed, trying again in 3s", command);
+          if (system_wrapper(command) != 0) {
+              dsme_log(LOG_ERR, "%s failed, trying again in 3s", command);
               sleep(3);
-              if (system(command) != 0) {
-		dsme_log(LOG_ERR, "%s failed again", command);
+              if (system_wrapper(command) != 0) {
+                  dsme_log(LOG_ERR, "%s failed again", command);
                   goto fail_and_exit;
               }
           }
@@ -138,12 +215,11 @@ static void shutdown(dsme_runlevel_t runlevel)
           } else {
               snprintf(command, sizeof(command), "/usr/sbin/reboot");
           }
-          dsme_log(LOG_CRIT, "Issuing %s", command);
-          if (system(command) != 0) {
-	    dsme_log(LOG_ERR, "%s failed, trying again in 3s", command);
+          if (system_wrapper(command) != 0) {
+              dsme_log(LOG_ERR, "%s failed, trying again in 3s", command);
               sleep(3);
-              if (system(command) != 0) {
-		dsme_log(LOG_ERR, "%s failed again", command);
+              if (system_wrapper(command) != 0) {
+                  dsme_log(LOG_ERR, "%s failed again", command);
                   goto fail_and_exit;
               }
           }
