@@ -158,10 +158,9 @@ fail_and_exit:
   dsme_main_loop_quit(EXIT_FAILURE);
 }
 
-
 /*
  * This function tries to find mounted MMC (mmcblk) and remount it
- * read-only if mounted. 
+ * read-only if mounted.
  * @return true on success, false on failure
  */
 static bool remount_mmc_readonly(void)
@@ -214,7 +213,7 @@ static bool remount_mmc_readonly(void)
 
           dsme_log(LOG_ERR, "remount failed, no mount cmd found");
           return false;
-      } 
+      }
       while ((rc = wait(&status)) != pid)
           if (rc < 0 && errno == ECHILD)
               break;
@@ -232,7 +231,6 @@ static bool remount_mmc_readonly(void)
   }
 }
 
-
 DSME_HANDLER(DSM_MSGTYPE_CHANGE_RUNLEVEL, conn, msg)
 {
   (void)change_runlevel(msg->runlevel);
@@ -243,13 +241,11 @@ DSME_HANDLER(DSM_MSGTYPE_SHUTDOWN, conn, msg)
   shutdown(msg->runlevel);
 }
 
-
 module_fn_info_t message_handlers[] = {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_CHANGE_RUNLEVEL),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_SHUTDOWN),
   { 0 }
 };
-
 
 void module_init(module_t* module)
 {
