@@ -36,10 +36,6 @@
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modulebase.h"
 
-#ifndef __GLIBC__
-#include "../include/dsme/musl-compatibility.h"
-#endif
-
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -50,6 +46,7 @@
 #include <ctype.h>
 #include <errno.h>
 
+#include "../include/dsme/musl-compatibility.h"
 
 #define DSME_STATIC_STRLEN(s) (sizeof(s) - 1)
 
