@@ -394,6 +394,7 @@ CLEAN_HEADERS += modules/isi_conf.h
 CLEAN_HEADERS += include/dsme/oom.h
 CLEAN_HEADERS += include/dsme/mainloop.h
 CLEAN_HEADERS += include/dsme/timers.h
+CLEAN_HEADERS += include/dsme/musl-compatibility.h
 
 # Files with whitespace issues
 

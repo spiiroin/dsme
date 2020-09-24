@@ -7,4 +7,3 @@
     } while (_rc == -1 && errno == EINTR); \
     _rc; })
 #endif
-

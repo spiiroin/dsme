@@ -37,7 +37,7 @@
 #include "../include/dsme/modulebase.h"
 
 #ifndef __GLIBC__
-#include "../include/dsme/temp-failure-retry.h"
+#include "../include/dsme/musl-compatibility.h"
 #endif
 
 #include <string.h>
