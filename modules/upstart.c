@@ -42,6 +42,8 @@
 #include <sys/utsname.h>
 #include <sys/time.h>
 
+/* musl-libc compatibility */
+#include <features.h> // for __GLIBC__
 #ifndef __GLIBC__
 # include <utmp.h>
 # if defined _PATH_UTMP && !defined _PATH_UTMPX

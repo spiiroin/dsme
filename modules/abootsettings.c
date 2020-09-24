@@ -32,10 +32,6 @@
 #include "../include/dsme/modulebase.h"
 #include "../include/dsme/logging.h"
 
-#ifndef __GLIBC__
-#include "../include/dsme/temp-failure-retry.h"
-#endif
-
 #include <dsme/state.h>
 
 #include <glib.h>
@@ -47,6 +43,8 @@
 #include <sys/ioctl.h>
 #include <fcntl.h>
 #include <linux/fs.h>
+
+#include "../include/dsme/musl-compatibility.h"
 
 #define PFIX                     "abootsettings: "
 // Device info magic string (from aboot)

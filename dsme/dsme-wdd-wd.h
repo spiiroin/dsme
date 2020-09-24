@@ -31,9 +31,7 @@
 
 #include <stdbool.h>
 
-#ifndef __GLIBC__
 #include "../include/dsme/musl-compatibility.h"
-#endif
 
 // Period for kicking; i.e. how soon the quickest watchdog will bite.
 // NOTE: This must be picked from the wd[] array in dsme-wdd-wd.c!
