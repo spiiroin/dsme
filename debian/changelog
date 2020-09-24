@@ -1,3 +1,12 @@
+dsme (0.81.4) precise; urgency=low
+
+  * Fix Musl libc incompatibilities
+  * [musl] Add missing stdint.h includes. JB#49555
+  * [musl] Correct musl-compatibility.h confusion. JB#49555
+  * [musl] Fix __GLIBC__ tests. JB#49555
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Thu, 24 Sep 2020 18:22:31 +0300
+
 dsme (0.81.3) precise; urgency=low
 
   * [iphb] Make RTC power on reliable. Contributes to JB#50354
