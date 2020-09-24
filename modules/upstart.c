@@ -42,6 +42,16 @@
 #include <sys/utsname.h>
 #include <sys/time.h>
 
+#ifndef __GLIBC__
+# include <utmp.h>
+# if defined _PATH_UTMP && !defined _PATH_UTMPX
+#  define _PATH_UTMPX _PATH_UTMP
+# endif
+# if defined _PATH_WTMP && !defined _PATH_WTMPX
+#  define _PATH_WTMPX _PATH_WTMP
+# endif
+#endif
+
 
 static bool save_state_for_getbootstate(dsme_runlevel_t runlevel);
 static bool telinit_internal(dsme_runlevel_t runlevel);

@@ -55,7 +55,7 @@ struct module_t {
    Registered handler information.
 */
 typedef struct {
-    u_int32_t       msg_type;
+    uint32_t       msg_type;
     size_t          msg_size;
     const module_t* owner;
     handler_fn_t*   callback;
@@ -162,7 +162,7 @@ static const struct ucred bogus_ucred = {
 static int msg_comparator(gconstpointer a, gconstpointer b)
 {
   const msg_handler_info_t* handler  = (msg_handler_info_t*)a;
-  u_int32_t                 msg_type = GPOINTER_TO_UINT(b);
+  uint32_t                 msg_type = GPOINTER_TO_UINT(b);
 
   return compare(handler->msg_type, msg_type);
 }
@@ -197,7 +197,7 @@ static int name_comparator(const module_t* node, const char* name)
 #endif
 
 
-static int modulebase_add_single_handler(u_int32_t       msg_type,
+static int modulebase_add_single_handler(uint32_t        msg_type,
                                          size_t          msg_size,
                                          handler_fn_t*   callback,
                                          const module_t* owner)

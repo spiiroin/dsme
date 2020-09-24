@@ -34,6 +34,11 @@
 #include "malf.h"
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
+#include "../include/dsme/modulebase.h"
+
+#ifndef __GLIBC__
+#include "../include/dsme/temp-failure-retry.h"
+#endif
 
 #include <string.h>
 #include <stdio.h>

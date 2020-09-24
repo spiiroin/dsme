@@ -32,6 +32,10 @@
 #include "../include/dsme/timers.h"
 #include "../include/dsme/logging.h"
 
+#ifndef __GLIBC__
+#include "../include/dsme/temp-failure-retry.h"
+#endif
+
 #include "dbusproxy.h"
 
 /* ========================================================================= *

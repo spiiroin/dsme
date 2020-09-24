@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-#include <sys/poll.h>
+#include <poll.h>
 #include <sys/syslog.h>
 
 
@@ -52,34 +52,30 @@
 #define bme_log(L, FMT ...) fprintf(stderr, FMT);
 
 #include <sys/types.h>
-typedef __uint8_t  uint8;
-typedef __uint16_t uint16;
-typedef __uint32_t uint32;
-
 typedef struct {
-    uint16      type, subtype;
+    uint16_t      type, subtype;
 } tBMEmsgGeneric;
 
 
 struct emsg_battery_info_req {
-    uint16      type, subtype;
-    uint32      flags;
+    uint16_t      type, subtype;
+    uint32_t      flags;
 };
 
 /* Battery info reply */
 struct emsg_battery_info_reply {
-    uint32      a;
-    uint32      flags;
-    uint16      c;
-    uint16      d;
-    uint16      temp;
-    uint16      f;
-    uint16      g;
-    uint16      h;
-    uint16      i;
-    uint16      j;
-    uint16      k;
-    uint16      l;
+    uint32_t      a;
+    uint32_t      flags;
+    uint16_t      c;
+    uint16_t      d;
+    uint16_t      temp;
+    uint16_t      f;
+    uint16_t      g;
+    uint16_t      h;
+    uint16_t      i;
+    uint16_t      j;
+    uint16_t      k;
+    uint16_t      l;
 };
 
 union emsg_battery_info {
@@ -204,7 +200,7 @@ int bme_handle_new_client(int fd)
 int em_srv_battery_info_req(struct emsg_battery_info_req *reqp, int client)
 {
     struct emsg_battery_info_reply reply;
-    uint32 flags;
+    uint32_t flags;
 
     memset(&reply, 0, sizeof(reply));
     flags = reply.flags = reqp->flags;

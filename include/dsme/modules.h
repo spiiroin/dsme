@@ -66,7 +66,7 @@ typedef void (handler_fn_t)(endpoint_t* sender, const dsmemsg_generic_t* msg);
    Handler information entry in module.
 */
 typedef struct {
-    u_int32_t     msg_type;
+    uint32_t     msg_type;
     handler_fn_t* callback;
     size_t        msg_size;
 } module_fn_info_t;
