@@ -3,7 +3,7 @@
 #
 AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) -fPIC
 AM_LDFLAGS = -pthread -module -avoid-version -shared
-AM_CPPFLAGS = $(CPP_GENFLAGS)
+AM_CPPFLAGS = $(CPP_GENFLAGS) -I$(top_srcdir)
 ACLOCAL_AMFLAGS = -I m4
 
 pkglib_LTLIBRARIES = startup.la              \
@@ -90,7 +90,8 @@ state_la_LIBADD =
 if WANT_VIBRA_FEEDBACK
 state_la_SOURCES += vibrafeedback.c vibrafeedback.h
 state_la_CFLAGS += $(GLIB_CFLAGS) $(LIBNGF_CFLAGS)
-state_la_LIBADD += $(GLIB_LIBS) $(LIBNGF_LIBS)
+state_la_LIBADD += $(GLIB_LIBS) $(LIBNGF_LIBS) \
+	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 endif
 
 if WANT_RUNLEVEL
@@ -112,8 +113,9 @@ processwd_la_SOURCES = processwd.c
 processwd_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 
 dbusproxy_la_SOURCES = dbusproxy.c dsme_dbus.c
-dbusproxy_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS) $(DBUSGLIB_CFLAGS)
-dbusproxy_la_LIBADD = $(DBUSGLIB_LIBS) -ldsme_dbus_if
+dbusproxy_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
+dbusproxy_la_LIBADD = $(DBUSGLIB_LIBS) -ldsme_dbus_if \
+	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 
 alarmtracker_la_SOURCES = alarmtracker.c
 alarmtracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
@@ -128,12 +130,14 @@ emergencycalltracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 
 usbtracker_la_SOURCES = usbtracker.c
 usbtracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
-usbtracker_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
+usbtracker_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS) \
+	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 
 iphb_la_SOURCES = iphb.c
 iphb_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
 iphb_la_CPPFLAGS = $(AM_CPPFLAGS)
-iphb_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
+iphb_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS) \
+	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 
 thermalflagger_la_SOURCES = thermalflagger.c
 
@@ -185,7 +189,8 @@ endif
 if WANT_VIBRA_FEEDBACK
 shutdownfeedback_la_SOURCES = shutdownfeedback.c vibrafeedback.c vibrafeedback.h
 shutdownfeedback_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(LIBNGF_CFLAGS)
-shutdownfeedback_la_LIBADD = $(GLIB_LIBS) $(LIBNGF_LIBS)
+shutdownfeedback_la_LIBADD = $(GLIB_LIBS) $(LIBNGF_LIBS) \
+	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 endif
 
 if WANT_WLAN_LOADER

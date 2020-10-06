@@ -49,8 +49,7 @@
 
 #include <string.h>
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
-#include <dbus/dbus-glib-lowlevel.h>
+#include <dbus-gmain/dbus-gmain.h>
 
 /** Prefix string used for logging from this module */
 #define PFIX "usbtracker: "
@@ -673,7 +672,7 @@ systembus_connect(void)
         goto cleanup;
     }
 
-    dbus_connection_setup_with_g_main(systembus, 0);
+    dbus_gmain_set_up_connection(systembus, 0);
 
     xusbmoded_init_tracking();
 

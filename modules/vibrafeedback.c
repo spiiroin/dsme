@@ -38,7 +38,7 @@
 
 #include <glib.h>
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib-lowlevel.h>
+#include <dbus-gmain/dbus-gmain.h>
 
 #include "vibrafeedback.h"
 
@@ -148,7 +148,7 @@ void dsme_ini_vibrafeedback(void) {
                  err.name, err.message);
         goto cleanup;
     }
-    dbus_connection_setup_with_g_main(dbus_connection, NULL);
+    dbus_gmain_set_up_connection(dbus_connection, NULL);
 cleanup:
     dbus_error_free(&err);
 }

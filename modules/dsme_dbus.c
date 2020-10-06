@@ -39,10 +39,8 @@
 #include "../dsme/dsme-server.h"
 #include <dsme/state.h>
 
-#include <glib.h>
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
-#include <dbus/dbus-glib-lowlevel.h>
+#include <dbus-gmain/dbus-gmain.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -1360,7 +1358,7 @@ manager_connect(DsmeDbusManager *self)
     dbus_connection_set_exit_on_disconnect(con, FALSE);
 
     /* Attach to glib mainloop */
-    dbus_connection_setup_with_g_main(con, 0);
+    dbus_gmain_set_up_connection(con, 0);
 
     /* Manager owns the connection */
     self->mr_connection = con, con = 0;
