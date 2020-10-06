@@ -193,7 +193,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_LIBTOOL
+LT_INIT
 PKG_PROG_PKG_CONFIG
 
 # Specify dir for local macros
@@ -260,4 +260,5 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  dsme.init])
 
-AC_OUTPUT(dsme-plugin.pc)
+AC_CONFIG_FILES([dsme-plugin.pc])
+AC_OUTPUT
