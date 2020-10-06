@@ -3,7 +3,8 @@
 #
 AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) -fPIC
 AM_LDFLAGS = -pthread -module -avoid-version -shared
-AM_CPPFLAGS = $(CPP_GENFLAGS) -I$(top_srcdir)
+AM_CPPFLAGS = $(CPP_GENFLAGS) -I$(top_srcdir) \
+	$(GLIB_CFLAGS)
 ACLOCAL_AMFLAGS = -I m4
 
 pkglib_LTLIBRARIES = startup.la              \
@@ -82,14 +83,12 @@ endif
 startup_la_SOURCES = startup.c
 
 heartbeat_la_SOURCES = heartbeat.c
-heartbeat_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
-
 state_la_SOURCES = state.c
 state_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 state_la_LIBADD =
 if WANT_VIBRA_FEEDBACK
 state_la_SOURCES += vibrafeedback.c vibrafeedback.h
-state_la_CFLAGS += $(GLIB_CFLAGS) $(LIBNGF_CFLAGS)
+state_la_CFLAGS += $(LIBNGF_CFLAGS)
 state_la_LIBADD += $(GLIB_LIBS) $(LIBNGF_LIBS) \
 	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 endif
@@ -106,11 +105,9 @@ endif
 
 if WANT_VALIDATOR_LISTENER
 runlevel_la_SOURCES = validatorlistener.c
-validatorlistener_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 endif
 
 processwd_la_SOURCES = processwd.c
-processwd_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 
 dbusproxy_la_SOURCES = dbusproxy.c dsme_dbus.c
 dbusproxy_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
@@ -122,20 +119,19 @@ alarmtracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 alarmtracker_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 thermalmanager_la_SOURCES = thermalmanager.c thermalobject.c
-thermalmanager_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
+thermalmanager_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 thermalmanager_la_LIBADD = -lthermalmanager_dbus_if
 
 emergencycalltracker_la_SOURCES = emergencycalltracker.c
 emergencycalltracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 
 usbtracker_la_SOURCES = usbtracker.c
-usbtracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
+usbtracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 usbtracker_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS) \
 	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 
 iphb_la_SOURCES = iphb.c
-iphb_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
-iphb_la_CPPFLAGS = $(AM_CPPFLAGS)
+iphb_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
 iphb_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS) \
 	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 
@@ -145,8 +141,8 @@ malf_la_SOURCES = malf.c
 
 if WANT_GENERIC_THERMAL_MGMT
 thermalsensor_generic_la_SOURCES = thermalsensor_generic.c
-thermalsensor_generic_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
-thermalsensor_generic_la_LIBADD = -lthermalmanager_dbus_if
+thermalsensor_generic_la_CFLAGS  = $(AM_CFLAGS) $(DBUS_CFLAGS)
+thermalsensor_generic_la_LIBADD  = -lthermalmanager_dbus_if
 endif
 
 
@@ -155,41 +151,39 @@ powerontimer_la_SOURCES = powerontimer.c         \
                              powerontimer_backend.c \
                              powerontimer.h         \
                              powerontimer_backend.h
-powerontimer_la_CFLAGS =  $(AM_CFLAGS) $(GLIB_CFLAGS)
 powerontimer_la_LIBADD = -lcal -lrt
 endif
 
 diskmonitor_la_SOURCES = diskmonitor.c \
 				diskmonitor.h
 
-diskmonitor_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
+diskmonitor_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 
 dbusautoconnector_la_SOURCES = dbusautoconnector.c
-dbusautoconnector_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
-dbusautoconnector_la_LIBADD = $(GLIB_LIBS)
+dbusautoconnector_la_CFLAGS  = $(AM_CFLAGS) $(DBUS_CFLAGS)
+dbusautoconnector_la_LIBADD  = $(GLIB_LIBS)
 
 if WANT_PWRKEY_MONITOR
 pwrkeymonitor_la_SOURCES = pwrkeymonitor.c
-pwrkeymonitor_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS)
 pwrkeymonitor_la_LIBADD = $(GLIB_LIBS)
 endif
 
 if WANT_BATTERY_TRACKER
 batterytracker_la_SOURCES = batterytracker.c
-batterytracker_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
-batterytracker_la_LIBADD = $(GLIB_LIBS)
+batterytracker_la_CFLAGS  = $(AM_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
+batterytracker_la_LIBADD  = $(GLIB_LIBS)
 endif
 
 if WANT_BOOTREASON_LOGGER
 bootreasonlogger_la_SOURCES = bootreasonlogger.c
-bootreasonlogger_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
-bootreasonlogger_la_LIBADD = $(GLIB_LIBS)
+bootreasonlogger_la_CFLAGS  = $(AM_CFLAGS) $(DBUS_CFLAGS)
+bootreasonlogger_la_LIBADD  = $(GLIB_LIBS)
 endif
 
 if WANT_VIBRA_FEEDBACK
 shutdownfeedback_la_SOURCES = shutdownfeedback.c vibrafeedback.c vibrafeedback.h
-shutdownfeedback_la_CFLAGS = $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS) $(LIBNGF_CFLAGS)
-shutdownfeedback_la_LIBADD = $(GLIB_LIBS) $(LIBNGF_LIBS) \
+shutdownfeedback_la_CFLAGS  = $(AM_CFLAGS) $(DBUS_CFLAGS) $(LIBNGF_CFLAGS)
+shutdownfeedback_la_LIBADD  = $(GLIB_LIBS) $(LIBNGF_LIBS) \
 	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
 endif
 
@@ -200,6 +194,6 @@ endif
 
 if WANT_ABOOTSETTINGS
 abootsettings_la_SOURCES = abootsettings.c
-abootsettings_la_CFLAGS =  $(AM_CFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
-abootsettings_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
+abootsettings_la_CFLAGS  = $(AM_CFLAGS) $(DBUS_CFLAGS)
+abootsettings_la_LIBADD  = $(GLIB_LIBS) $(DBUS_LIBS)
 endif
