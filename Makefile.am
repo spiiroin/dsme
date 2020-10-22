@@ -1,1 +1,1 @@
-SUBDIRS = dsme modules util test tests getbootstate
+SUBDIRS = dbus-gmain dsme modules util test tests getbootstate

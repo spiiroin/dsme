@@ -62,8 +62,7 @@
 #include <linux/rtc.h>
 #include <limits.h>
 #include <dbus/dbus.h>
-#include <dbus/dbus-glib.h>
-#include <dbus/dbus-glib-lowlevel.h>
+#include <dbus-gmain/dbus-gmain.h>
 #include <mce/dbus-names.h>
 
 #include "../include/android/android_alarm.h"
@@ -3017,7 +3016,7 @@ static void systembus_connect(void)
 	goto cleanup;
     }
 
-    dbus_connection_setup_with_g_main(systembus, 0);
+    dbus_gmain_set_up_connection(systembus, 0);
 
     xmce_handle_dbus_connect();
 

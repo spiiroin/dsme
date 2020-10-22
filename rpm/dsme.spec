@@ -14,8 +14,7 @@ Requires(preun): systemd
 Requires(post): systemd
 Requires(postun): systemd
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32.0
-BuildRequires:  pkgconfig(dbus-1)
-BuildRequires:  pkgconfig(dbus-glib-1)
+BuildRequires:  pkgconfig(dbus-1) >= 1.8
 BuildRequires:  pkgconfig(libiphb) >= 1.2.0
 BuildRequires:  pkgconfig(dsme) >= 0.66.0
 BuildRequires:  pkgconfig(libsystemd)

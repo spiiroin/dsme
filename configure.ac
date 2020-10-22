@@ -1,7 +1,8 @@
 # Package name and version
 AC_INIT(dsme, 0.81.4)
 
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([foreign subdir-objects])
+AM_EXTRA_RECURSIVE_TARGETS([dbus-gmain])
 
 AC_PREREQ([2.61])
 AC_CONFIG_SRCDIR([dsme/dsme-wdd-wd.c])
@@ -193,7 +194,7 @@ AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PROG_LIBTOOL
+LT_INIT
 PKG_PROG_PKG_CONFIG
 
 # Specify dir for local macros
@@ -204,9 +205,8 @@ AM_PROG_CC_C_O()
 
 # Pkgconf checks
 PKG_CHECK_MODULES(LIBCRYPTSETUP, libcryptsetup)
-PKG_CHECK_MODULES(GLIB, glib-2.0)
-PKG_CHECK_MODULES(DBUS, dbus-1)
-PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1)
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.40)
+PKG_CHECK_MODULES(DBUS, dbus-1 >= 1.8)
 PKG_CHECK_MODULES(MCE_DEV, mce,
 		  [],
 		  AC_MSG_ERROR(Development files for mce are missing. Install mce-headers / mce-dev.))
@@ -252,6 +252,7 @@ AC_CHECK_FUNCS([atexit clock_gettime dup2 ftw64 gettimeofday inet_ntoa memmove  
 
 # Create files
 AC_CONFIG_FILES([Makefile
+                 dbus-gmain/Makefile
                  dsme/Makefile
                  modules/Makefile
                  util/Makefile
@@ -260,4 +261,5 @@ AC_CONFIG_FILES([Makefile
                  tests/Makefile
                  dsme.init])
 
-AC_OUTPUT(dsme-plugin.pc)
+AC_CONFIG_FILES([dsme-plugin.pc])
+AC_OUTPUT
