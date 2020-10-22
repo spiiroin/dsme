@@ -1,0 +1,4 @@
+[submodule "dbus-gmain"]
+	path = dbus-gmain
+	url = https://github.com/sailfishos-mirror/dbus-glib.git
+	branch = dbus-gmain
