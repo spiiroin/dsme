@@ -239,7 +239,6 @@ LDLIBS   += -ldl
 
 PKG_NAMES += glib-2.0
 PKG_NAMES += dbus-1
-PKG_NAMES += dbus-glib-1
 PKG_NAMES += dsme
 PKG_NAMES += dsme_dbus_if
 PKG_NAMES += thermalmanager_dbus_if
@@ -266,6 +265,21 @@ endif
 CPPFLAGS += $(PKG_CPPFLAGS)
 CFLAGS   += $(PKG_CFLAGS)
 LDLIBS   += $(PKG_LDLIBS)
+
+# ----------------------------------------------------------------------------
+# dbus-gmain
+# ----------------------------------------------------------------------------
+
+# The dbus-gmain submodule contains sources that have
+# issues and do not compile cleanly. As the content is
+# what it is, silence warnings etc when compiling source
+# files from there...
+DBUS_GMAIN_CPPFLAGS += -I.
+DBUS_GMAIN_CFLAGS   += -Wno-unused-parameter
+DBUS_GMAIN_CFLAGS   += -Wno-cast-function-type
+
+dbus-gmain/%.o : CPPFLAGS += $(DBUS_GMAIN_CPPFLAGS)
+dbus-gmain/%.o : CFLAGS   += $(DBUS_GMAIN_CFLAGS)
 
 # ----------------------------------------------------------------------------
 # dsme-wdd
@@ -308,7 +322,10 @@ modules/alarmtracker.so          : modules/alarmtracker.pic.o
 modules/batterytracker.so        : modules/batterytracker.pic.o
 modules/bootreasonlogger.so      : modules/bootreasonlogger.pic.o
 modules/dbusautoconnector.so     : modules/dbusautoconnector.pic.o
-modules/dbusproxy.so             : modules/dbusproxy.pic.o modules/dsme_dbus.pic.o
+modules/dbusproxy.so             : \
+	modules/dbusproxy.pic.o \
+	modules/dsme_dbus.pic.o \
+	dbus-gmain/dbus-gmain.pic.o
 modules/diskmonitor.so           : modules/diskmonitor.pic.o
 modules/emergencycalltracker.so  : modules/emergencycalltracker.pic.o
 modules/heartbeat.so             : modules/heartbeat.pic.o
@@ -448,6 +465,10 @@ DIRTY_HEADERS += test/utils_misc.h
 
 BROKEN_SOURCES += util/kicker.c
 BROKEN_SOURCES += util/kick_wd.c
+
+# No need to process these
+BROKEN_SOURCES += dbus-gmain/dbus-gmain.c
+BROKEN_HEADERS += dbus-gmain/dbus-gmain.h
 
 # ----------------------------------------------------------------------------
 # Source code normalization

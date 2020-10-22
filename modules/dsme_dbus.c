@@ -3,8 +3,9 @@
 
    D-Bus C binding for DSME
    <p>
-   Copyright (C) 2008-2010 Nokia Corporation.
-   Copyright (C) 2013-2017 Jolla Ltd.
+   Copyright (c) 2008 - 2010 Nokia Corporation.
+   Copyright (c) 2013 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Tapio Rantala <ext-tapio.rantala@nokia.com>
@@ -14,6 +15,8 @@
    @author Kalle Jokiniemi <kalle.jokiniemi@jolla.com>
    @author Slava Monich <slava.monich@jolla.com>
    @author marko lemmetty <marko.lemmetty@jollamobile.com>
+   @author Bogdan Migunov <bogdanmigunov@yandex.ru>
+   @author Björn Bidar <bjorn.bidar@jolla.com>
 
    This file is part of Dsme.
 
@@ -39,12 +42,12 @@
 #include "../dsme/dsme-server.h"
 #include <dsme/state.h>
 
-#include <dbus/dbus.h>
-#include <dbus-gmain/dbus-gmain.h>
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+/* dbus_gmain_set_up_connection() from dbus-gmain submodule */
+#include "../dbus-gmain/dbus-gmain.h"
 
 #define DBUS_FAILED_FILE "/run/systemd/boot-status/dbus-failed"
 

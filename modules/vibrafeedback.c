@@ -4,9 +4,13 @@
    Play vibra using ngfd
 
    <p>
-   Copyright (C) 2014 Jolla Oy.
+   Copyright (c) 2014 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Pekka Lundstrom <pekka.lundstrom@jolla.com>
+   @author Juho Hämäläinen <juho.hamalainen@tieto.com>
+   @author Simo Piiroinen <simo.piiroinen@jolla.com>
+   @author Björn Bidar <bjorn.bidar@jolla.com>
 
    This file is part of Dsme.
 
@@ -37,8 +41,6 @@
 #include <stdlib.h>
 
 #include <glib.h>
-#include <dbus/dbus.h>
-#include <dbus-gmain/dbus-gmain.h>
 
 #include "vibrafeedback.h"
 
@@ -148,7 +150,6 @@ void dsme_ini_vibrafeedback(void) {
                  err.name, err.message);
         goto cleanup;
     }
-    dbus_gmain_set_up_connection(dbus_connection, NULL);
 cleanup:
     dbus_error_free(&err);
 }
