@@ -1,5 +1,5 @@
 # Package name and version
-AC_INIT(dsme, 0.81.4)
+AC_INIT(dsme, 0.81.5)
 
 AM_INIT_AUTOMAKE([foreign subdir-objects])
 AM_EXTRA_RECURSIVE_TARGETS([dbus-gmain])

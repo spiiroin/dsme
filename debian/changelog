@@ -1,3 +1,13 @@
+dsme (0.81.5) precise; urgency=low
+
+  * [dsme] Modernize configure.ac
+  * [dsme] Use dbus-gmain instead of dbus-glib
+  * [modules] Move shared CFLAS to AM_CPPFLAGS
+  * [dbus-glib] Add sumbodule. Contributes to JB#51115
+  * [dbus-glib] Remove redundant dbus connection setups. JB#51115
+
+ -- Simo Piiroinen <simo.piiroinen@jollamobile.com>  Fri, 04 Dec 2020 10:36:39 +0200
+
 dsme (0.81.4) precise; urgency=low
 
   * Fix Musl libc incompatibilities
