@@ -272,6 +272,7 @@ modules/diskmonitor.pic.o:\
 
 modules/dsme_dbus.o:\
 	modules/dsme_dbus.c\
+	dbus-gmain/dbus-gmain.h\
 	dsme/dsme-server.h\
 	include/dsme/logging.h\
 	include/dsme/modulebase.h\
@@ -282,6 +283,7 @@ modules/dsme_dbus.o:\
 
 modules/dsme_dbus.pic.o:\
 	modules/dsme_dbus.c\
+	dbus-gmain/dbus-gmain.h\
 	dsme/dsme-server.h\
 	include/dsme/logging.h\
 	include/dsme/modulebase.h\

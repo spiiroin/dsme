@@ -6,8 +6,9 @@
    so that we will not allow reboot/shutdown while the device is
    mounted to a host PC over USB.
    <p>
-   Copyright (C) 2010 Nokia Corporation.
-   Copyright (C) 2013-2017 Jolla Ltd
+   Copyright (c) 2010 Nokia Corporation.
+   Copyright (c) 2013 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Matias Muhonen <ext-matias.muhonen@nokia.com>
@@ -15,6 +16,8 @@
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
    @author Pekka Lundstrom <pekka.lundstrom@jollamobile.com>
    @author Marko Saukko <marko.saukko@jollamobile.com>
+   @author Bogdan Migunov <bogdanmigunov@yandex.ru>
+   @author Björn Bidar <bjorn.bidar@jolla.com>
 
    This file is part of Dsme.
 
@@ -48,8 +51,8 @@
 #include <dsme/state.h>
 
 #include <string.h>
-#include <dbus/dbus.h>
-#include <dbus-gmain/dbus-gmain.h>
+
+#include <glib.h>
 
 /** Prefix string used for logging from this module */
 #define PFIX "usbtracker: "
@@ -671,8 +674,6 @@ systembus_connect(void)
                  err.name, err.message);
         goto cleanup;
     }
-
-    dbus_gmain_set_up_connection(systembus, 0);
 
     xusbmoded_init_tracking();
 

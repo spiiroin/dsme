@@ -127,13 +127,11 @@ emergencycalltracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
 
 usbtracker_la_SOURCES = usbtracker.c
 usbtracker_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS)
-usbtracker_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS) \
-	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
+usbtracker_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
 
 iphb_la_SOURCES = iphb.c
 iphb_la_CFLAGS = $(AM_CFLAGS) $(DBUS_CFLAGS) $(MCE_DEV_CFLAGS)
-iphb_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS) \
-	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
+iphb_la_LIBADD = $(GLIB_LIBS) $(DBUS_LIBS)
 
 thermalflagger_la_SOURCES = thermalflagger.c
 
@@ -183,8 +181,7 @@ endif
 if WANT_VIBRA_FEEDBACK
 shutdownfeedback_la_SOURCES = shutdownfeedback.c vibrafeedback.c vibrafeedback.h
 shutdownfeedback_la_CFLAGS  = $(AM_CFLAGS) $(DBUS_CFLAGS) $(LIBNGF_CFLAGS)
-shutdownfeedback_la_LIBADD  = $(GLIB_LIBS) $(LIBNGF_LIBS) \
-	$(top_srcdir)/dbus-gmain/libdbus-gmain.la
+shutdownfeedback_la_LIBADD  = $(GLIB_LIBS) $(LIBNGF_LIBS)
 endif
 
 if WANT_WLAN_LOADER

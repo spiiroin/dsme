@@ -6,8 +6,9 @@
    IP heartbeat service dsme plug-in
 
    <p>
-   Copyright (C) 2010 Nokia. All rights reserved.
-   Copyright (C) 2013-2019 Jolla Ltd.
+   Copyright (c) 2010 Nokia. All rights reserved.
+   Copyright (c) 2013 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Raimo Vuonnala <raimo.vuonnala@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
@@ -15,6 +16,9 @@
    @author Antti Virtanen <antti.i.virtanen@nokia.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
    @author Petri M. Gerdt <petri.gerdt@jollamobile.com>
+   @author Bogdan Migunov <bogdanmigunov@yandex.ru>
+   @author slapin <slapinid@gmail.com>
+   @author Björn Bidar <bjorn.bidar@jolla.com>
 
    This file is part of Dsme.
 
@@ -61,8 +65,6 @@
 #include <sys/ioctl.h>
 #include <linux/rtc.h>
 #include <limits.h>
-#include <dbus/dbus.h>
-#include <dbus-gmain/dbus-gmain.h>
 #include <mce/dbus-names.h>
 
 #include "../include/android/android_alarm.h"
@@ -3015,8 +3017,6 @@ static void systembus_connect(void)
 		 err.name, err.message);
 	goto cleanup;
     }
-
-    dbus_gmain_set_up_connection(systembus, 0);
 
     xmce_handle_dbus_connect();
 
