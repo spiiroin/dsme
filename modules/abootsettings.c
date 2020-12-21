@@ -5,7 +5,8 @@
    User can change e.g. device lock value for aboot.
    <p>
 
-   Copyright (C) 2017 Jolla Oy
+   Copyright (c) 2017 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Marko Lemmetty <marko.lemmetty@jollamobile.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
@@ -221,6 +222,7 @@ static const dsme_dbus_binding_t dbus_methods_array[] =
     {
         .method = set_locked,
         .name   = "set_locked",
+        .priv   = true,
         .args   =
             "    <arg direction=\"in\" name=\"state\" type=\"i\"/>\n"
             "    <arg direction=\"out\" name=\"success\" type=\"i\"/>\n"
