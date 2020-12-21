@@ -3,10 +3,13 @@
 
    DSME interface towards plugin modules.
    <p>
-   Copyright (C) 2004-2010 Nokia Corporation.
+   Copyright (c) 2004 - 2010 Nokia Corporation.
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Ari Saastamoinen
    @author Semi Malinen <semi.malinen@nokia.com>
+   @author Simo Piiroinen <simo.piiroinen@jolla.com>
 
    This file is part of Dsme.
 
@@ -121,6 +124,7 @@ void endpoint_send(endpoint_t* recipient, const void* msg);
 const struct ucred* endpoint_ucred(const endpoint_t* sender);
 char* endpoint_name_by_pid(pid_t pid);
 char* endpoint_name(const endpoint_t* sender);
+bool endpoint_is_privileged(const endpoint_t* sender);
 bool endpoint_same(const endpoint_t* a, const endpoint_t* b);
 bool endpoint_is_dsme(const endpoint_t* endpoint);
 endpoint_t* endpoint_copy(const endpoint_t* endpoint);

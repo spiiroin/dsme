@@ -40,6 +40,7 @@
 #include "../include/dsme/modules.h"
 #include "../include/dsme/modulebase.h"
 #include "../dsme/dsme-server.h"
+#include "../dsme/utility.h"
 #include <dsme/state.h>
 
 #include <stdlib.h>
@@ -212,6 +213,7 @@ static bool               dsme_dbus_is_enabled              (void);
 static const char        *dsme_dbus_calling_module_name     (void);
 static bool               dsme_dbus_connection_is_open      (DBusConnection *con);
 static bool               dsme_dbus_bus_get_unix_process_id (DBusConnection *conn, const char *name, pid_t *pid);
+static bool               dsme_dbus_name_is_privileged      (DBusConnection *con, const char *name);
 static const char        *dsme_dbus_get_type_name           (int type);
 static bool               dsme_dbus_check_arg_type          (DBusMessageIter *iter, int want_type);
 static const char        *dsme_dbus_name_request_reply_repr (int reply);
@@ -1719,10 +1721,19 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
                  interface_name, member,
                  module ? module_name(module) : "(current");
 
-        if( module )
-            modulebase_enter_module(module);
-        bindings->method(&message, &reply);
-        modulebase_enter_module(restore);
+        if( bindings->priv &&
+            !dsme_dbus_name_is_privileged(manager_connection(self),
+                                          dbus_message_get_sender(req)) ) {
+            reply = dsme_dbus_reply_error(&message,
+                                          DBUS_ERROR_ACCESS_DENIED,
+                                          "sender is not privileged");
+        }
+        else {
+            if( module )
+                modulebase_enter_module(module);
+            bindings->method(&message, &reply);
+            modulebase_enter_module(restore);
+        }
 
         if( !dbus_message_get_no_reply(req) ) {
             if( !reply ) {
@@ -1836,6 +1847,9 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
     DBusError     err = DBUS_ERROR_INIT;
     dbus_uint32_t dta = 0;
 
+    if( !name )
+        goto EXIT;
+
     if( !dsme_dbus_connection_is_open(conn) )
         goto EXIT;
 
@@ -1888,6 +1902,20 @@ EXIT:
     dbus_error_free(&err);
 
     return ack;
+}
+
+static bool
+dsme_dbus_name_is_privileged(DBusConnection *con, const char *name)
+{
+    bool is_privileged = false;
+    // FIXME: pid query is blocking dbus call
+    pid_t pid = -1;
+    if( !dsme_dbus_bus_get_unix_process_id(con, name, &pid) )
+        dsme_log(LOG_WARNING, "could not get pid for name %s", name);
+    else
+        is_privileged = dsme_process_is_privileged(pid);
+
+    return is_privileged;
 }
 
 static const char *

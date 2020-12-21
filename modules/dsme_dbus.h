@@ -3,8 +3,9 @@
 
    D-Bus C binding for DSME
    <p>
-   Copyright (C) 2009-2010 Nokia Corporation.
-   Copyright (C) 2013-2017 Jolla Ltd.
+   Copyright (c) 2009 - 2010 Nokia Corporation.
+   Copyright (c) 2013 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
@@ -48,6 +49,7 @@ typedef struct dsme_dbus_binding_t
 {
     DsmeDbusMethod  method;
     const char     *name; // = member
+    bool            priv;
     const char     *args; // = xml desc
 } dsme_dbus_binding_t;
 

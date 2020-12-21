@@ -4,7 +4,8 @@
  * Generic functions needed by dsme core and/or multiple plugings.
  *
  * <p>
- * Copyright (C) 2019 Jolla Ltd.
+ * Copyright (c) 2019 - 2020 Jolla Ltd.
+ * Copyright (c) 2020 Open Mobile Platform LLC.
  *
  * @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
  *
@@ -34,6 +35,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <pwd.h>
 
 #include <libcryptsetup.h>
 
@@ -45,11 +47,57 @@
  * UTILITY
  * ------------------------------------------------------------------------- */
 
+bool                        dsme_user_is_privileged       (uid_t uid, gid_t gid);
+bool                        dsme_process_is_privileged    (pid_t pid);
 static void                 dsme_free_crypt_device        (struct crypt_device *cdev);
 static struct crypt_device *dsme_get_crypt_device_for_home(void);
 bool                        dsme_home_is_encrypted        (void);
 const char                 *dsme_state_repr               (dsme_state_t state);
 static char                *dsme_pid2exe                  (pid_t pid);
+
+/* ========================================================================= *
+ * Client identification
+ * ========================================================================= */
+
+bool
+dsme_user_is_privileged(uid_t uid, gid_t gid)
+{
+    bool is_privileged = false;
+
+    /* Check if UID/GID is root/privileged */
+    if( uid != 0 && gid != 0 ) {
+        struct passwd *pw = getpwnam("privileged");
+        if( !pw ) {
+            dsme_log(LOG_WARNING, "privileged user not found");
+            goto EXIT;
+        }
+        if( uid != pw->pw_uid && gid != pw->pw_gid )
+            goto EXIT;
+    }
+
+    is_privileged = true;
+
+EXIT:
+    return is_privileged;
+}
+
+bool
+dsme_process_is_privileged(pid_t pid)
+{
+    bool is_privileged = false;
+
+    /* /proc/PID directory is owned by process EUID:EGID */
+    char temp[256];
+    snprintf(temp, sizeof temp, "/proc/%d", (int)pid);
+    struct stat st = {};
+
+    if( stat(temp, &st) == -1 )
+        dsme_log(LOG_WARNING, "could not stat %s: %m", temp);
+    else
+        is_privileged = dsme_user_is_privileged(st.st_uid, st.st_gid);
+
+    return is_privileged;
+}
 
 /* ========================================================================= *
  * Probing for encrypted home partition

@@ -3,8 +3,9 @@
 
    Implements DSME plugin framework.
    <p>
-   Copyright (C) 2004-2010 Nokia Corporation
-   Copyright (C) 2013-2017 Jolla Ltd.
+   Copyright (c) 2004 - 2010 Nokia Corporation
+   Copyright (c) 2013 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Ari Saastamoinen
    @author Semi Malinen <semi.malinen@nokia.com>
@@ -32,6 +33,7 @@
 #include "../include/dsme/logging.h"
 #include "../include/dsme/mainloop.h"
 #include "dsme-server.h"
+#include "utility.h"
 
 #include <glib.h>
 #include <stdio.h>
@@ -491,6 +493,21 @@ char* endpoint_name(const endpoint_t* sender)
   }
 
   return name;
+}
+
+bool endpoint_is_privileged(const endpoint_t* sender)
+{
+    bool is_privileged = false;
+
+    if( sender ) {
+        if( !sender->conn )
+            is_privileged = true;
+        else if( sender->ucred.pid != 0 )
+            is_privileged = dsme_user_is_privileged(sender->ucred.uid,
+                                                    sender->ucred.gid);
+    }
+
+    return is_privileged;
 }
 
 bool endpoint_same(const endpoint_t* a, const endpoint_t* b)
