@@ -3,8 +3,9 @@
 
    This file implements device state policy in DSME.
    <p>
-   Copyright (C) 2004-2010 Nokia Corporation.
-   Copyright (C) 2013-2017 Jolla Ltd.
+   Copyright (c) 2004 - 2010 Nokia Corporation.
+   Copyright (c) 2013 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Ismo Laitinen <ismo.laitinen@nokia.com>
    @author Semi Malinen <semi.malinen@nokia.com>
@@ -815,7 +816,10 @@ static void handle_telinit_NOT_SET(endpoint_t* conn)
 
 static void handle_telinit_SHUTDOWN(endpoint_t* conn)
 {
-    if (is_state_change_request_acceptable(DSME_STATE_SHUTDOWN)) {
+    if( !endpoint_is_privileged(conn) ) {
+        dsme_log(LOG_WARNING, PFIX"shutdown request from unprivileged client");
+    }
+    else if (is_state_change_request_acceptable(DSME_STATE_SHUTDOWN)) {
         shutdown_requested = true;
         actdead_requested  = false;
         change_state_if_necessary();
@@ -824,14 +828,22 @@ static void handle_telinit_SHUTDOWN(endpoint_t* conn)
 
 static void handle_telinit_USER(endpoint_t* conn)
 {
-    shutdown_requested = false;
-    actdead_requested  = false;
-    change_state_if_necessary();
+    if( !endpoint_is_privileged(conn) ) {
+        dsme_log(LOG_WARNING, PFIX"powerup request from unprivileged client");
+    }
+    else {
+        shutdown_requested = false;
+        actdead_requested  = false;
+        change_state_if_necessary();
+    }
 }
 
 static void handle_telinit_ACTDEAD(endpoint_t* conn)
 {
-    if (is_state_change_request_acceptable(DSME_STATE_ACTDEAD)) {
+    if( !endpoint_is_privileged(conn) ) {
+        dsme_log(LOG_WARNING, PFIX"actdead request from unprivileged client");
+    }
+    else if (is_state_change_request_acceptable(DSME_STATE_ACTDEAD)) {
         actdead_requested = true;
         change_state_if_necessary();
     }
@@ -839,7 +851,10 @@ static void handle_telinit_ACTDEAD(endpoint_t* conn)
 
 static void handle_telinit_REBOOT(endpoint_t* conn)
 {
-    if (is_state_change_request_acceptable(DSME_STATE_REBOOT)) {
+    if( !endpoint_is_privileged(conn) ) {
+        dsme_log(LOG_WARNING, PFIX"reboot request from unprivileged client");
+    }
+    else if (is_state_change_request_acceptable(DSME_STATE_REBOOT)) {
         reboot_requested  = true;
         actdead_requested = false;
         change_state_if_necessary();
