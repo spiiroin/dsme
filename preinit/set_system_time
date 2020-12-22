@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Set system time from RTC
+hwclock -s
+
+# Apply correction value that DSME writes to
+# a file in case device has read-only RTC TOD
+DELTA_TIME_FILE="/var/tmp/delta-time"
+if [ -f $DELTA_TIME_FILE ]; then
+  DELTA_TIME_VALUE=$(cat $DELTA_TIME_FILE)
+  date -s@$(($(date +'%s')+$DELTA_TIME_VALUE))
+fi
+
+exit 0

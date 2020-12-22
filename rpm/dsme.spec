@@ -73,6 +73,7 @@ install -d %{buildroot}%{_unitdir}/multi-user.target.wants/
 ln -s ../%{name}.service %{buildroot}%{_unitdir}/multi-user.target.wants/%{name}.service
 install -d %{buildroot}/var/lib/dsme
 [ ! -f %{buildroot}/var/lib/dsme/alarm_queue_status ] && echo 0 > %{buildroot}/var/lib/dsme/alarm_queue_status
+install -D -m755 preinit/set_system_time %{buildroot}/usr/lib/startup/preinit/set_system_time
 
 %preun
 if [ "$1" -eq 0 ]; then
@@ -99,6 +100,7 @@ systemctl daemon-reload || :
 /var/lib/dsme
 %config(noreplace) /var/lib/dsme/alarm_queue_status
 /etc/profile.d/reboot-via-dsme.sh
+/usr/lib/startup/preinit/set_system_time
 
 %files plugin-devel
 %defattr(-,root,root,-)
