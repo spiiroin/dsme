@@ -101,6 +101,7 @@ static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 
   DSM_MSGTYPE_POWERUP_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_POWERUP_REQ);
   modules_broadcast_internally(&req);
+  *reply = dsme_dbus_reply_new(request);
 }
 
 static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
@@ -113,6 +114,7 @@ static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 
   DSM_MSGTYPE_REBOOT_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_REBOOT_REQ);
   modules_broadcast_internally(&req);
+  *reply = dsme_dbus_reply_new(request);
 }
 
 static void req_shutdown(const DsmeDbusMessage* request,
@@ -127,6 +129,7 @@ static void req_shutdown(const DsmeDbusMessage* request,
   DSM_MSGTYPE_SHUTDOWN_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_SHUTDOWN_REQ);
 
   modules_broadcast_internally(&req);
+  *reply = dsme_dbus_reply_new(request);
 }
 
 /** Flag for: dbus broadcast info has been installed */
