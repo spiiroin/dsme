@@ -1,3 +1,14 @@
+dsme (0.82.0) precise; urgency=low
+
+  * [dsme] Enablers for privileged client checking
+  * [abootsettings] Only privileged clients can set lock state. Fixes JB#52494
+  * [state] Reject reboot requests from unprivileged endpoints. JB#38609
+  * [dbusproxy] Only privileged clients can reboot device. Fixes JB#38609
+  * [dbusproxy] Set reply message when method call is successfully handled
+  * [tests] Fix autotest build
+
+ -- Simo Piiroinen <simo.piiroinen@jolla.com>  Wed, 20 Jan 2021 09:41:45 +0200
+
 dsme (0.81.6) precise; urgency=low
 
   * [tests] Remove libdbus-glib dependency from test cases. JB#51115
