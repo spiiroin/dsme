@@ -4,7 +4,8 @@
  * Generic functions needed by dsme core and/or multiple plugings.
  *
  * <p>
- * Copyright (C) 2019 Jolla Ltd.
+ * Copyright (c) 2019 - 2020 Jolla Ltd.
+ * Copyright (c) 2020 Open Mobile Platform LLC.
  *
  * @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
  *
@@ -38,6 +39,8 @@
  * UTILITY
  * ------------------------------------------------------------------------- */
 
+bool        dsme_user_is_privileged(uid_t uid, gid_t gid);
+bool        dsme_process_is_privileged(pid_t pid);
 bool        dsme_home_is_encrypted(void);
 const char *dsme_state_repr       (dsme_state_t state);
 

@@ -3,8 +3,9 @@
  *
  * Dsmetool can be used to send commands to DSME.
  * <p>
- * Copyright (C) 2004-2011 Nokia Corporation.
- * Copyright (C) 2013-2017 Jolla Ltd.
+ * Copyright (c) 2004 - 2011 Nokia Corporation.
+ * Copyright (c) 2013 - 2020 Jolla Ltd.
+ * Copyright (c) 2020 Open Mobile Platform LLC.
  *
  * @author Ismo Laitinen <ismo.laitinen@nokia.com>
  * @author Semi Malinen <semi.malinen@nokia.com>
@@ -189,11 +190,6 @@ static void dsmeipc_connect(void)
 
     log_debug("connected");
 
-    /* This gives enough time for DSME to check
-     * the socket permissions before we close the socket
-     * connection */
-    (void)xdsme_query_version(true);
-
 EXIT:
     return;
 }
@@ -202,6 +198,11 @@ static void dsmeipc_disconnect(void)
 {
     if( !dsmeipc_conn )
         goto EXIT;
+
+    /* This gives enough time for DSME to check
+     * the socket permissions before we close the socket
+     * connection */
+    (void)xdsme_query_version(true);
 
     log_debug("disconnecting");
     dsmesock_close(dsmeipc_conn), dsmeipc_conn = 0;

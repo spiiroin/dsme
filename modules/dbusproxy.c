@@ -4,8 +4,9 @@
    This module implements proxying of between DSME's internal message
    queue and D-Bus.
    <p>
-   Copyright (C) 2009-2010 Nokia Corporation.
-   Copyright (C) 2015-2017 Jolla Ltd.
+   Copyright (c) 2009 - 2010 Nokia Corporation.
+   Copyright (c) 2015 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Semi Malinen <semi.malinen@nokia.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
@@ -100,6 +101,7 @@ static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 
   DSM_MSGTYPE_POWERUP_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_POWERUP_REQ);
   modules_broadcast_internally(&req);
+  *reply = dsme_dbus_reply_new(request);
 }
 
 static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
@@ -112,6 +114,7 @@ static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 
   DSM_MSGTYPE_REBOOT_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_REBOOT_REQ);
   modules_broadcast_internally(&req);
+  *reply = dsme_dbus_reply_new(request);
 }
 
 static void req_shutdown(const DsmeDbusMessage* request,
@@ -126,6 +129,7 @@ static void req_shutdown(const DsmeDbusMessage* request,
   DSM_MSGTYPE_SHUTDOWN_REQ req = DSME_MSG_INIT(DSM_MSGTYPE_SHUTDOWN_REQ);
 
   modules_broadcast_internally(&req);
+  *reply = dsme_dbus_reply_new(request);
 }
 
 /** Flag for: dbus broadcast info has been installed */
@@ -187,16 +191,19 @@ static const dsme_dbus_binding_t dbus_methods_array[] =
     {
         .method = req_powerup,
         .name   = dsme_req_powerup,
+        .priv   = true,
         .args   = ""
     },
     {
         .method = req_reboot,
         .name   = dsme_req_reboot,
+        .priv   = true,
         .args   = ""
     },
     {
         .method = req_shutdown,
         .name   = dsme_req_shutdown,
+        .priv   = true,
         .args   = ""
     },
     // sentinel

@@ -4,7 +4,8 @@
    Play vibra when shutting down
 
    <p>
-   Copyright (C) 2014-2017 Jolla Oy.
+   Copyright (c) 2014 - 2020 Jolla Ltd.
+   Copyright (c) 2020 Open Mobile Platform LLC.
 
    @author Pekka Lundstrom <pekka.lundstrom@jolla.com>
    @author Simo Piiroinen <simo.piiroinen@jollamobile.com>
@@ -49,13 +50,11 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_CHANGE_IND, conn, msg)
 DSME_HANDLER(DSM_MSGTYPE_REBOOT_REQ, conn, msg)
 {
     // dsme_log(LOG_DEBUG, PFIX"reboot reques received");
-    dsme_play_vibra(pwroff_event_name);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_SHUTDOWN_REQ, conn, msg)
 {
     //dsme_log(LOG_DEBUG, PFIX"shutdown reques received");
-    dsme_play_vibra(pwroff_event_name);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, conn, msg)
