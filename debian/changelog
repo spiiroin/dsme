@@ -1,3 +1,9 @@
+dsme (0.83.0) precise; urgency=low
+
+  * [preinit] Add set system time -plugin. JB#52072
+
+ -- Simo Piiroinen <simo.piiroinen@jolla.com>  Tue, 02 Feb 2021 08:27:54 +0200
+
 dsme (0.82.0) precise; urgency=low
 
   * [dsme] Enablers for privileged client checking
