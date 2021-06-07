@@ -575,6 +575,10 @@ static void trap_terminating_signals(void)
   */
 int main(int argc, char *argv[])
 {
+    // parse command line options
+    int daemon = 0;
+    parse_options(argc, argv, &daemon);
+
     fprintf(stderr, "DSME %s starting up\n", STRINGIFY(PRG_VERSION));
 
     // do the first kick right away
@@ -618,11 +622,6 @@ int main(int argc, char *argv[])
     if (mlockall(MCL_CURRENT|MCL_FUTURE) == -1) {
         fprintf(stderr, ME "Couldn't lock to RAM: %s\n", strerror(errno));
     }
-
-
-    // parse command line options
-    int daemon = 0;
-    parse_options(argc, argv, &daemon);
 
     // daemonize
     if (daemon && daemonize() == -1) {
