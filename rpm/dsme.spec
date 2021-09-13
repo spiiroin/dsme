@@ -1,6 +1,6 @@
 Name:       dsme
 Summary:    Device State Management Entity
-Version:    0.83.1
+Version:    0.83.2
 Release:    0
 License:    LGPLv2+
 URL:        https://git.sailfishos.org/mer-core/dsme

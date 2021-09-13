@@ -1,3 +1,9 @@
+dsme (0.83.2) precise; urgency=low
+
+  * [tests] Use correct DSME D-Bus object path. Fixes JB#52779
+
+ -- Simo Piiroinen <simo.piiroinen@jolla.com>  Mon, 13 Sep 2021 13:37:31 +0300
+
 dsme (0.83.1) precise; urgency=low
 
   * [dsme] Show only help if we use -h argument
