@@ -36,7 +36,9 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <pwd.h>
-
+#ifdef DSME_USEWHEEL
+#include <grp.h>
+#endif
 #include <libcryptsetup.h>
 
 /* ========================================================================= *
@@ -64,6 +66,25 @@ dsme_user_is_privileged(uid_t uid, gid_t gid)
 {
     bool is_privileged = false;
 
+#ifdef DSME_USEWHEEL
+    struct passwd* pw = getpwuid(uid);
+    if( pw ) {
+        int ngroups = 0;
+        getgrouplist(pw->pw_name, pw->pw_gid, NULL, &ngroups);
+        gid_t groups[ngroups];
+        getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
+
+        for (int i = 0; i < ngroups; i++) {
+            struct group* gr = getgrgid(groups[i]);
+            if( gr != NULL ) {
+                if(strcmp(gr->gr_name,"wheel") == 0 ) {
+                   is_privileged = true;
+                   break;
+               }
+            }
+        }
+    }
+#else
     /* Check if UID/GID is root/privileged */
     if( uid != 0 && gid != 0 ) {
         struct passwd *pw = getpwnam("privileged");
@@ -78,6 +99,7 @@ dsme_user_is_privileged(uid_t uid, gid_t gid)
     is_privileged = true;
 
 EXIT:
+#endif
     return is_privileged;
 }
 
