@@ -1,6 +1,6 @@
 # ----------------------------------------------------------- -*- mode: sh -*-
 # Package version
-VERSION   := 0.83.2
+VERSION   := 0.84.0
 
 # Dummy default install dir - override from packaging scripts
 DESTDIR ?= /tmp/dsme-test-install
@@ -208,6 +208,9 @@ CPPFLAGS += -DDSME_WLAN_LOADER
 
 # AutoXXX compatibility
 CPPFLAGS += -DPRG_VERSION=$(VERSION)
+
+# Users in 'wheel' group are considered privileged
+#CPPFLAGS += -DDSME_USEWHEEL
 
 # ----------------------------------------------------------------------------
 # Compiler options

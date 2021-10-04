@@ -1,3 +1,9 @@
+dsme (0.84.0) precise; urgency=low
+
+  * [DSME] Use wheel group as priveleged
+
+ -- Simo Piiroinen <simo.piiroinen@jolla.com>  Wed, 06 Oct 2021 11:48:53 +0300
+
 dsme (0.83.2) precise; urgency=low
 
   * [tests] Use correct DSME D-Bus object path. Fixes JB#52779
