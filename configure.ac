@@ -169,6 +169,16 @@ AM_CONDITIONAL([WANT_ABOOTSETTINGS], [test x$enable_abootsettings != xno])
 
 
 #
+# Wheel is privileged
+#
+AC_ARG_ENABLE([usewheel],
+  [AS_HELP_STRING([--enable-usewheel],
+    [Users in wheel group are considered privileged])])
+
+AS_IF([test "x$enable_usewheel" = xyes],
+  [AC_DEFINE([DSME_USEWHEEL], [1], [Users in wheel group are considered privileged])])
+
+#
 # Compiler and linker flags
 #
 AC_DEFINE_UNQUOTED([PRG_VERSION],[$VERSION],[Version for DSME])
