@@ -59,11 +59,11 @@ test -e Makefile || (%configure --disable-static \
     --disable-validatorlistener \
     --enable-abootsettings)
 
-%make_build
+%make_build _LIBDIR=%{_libdir}
 
 %install
 rm -rf %{buildroot}
-%make_install
+%make_install _LIBDIR=%{_libdir}
 
 install -d %{buildroot}%{_sysconfdir}/dsme/
 install -D -m 644 reboot-via-dsme.sh %{buildroot}/etc/profile.d/reboot-via-dsme.sh
