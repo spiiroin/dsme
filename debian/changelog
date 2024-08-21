@@ -1,3 +1,11 @@
+dsme (0.84.1) precise; urgency=low
+
+  * [rpmbuild] Pass libdir to make when building and installing
+  * [dsme-server] Fix errors in --help output
+  * [iphb] Keep rtc device opened only when needed. Fixes JB#62412
+
+ -- Simo Piiroinen <simo.piiroinen@jolla.com>  Wed, 21 Aug 2024 13:42:28 +0300
+
 dsme (0.84.0) precise; urgency=low
 
   * [DSME] Use wheel group as priveleged
