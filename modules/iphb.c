@@ -126,6 +126,14 @@ typedef struct _client_t {
     struct _client_t *next;    /*!< pointer to the next client in the list (NULL if none) */
 } client_t;
 
+/** @brief  Reasons for keeping rtc device opened
+ */
+typedef enum rtc_need_t {
+    RTC_NEED_NONE    = 0,       /*!< rtc device can be closed */
+    RTC_NEED_ALARM   = 1 << 0,  /*!< rtc is needed for wakeup alarm */
+    RTC_NEED_UPDATES = 1 << 1,  /*!< rtc is needed for system time sync */
+} rtc_need_t;
+
 /* ------------------------------------------------------------------------- *
  * Function prototypes
  * ------------------------------------------------------------------------- */
@@ -141,6 +149,9 @@ static void systemtime_init(void);
 
 static char *tm_repr(const struct tm *tm, char *buff, size_t size);
 static char *t_repr(time_t t, char *buff, size_t size);
+
+static bool rtc_attach(void);
+static void rtc_detach(void);
 
 /* ------------------------------------------------------------------------- *
  * Variables
@@ -172,6 +183,12 @@ static const char rtc_path[] = "/dev/rtc0";
 
 /** File descriptor for RTC device node */
 static int rtc_fd = -1;
+
+/** Current reasons for keeping rtc device open */
+static rtc_need_t rtc_need = RTC_NEED_NONE;
+
+/** Timer id for closing rtc device */
+static guint rtc_need_ended_id = 0;
 
 /** Linked lits of connected clients */
 static client_t *clients = NULL;
@@ -1045,7 +1062,7 @@ static void deltatime_update(void)
     struct tm tm;
 
     /* Not applicaple if the rtc device is not open */
-    if( rtc_fd == -1 )
+    if( !rtc_attach() )
         goto cleanup;
 
     time_t delta = 0;
@@ -1074,6 +1091,66 @@ cleanup:
 /* ------------------------------------------------------------------------- *
  * RTC management functionality
  * ------------------------------------------------------------------------- */
+
+
+/** Human readable representation for rtc_need_t enum value
+ */
+static const char *rtc_need_repr(rtc_need_t need)
+{
+    static const char * const lut[4] = {
+        "NONE", "ALARM", "UPDATES", "ALARM+UPDATES",
+    };
+    return lut[need & 3];
+}
+
+/** Timer callback for closing rtc device
+ */
+static gboolean rtc_need_ended_cb(gpointer aptr)
+{
+    (void)aptr;
+    rtc_need_ended_id = 0;
+    dsme_log(LOG_INFO, PFIX"rtc no longer needed");
+    rtc_detach();
+    return G_SOURCE_REMOVE;
+}
+
+/** Update reasons for keeping rtc device open
+ *
+ * When need is gone, idle timer callback is used
+ * for closing rtc device.
+ */
+static void rtc_set_need(rtc_need_t need)
+{
+    if( rtc_need != need ) {
+        dsme_log(LOG_INFO, PFIX"rtc need: %s -> %s",
+                 rtc_need_repr(rtc_need),
+                 rtc_need_repr(need));
+        rtc_need = need;
+    }
+
+    if( rtc_need == RTC_NEED_NONE ) {
+        if( !rtc_need_ended_id )
+            rtc_need_ended_id = g_idle_add(rtc_need_ended_cb, NULL);
+    }
+    else {
+        if( rtc_need_ended_id )
+            g_source_remove(rtc_need_ended_id), rtc_need_ended_id = 0;
+    }
+}
+
+/** Add reason to keep rtc device open
+ */
+static void rtc_add_need(rtc_need_t need)
+{
+    rtc_set_need(rtc_need | need);
+}
+
+/** Remove reason to keep rtc device open
+ */
+static void rtc_remove_need(rtc_need_t need)
+{
+    rtc_set_need(rtc_need & ~need);
+}
 
 /** Human readable representation of struct tm
  */
@@ -1174,7 +1251,7 @@ static bool rtc_get_time_raw(struct rtc_time *tod)
 {
     bool result = false;
 
-    if( rtc_fd == -1 )
+    if( !rtc_attach() )
 	goto cleanup;
 
     memset(tod, 0, sizeof *tod);
@@ -1225,7 +1302,7 @@ static bool rtc_set_time_raw(struct rtc_time *tod)
 {
     bool result = false;
 
-    if( rtc_fd == -1 )
+    if( !rtc_attach() )
 	goto cleanup;
 
     if( ioctl(rtc_fd, RTC_SET_TIME, tod) == -1 ) {
@@ -1344,7 +1421,7 @@ static bool rtc_set_alarm_raw(const struct rtc_time *tod, bool enabled)
 
     struct rtc_wkalrm alrm;
 
-    if( rtc_fd == -1 )
+    if( !rtc_attach() )
 	goto cleanup;
 
     memset(&alrm, 0, sizeof alrm);
@@ -1366,6 +1443,11 @@ static bool rtc_set_alarm_raw(const struct rtc_time *tod, bool enabled)
 	dsme_log(LOG_ERR, PFIX"%s: %s: %m", rtc_path, "RTC_WKALM_SET");
 	goto cleanup;
     }
+
+    if( enabled )
+        rtc_add_need(RTC_NEED_ALARM);
+    else
+        rtc_remove_need(RTC_NEED_ALARM);
 
     prev = alrm;
     result = true;
@@ -1423,7 +1505,7 @@ static bool rtc_set_alarm_after(time_t delay)
     dsme_log(LOG_INFO, PFIX"system : %s", t_repr(sys, tmp, sizeof tmp));
     dsme_log(LOG_INFO, PFIX"alarm  : %s", t_repr(alm, tmp, sizeof tmp));
 
-    if( rtc_fd == -1 )
+    if( !rtc_attach() )
 	goto cleanup;
 
     if( rtc_get_time_tm(&tm) == (time_t)-1 )
@@ -1551,6 +1633,7 @@ static bool rtc_handle_input(void)
 	if( --deltatime_updates_todo == 0 ) {
 	    if( ioctl(rtc_fd, RTC_UIE_OFF, 0) == -1 )
 		dsme_log(LOG_WARNING, PFIX"failed to disable update interrupts");
+            rtc_remove_need(RTC_NEED_UPDATES);
 	}
     }
 
@@ -1565,6 +1648,14 @@ cleanup:
  */
 static void rtc_detach(void)
 {
+    /* Clear on-demand rtc bookkeeping */
+    rtc_set_need(RTC_NEED_NONE);
+    if( rtc_need_ended_id ) {
+        g_source_remove(rtc_need_ended_id),
+            rtc_need_ended_id = 0;
+    }
+
+    /* Close rtc device */
     if( rtc_fd != -1 ) {
 	epollfd_remove_fd(rtc_fd);
 	close(rtc_fd), rtc_fd = -1;
@@ -1579,6 +1670,8 @@ static void rtc_detach(void)
  */
 static bool rtc_attach(void)
 {
+    static bool systemtime_initialized = false;
+
     int fd = -1;
 
     if( rtc_fd != -1 )
@@ -1599,7 +1692,13 @@ static bool rtc_attach(void)
     dsme_log(LOG_INFO, PFIX"opened %s", rtc_path);
 
     /* deal with obviously wrong rtc time values */
-    systemtime_init();
+    if( !systemtime_initialized ) {
+        systemtime_initialized = true;
+        systemtime_init();
+    }
+
+    /* Update on-demand rtc bookkeeping */
+    rtc_add_need(RTC_NEED_NONE);
 
 cleanup:
 
@@ -3254,6 +3353,7 @@ static void systemtime_init(void)
         dsme_log(LOG_WARNING, PFIX"failed to enable update interrupts");
     }
     else {
+        rtc_add_need(RTC_NEED_UPDATES);
         rtc_to_system_time = true;
     }
 

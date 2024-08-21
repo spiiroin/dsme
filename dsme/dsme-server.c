@@ -71,23 +71,33 @@ static void usage(const char *  progname);
 /**
    Usage
 */
-static void usage(const char *  progname)
+static void usage(const char *progname)
 {
-  printf("USAGE: %s -p <startup-module> "
-	 "[-p <optional-module>] [...] options\n",
-         progname);
-  printf("Valid options:\n");
-  printf(" -l  --logging     "
-	 "Logging type (syslog, stderr, none)\n");
-  printf(" -v  --verbosity   Log verbosity (3..7)\n");
-  printf(" -t  --log-include   <file-pattern>:<func-pattern>\n");
-  printf(" -e  --log-exclude   <file-pattern>:<func-pattern>\n");
+    static const char fmt[] = ""
+        "Usage:\n"
+        "  %s -p <startup-module> [-p <optional-module>] [...] options\n"
+        "\n"
+        "Options:\n"
+        "  -l  --logging=<target>\n"
+        "        Select where log messages are written to.\n"
+        "        Valid targets are: syslog, stderr and none.\n"
+        "  -v  --verbosity=<level>\n"
+        "        Select (syslog compatible) verbosity level.\n"
+        "        Valid levels are: debug, info, notice, warning, err, crit,\n"
+        "        alert and emerg. Or numerical value in 7 ... 0 range.\n"
+        "  -i  --log-include=<file-pattern>:<func-pattern>\n"
+        "  -e  --log-exclude=<file-pattern>:<func-pattern>\n"
 #ifdef DSME_SYSTEMD_ENABLE
-  printf(" -s  --systemd     "
-	 "Signal systemd when initialization is done\n");
+        "  -s  --systemd\n"
+        "         Signal systemd when initialization is done.\n"
 #endif
-  printf("     --valgrind    Enable running with valgrind\n");
-  printf(" -h  --help        Help\n");
+
+        "  --valgrind\n"
+        "         Enable running with valgrind\n"
+        "  -h  --help\n"
+        "         Output this help text.\n"
+        "\n";
+    printf(fmt, progname);
 }
 
 
@@ -118,6 +128,49 @@ static bool valgrind_mode_enabled = false;
 bool dsme_in_valgrind_mode(void)
 {
     return valgrind_mode_enabled;
+}
+
+
+static int parse_verbosity(const char *arg)
+{
+    static const struct {
+        const char *name;
+        int         level;
+    } lut[] = {
+        { "emerg",   LOG_EMERG   },
+        { "alert",   LOG_ALERT   },
+        { "crit",    LOG_CRIT    },
+        { "err",     LOG_ERR     },
+        { "warning", LOG_WARNING },
+        { "notice",  LOG_NOTICE  },
+        { "info",    LOG_INFO    },
+        { "debug",   LOG_DEBUG   },
+    };
+
+    int level = -1;
+
+    if( !arg )
+        goto EXIT;
+
+    if( isdigit(*arg) ) {
+        level = strtol(arg, NULL, 0);
+        goto EXIT;
+    }
+
+    for( size_t i = 0; i < G_N_ELEMENTS(lut); ++i ) {
+        if( !strncasecmp(lut[i].name, arg, strlen(arg)) ) {
+            level = lut[i].level;
+            goto EXIT;
+        }
+    }
+
+EXIT:
+    if( level < LOG_EMERG || level > LOG_DEBUG ) {
+        fprintf(stderr, "Invalid verbosity level: %s\n", arg ?: "<null>");
+        level = LOG_WARNING;
+    }
+
+    return level;
 }
 
 static void parse_options(int      argc,           /* in  */
@@ -182,8 +235,7 @@ static void parse_options(int      argc,           /* in  */
             break;
 
         case 'v': /* -v or --verbosity */
-            if (strlen(optarg) == 1 && isdigit(optarg[0]))
-                logging_verbosity = atoi(optarg);
+            logging_verbosity = parse_verbosity(optarg);
             break;
 
         case 'i': /* -i or --log-include */
