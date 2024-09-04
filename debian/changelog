@@ -1,3 +1,9 @@
+dsme (0.84.2) precise; urgency=low
+
+  * [dsme] Avoid undefined behaviour. JB#49555
+
+ -- Simo Piiroinen <simo.piiroinen@jolla.com>  Wed, 04 Sep 2024 10:28:46 +0300
+
 dsme (0.84.1) precise; urgency=low
 
   * [rpmbuild] Pass libdir to make when building and installing
