@@ -1,10 +1,10 @@
 #
 # Generic options
 #
-AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) $(GLIB_CFLAGS)
+AM_CFLAGS = $(C_GENFLAGS) $(C_OPTFLAGS) $(GLIB_CFLAGS) $(DBUS_CFLAGS)
 AM_LDFLAGS = -pthread
 AM_CPPFLAGS = $(CPP_GENFLAGS)
-LDADD = $(GLIB_LIBS) -ldsme -lrt
+LDADD = $(GLIB_LIBS) $(DBUS_LIBS) -ldsme -ldsme_dbus_if -lrt
 
 ACLOCAL_AMFLAGS = -I m4
 

@@ -90,11 +90,13 @@ void dsme_log_clear_rules(void);
 bool dsme_log_p_ (int level, const char *file, const char *func);
 void dsme_log_queue(int level, const char *file, const char *func, const char *fmt, ...) __attribute__((format(printf,4,5)));
 
-#  define dsme_log(LEV_, FMT_, ARGS_...) \
+# define dsme_log_p(LEV_) dsme_log_p_(LEV_, __FILE__, __FUNCTION__)
+
+# define dsme_log(LEV_, FMT_, ARGS_...) \
      do {\
          if( dsme_log_p_(LEV_, __FILE__, __FUNCTION__) ) {\
              dsme_log_queue(LEV_, __FILE__, __FUNCTION__, FMT_, ## ARGS_);\
          }\
-     }while(0)
+     } while( 0 )
 
 #endif /* DSME_LOGGING_H */

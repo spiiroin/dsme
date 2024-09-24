@@ -117,19 +117,24 @@ typedef enum {
     CHARGER_DISCONNECTED,
 } charger_state_t;
 
-/* these are the state bits on which dsme bases its state selection */
-charger_state_t charger_state          = CHARGER_STATE_UNKNOWN;
-static bool     alarm_set              = false;
-static bool     device_overheated      = false;
-static bool     emergency_call_ongoing = false;
-static bool     mounted_to_pc          = false;
-static bool     battery_empty          = false;
-static bool     shutdown_requested     = false;
-static bool     actdead_requested      = false;
-static bool     reboot_requested       = false;
-static bool     test                   = false;
-static bool     actdead_switch_done    = false;
-static bool     user_switch_done       = false;
+/* These are the state bits on which dsme bases its state selection.
+ *
+ * Note: To ease debugging etc, changes to these values must be done
+ * via appropriate set/update function instead of direct assignment.
+ */
+static charger_state_t charger_state          = CHARGER_STATE_UNKNOWN;
+static bool            alarm_pending          = false;
+static bool            device_overheated      = false;
+static bool            emergency_call_ongoing = false;
+static bool            shutdown_blocked       = false;
+static bool            mounted_to_pc          = false;
+static bool            battery_empty          = false;
+static bool            shutdown_requested     = false;
+static bool            actdead_requested      = false;
+static bool            reboot_requested       = false;
+static bool            testmode_requested     = false;
+static bool            actdead_switch_done    = false;
+static bool            user_switch_done       = false;
 
 /* The current battery level percentage
  *
@@ -182,6 +187,22 @@ static void stop_charger_disconnect_timer(void);
 static bool rd_mode_enabled(void);
 
 static void runlevel_switch_ind(const DsmeDbusMessage* ind);
+
+static const char *bool_repr(bool value);
+static const char *charger_state_repr(charger_state_t value);
+static void set_charger_state(charger_state_t value);
+static void set_alarm_pending(bool value);
+static void set_device_overheated(bool value);
+static void update_emergency_call_ongoing(bool value);
+static void update_shutdown_blocked(bool value);
+static void set_mounted_to_pc(bool value);
+static void set_battery_empty(bool value);
+static void set_shutdown_requested(bool value);
+static void set_actdead_requested(bool value);
+static void set_reboot_requested(bool value);
+static void set_testmode_requested(bool value);
+static void set_actdead_switch_done(bool value);
+static void set_user_switch_done(bool value);
 
 static const struct {
     int         value;
@@ -240,6 +261,155 @@ static dsme_runlevel_t state2runlevel(dsme_state_t state)
   }
 
   return runlevel;
+}
+
+static const char *bool_repr(bool value)
+{
+    return value ? "true" : "false";
+}
+
+static const char *charger_state_repr(charger_state_t value)
+{
+    const char *repr = "invalid";
+    switch( value ) {
+    case CHARGER_STATE_UNKNOWN: repr = "unknown";      break;
+    case CHARGER_CONNECTED:     repr = "connected";    break;
+    case CHARGER_DISCONNECTED:  repr = "disconnected"; break;
+    }
+    return repr;
+}
+
+static void set_charger_state(charger_state_t value)
+{
+    if( charger_state != value ) {
+        dsme_log(LOG_INFO, PFIX "charger_state: %s -> %s",
+                 charger_state_repr(charger_state), charger_state_repr(value));
+        charger_state = value;
+    }
+}
+
+static void set_alarm_pending(bool value)
+{
+    if( alarm_pending != value ) {
+        dsme_log(LOG_INFO, PFIX "alarm_pending: %s -> %s",
+                 bool_repr(alarm_pending), bool_repr(value));
+        alarm_pending = value;
+    }
+}
+
+static void set_device_overheated(bool value)
+{
+    if( device_overheated != value ) {
+        dsme_log(LOG_WARNING, PFIX "device_overheated: %s -> %s",
+                 bool_repr(device_overheated), bool_repr(value));
+        device_overheated = value;
+    }
+}
+
+static void update_emergency_call_ongoing(bool value)
+{
+    if( emergency_call_ongoing != value ) {
+        dsme_log(LOG_WARNING, PFIX "emergency_call_ongoing: %s -> %s",
+                 bool_repr(emergency_call_ongoing), bool_repr(value));
+        if( (emergency_call_ongoing = value) ) {
+            /* Stop also already scheduled shutdown / reboot */
+            stop_delayed_runlevel_timers();
+        }
+        else {
+            change_state_if_necessary();
+        }
+    }
+}
+
+static void update_shutdown_blocked(bool value)
+{
+    if( shutdown_blocked != value ) {
+        dsme_log(LOG_NOTICE, PFIX "shutdown_blocked: %s -> %s",
+                 bool_repr(shutdown_blocked), bool_repr(value));
+        if( (shutdown_blocked = value) ) {
+            /* Already scheduled shutdown / reboot will happen */
+        }
+        else {
+            /* Forget any shutdown / reboot requests
+             * received while shutdown was blocked. */
+            set_shutdown_requested(false);
+            set_reboot_requested(false);
+
+            change_state_if_necessary();
+        }
+    }
+}
+
+static void set_mounted_to_pc(bool value)
+{
+    if( mounted_to_pc != value ) {
+        dsme_log(LOG_NOTICE, PFIX "mounted_to_pc: %s -> %s",
+                 bool_repr(mounted_to_pc), bool_repr(value));
+        mounted_to_pc = value;
+    }
+}
+
+static void set_battery_empty(bool value)
+{
+    if( battery_empty != value ) {
+        dsme_log(LOG_WARNING, PFIX "battery_empty: %s -> %s",
+                 bool_repr(battery_empty), bool_repr(value));
+        battery_empty = value;
+    }
+}
+
+static void set_shutdown_requested(bool value)
+{
+    if( shutdown_requested != value ) {
+        dsme_log(LOG_NOTICE, PFIX "shutdown_requested: %s -> %s",
+                 bool_repr(shutdown_requested), bool_repr(value));
+        shutdown_requested = value;
+    }
+}
+
+static void set_actdead_requested(bool value)
+{
+    if( actdead_requested != value ) {
+        dsme_log(LOG_NOTICE, PFIX "actdead_requested: %s -> %s",
+                 bool_repr(actdead_requested), bool_repr(value));
+        actdead_requested = value;
+    }
+}
+
+static void set_reboot_requested(bool value)
+{
+    if( reboot_requested != value ) {
+        dsme_log(LOG_NOTICE, PFIX "reboot_requested: %s -> %s",
+                 bool_repr(reboot_requested), bool_repr(value));
+        reboot_requested = value;
+    }
+}
+
+static void set_testmode_requested(bool value)
+{
+    if( testmode_requested != value ) {
+        dsme_log(LOG_NOTICE, PFIX "testmode_requested: %s -> %s",
+                 bool_repr(testmode_requested), bool_repr(value));
+        testmode_requested = value;
+    }
+}
+
+static void set_actdead_switch_done(bool value)
+{
+    if( actdead_switch_done != value ) {
+        dsme_log(LOG_INFO, PFIX "actdead_switch_done: %s -> %s",
+                 bool_repr(actdead_switch_done), bool_repr(value));
+        actdead_switch_done = value;
+    }
+}
+
+static void set_user_switch_done(bool value)
+{
+    if( user_switch_done != value ) {
+        dsme_log(LOG_INFO, PFIX "user_switch_done: %s -> %s",
+                 bool_repr(user_switch_done), bool_repr(value));
+        user_switch_done = value;
+    }
 }
 
 #ifndef DSME_SUPPORT_DIRECT_USER_ACTDEAD
@@ -342,50 +512,58 @@ EXIT:
 
 static dsme_state_t select_state(void)
 {
-  dsme_state_t state;
+    dsme_state_t state = current_state;
 
-  if (emergency_call_ongoing) {
-      /* don't touch anything if we have an emergency call going on */
-      state = current_state;
-  } else {
-      if (test) {
-          state = DSME_STATE_TEST;
-      } else if (battery_empty) {
-          dsme_log(LOG_CRIT, PFIX"Battery empty shutdown!");
-          state = DSME_STATE_SHUTDOWN;
-      } else if (device_overheated) {
-          dsme_log(LOG_CRIT, PFIX"Thermal shutdown!");
-          state = DSME_STATE_SHUTDOWN;
-      } else if (actdead_requested) {
-          /* favor actdead requests over shutdown & reboot */
-          dsme_log(LOG_NOTICE, PFIX"Actdead by request");
-          state = DSME_STATE_ACTDEAD;
-      } else if (shutdown_requested || reboot_requested) {
-          /* favor normal shutdown over reboot over actdead */
-          if (shutdown_requested &&
-              (charger_state == CHARGER_DISCONNECTED) &&
-              (!alarm_set || dsme_home_is_encrypted()))
-          {
-              dsme_log(LOG_NOTICE, PFIX"Normal shutdown%s",
-                       alarm_set
-                       ? " (alarm set, but ignored due to encrypted home)"
-                       : "");
-              state = DSME_STATE_SHUTDOWN;
-          } else if (reboot_requested) {
-              dsme_log(LOG_NOTICE, PFIX"Reboot");
-              state = DSME_STATE_REBOOT;
-          } else{
-              dsme_log(LOG_NOTICE,
-                       PFIX"Actdead (charger: %s, alarm: %s)",
-                       charger_state == CHARGER_CONNECTED ? "on"  : "off(?)",
-                       alarm_set                          ? "set" : "not set");
-              state = DSME_STATE_ACTDEAD;
-          }
-      } else {
-          state = DSME_STATE_USER;
-      }
-  }
-  return state;
+    if( emergency_call_ongoing ) {
+        /* don't touch anything if we have an emergency call going on */
+        dsme_log(LOG_NOTICE, PFIX "Transitions blocked by emergency call");
+    }
+    else if( device_overheated ) {
+        dsme_log(LOG_CRIT, PFIX "Thermal shutdown!");
+        state = DSME_STATE_SHUTDOWN;
+    }
+    else if( battery_empty ) {
+        dsme_log(LOG_CRIT, PFIX "Battery empty shutdown!");
+        state = DSME_STATE_SHUTDOWN;
+    }
+    else if( shutdown_blocked ) {
+        /* Block non-emergency transitions */
+        dsme_log(LOG_NOTICE, PFIX "Transitions blocked by D-Bus clients");
+    }
+    else if( testmode_requested ) {
+        state = DSME_STATE_TEST;
+    }
+    else if( actdead_requested ) {
+        /* favor actdead requests over shutdown & reboot */
+        dsme_log(LOG_NOTICE, PFIX "Actdead by request");
+        state = DSME_STATE_ACTDEAD;
+    }
+    else if( shutdown_requested || reboot_requested ) {
+        /* favor normal shutdown over reboot over actdead */
+        if( shutdown_requested &&
+            (charger_state == CHARGER_DISCONNECTED) &&
+            (!alarm_pending || dsme_home_is_encrypted()) ) {
+            dsme_log(LOG_NOTICE, PFIX "Normal shutdown%s",
+                     alarm_pending
+                     ? " (alarm set, but ignored due to encrypted home)"
+                     : "");
+            state = DSME_STATE_SHUTDOWN;
+        }
+        else if( reboot_requested ) {
+            dsme_log(LOG_NOTICE, PFIX "Reboot");
+            state = DSME_STATE_REBOOT;
+        }
+        else {
+            dsme_log(LOG_NOTICE, PFIX "Actdead (charger: %s, alarm: %s)",
+                     charger_state == CHARGER_CONNECTED ? "on"  : "off(?)",
+                     alarm_pending                          ? "set" : "not set");
+            state = DSME_STATE_ACTDEAD;
+        }
+    }
+    else {
+        state = DSME_STATE_USER;
+    }
+    return state;
 }
 
 static void change_state_if_necessary(void)
@@ -432,11 +610,11 @@ static void try_to_change_state(dsme_state_t new_state)
               /* We need to return initial ACT_DEAD shutdown_reqest
                * as it got cleared when USER state transfer was requested
                */
-              shutdown_requested = true;
+              set_shutdown_requested(true);
               break;
           }
           /* Battery ok, lets do it */
-          user_switch_done = false;
+          set_user_switch_done(false);
 #ifndef DSME_SUPPORT_DIRECT_USER_ACTDEAD
           /* We don't support direct transfer from ACTDEAD to USER
            * but do it via reboot.
@@ -458,7 +636,7 @@ static void try_to_change_state(dsme_state_t new_state)
           }
 #endif /* DSME_SUPPORT_DIRECT_USER_ACTDEAD */
       } else if (current_state == DSME_STATE_USER) {
-          actdead_switch_done = false;
+          set_actdead_switch_done(false);
 #ifndef DSME_SUPPORT_DIRECT_USER_ACTDEAD
           /* We don't support direct transfer from USER to ACTDEAD
            * but do it via shutdown. Usb cable will wakeup the device again
@@ -703,7 +881,7 @@ static void start_overheat_timer(void)
 
 static int delayed_overheat_fn(void* unused)
 {
-  device_overheated = true;
+  set_device_overheated(true);
   change_state_if_necessary();
 
   overheat_timer = 0;
@@ -730,7 +908,7 @@ static void start_charger_disconnect_timer(int delay_s)
 
 static int delayed_charger_disconnect_fn(void* unused)
 {
-  charger_state = CHARGER_DISCONNECTED;
+  set_charger_state(CHARGER_DISCONNECTED);
   change_state_if_necessary();
 
   charger_disconnect_timer = 0;
@@ -745,7 +923,7 @@ static void stop_charger_disconnect_timer(void)
       dsme_log(LOG_DEBUG, PFIX"Charger disconnect timer stopped");
 
       /* the last we heard, the charger had just been disconnected */
-      charger_state = CHARGER_DISCONNECTED;
+      set_charger_state(CHARGER_DISCONNECTED);
   }
 }
 
@@ -778,18 +956,14 @@ DSME_HANDLER(DSM_MSGTYPE_SET_CHARGER_STATE, conn, msg)
           start_charger_disconnect_timer(CHARGER_DISCONNECT_TIMEOUT);
       }
   } else {
-      charger_state = new_charger_state;
+      set_charger_state(new_charger_state);
       change_state_if_necessary();
   }
 }
 
 DSME_HANDLER(DSM_MSGTYPE_SET_USB_STATE, conn, msg)
 {
-    if (mounted_to_pc != msg->mounted_to_pc) {
-        mounted_to_pc  = msg->mounted_to_pc;
-
-        dsme_log(LOG_INFO, PFIX"%smounted over USB", mounted_to_pc ? "" : "not ");
-    }
+    set_mounted_to_pc(msg->mounted_to_pc);
 }
 
 // handlers for telinit requests
@@ -804,8 +978,8 @@ static void handle_telinit_SHUTDOWN(endpoint_t* conn)
         dsme_log(LOG_WARNING, PFIX"shutdown request from unprivileged client");
     }
     else if (is_state_change_request_acceptable(DSME_STATE_SHUTDOWN)) {
-        shutdown_requested = true;
-        actdead_requested  = false;
+        set_shutdown_requested(true);
+        set_actdead_requested(false);
         change_state_if_necessary();
     }
 }
@@ -816,8 +990,8 @@ static void handle_telinit_USER(endpoint_t* conn)
         dsme_log(LOG_WARNING, PFIX"powerup request from unprivileged client");
     }
     else {
-        shutdown_requested = false;
-        actdead_requested  = false;
+        set_shutdown_requested(false);
+        set_actdead_requested(false);
         change_state_if_necessary();
     }
 }
@@ -828,7 +1002,7 @@ static void handle_telinit_ACTDEAD(endpoint_t* conn)
         dsme_log(LOG_WARNING, PFIX"actdead request from unprivileged client");
     }
     else if (is_state_change_request_acceptable(DSME_STATE_ACTDEAD)) {
-        actdead_requested = true;
+        set_actdead_requested(true);
         change_state_if_necessary();
     }
 }
@@ -839,8 +1013,8 @@ static void handle_telinit_REBOOT(endpoint_t* conn)
         dsme_log(LOG_WARNING, PFIX"reboot request from unprivileged client");
     }
     else if (is_state_change_request_acceptable(DSME_STATE_REBOOT)) {
-        reboot_requested  = true;
-        actdead_requested = false;
+        set_reboot_requested(true);
+        set_actdead_requested(false);
         change_state_if_necessary();
     }
 }
@@ -955,7 +1129,7 @@ DSME_HANDLER(DSM_MSGTYPE_SET_ALARM_STATE, conn, msg)
            PFIX"alarm %s state received",
            msg->alarm_set ? "set or snoozed" : "not set");
 
-  alarm_set = msg->alarm_set;
+  set_alarm_pending(msg->alarm_set);
 
   change_state_if_necessary();
 }
@@ -981,19 +1155,14 @@ DSME_HANDLER(DSM_MSGTYPE_SET_EMERGENCY_CALL_STATE, conn, msg)
            PFIX"emergency call %s state received",
            msg->ongoing ? "on" : "off");
 
-  emergency_call_ongoing = msg->ongoing;
-
-  if (emergency_call_ongoing) {
-      /* stop all timers that could lead to shutdown */
-      stop_delayed_runlevel_timers();
-  }
+  update_emergency_call_ongoing(msg->ongoing);
 
   change_state_if_necessary();
 }
 
 static int delayed_battery_empty_fn(void* unused)
 {
-    battery_empty = true;
+    set_battery_empty(true);
     change_state_if_necessary();
 
     battery_empty_timer = 0;
@@ -1100,7 +1269,7 @@ static void runlevel_switch_ind(const DsmeDbusMessage* ind)
     switch (runlevel_ind) {
         case DSME_RUNLEVEL_ACTDEAD: {
             /*  USER -> ACTDEAD runlevel change done */
-            actdead_switch_done = true;
+            set_actdead_switch_done(true);
             dsme_log(LOG_DEBUG, PFIX"USER -> ACTDEAD runlevel change done");
 
             /* Do we have a pending ACTDEAD -> USER timer? */
@@ -1113,7 +1282,7 @@ static void runlevel_switch_ind(const DsmeDbusMessage* ind)
         }
         case DSME_RUNLEVEL_USER: {
             /* ACTDEAD -> USER runlevel change done */
-            user_switch_done = true;
+            set_user_switch_done(true);
             dsme_log(LOG_DEBUG, PFIX"ACTDEAD -> USER runlevel change done");
 
             /* Do we have a pending USER -> ACTDEAD timer? */
@@ -1155,6 +1324,29 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
   dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
 }
 
+DSME_HANDLER(DSM_MSGTYPE_BLOCK_SHUTDOWN, client, msg)
+{
+    /* Note: The single shutdown_blockd control point here in
+     *       state module is multiplexed in dbusproxy module
+     *       by keeping track of active blocking dbus clients.
+     *
+     *       Clients utilizing dsmesock ipc must not be allowed
+     *       to interfere with this -> ignore external messages
+     *       (it is assumed that only dbusproxy sends these
+     *       messages from within dsme).
+     */
+    dsme_log(LOG_DEBUG, PFIX "BLOCK_SHUTDOWN");
+    if( endpoint_is_dsme(client) )
+        update_shutdown_blocked(true);
+}
+
+DSME_HANDLER(DSM_MSGTYPE_ALLOW_SHUTDOWN, client, msg)
+{
+    dsme_log(LOG_DEBUG, PFIX "ALLOW_SHUTDOWN");
+    if( endpoint_is_dsme(client) )
+        update_shutdown_blocked(false);
+}
+
 module_fn_info_t message_handlers[] = {
       DSME_HANDLER_BINDING(DSM_MSGTYPE_STATE_QUERY),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_TELINIT),
@@ -1170,6 +1362,8 @@ module_fn_info_t message_handlers[] = {
       DSME_HANDLER_BINDING(DSM_MSGTYPE_SET_BATTERY_LEVEL),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_CONNECTED),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_DBUS_DISCONNECT),
+      DSME_HANDLER_BINDING(DSM_MSGTYPE_BLOCK_SHUTDOWN),
+      DSME_HANDLER_BINDING(DSM_MSGTYPE_ALLOW_SHUTDOWN),
       {0}
 };
 
@@ -1246,23 +1440,23 @@ static void set_initial_state_bits(const char* bootstate)
        * otherwise we end up in actdead
        */
       // TODO: does getbootstate ever return "SHUTDOWN"?
-      charger_state      = CHARGER_DISCONNECTED;
-      shutdown_requested = true;
+      set_charger_state(CHARGER_DISCONNECTED);
+      set_shutdown_requested(true);
   } else if ((p = DSME_SKIP_PREFIX(bootstate, "USER"))) {
       // DSME_STATE_USER with possible malf information
   } else if ((p = DSME_SKIP_PREFIX(bootstate, "ACT_DEAD"))) {
       // DSME_STATE_ACTDEAD with possible malf information
-      shutdown_requested = true;
+      set_shutdown_requested(true);
   } else if (strcmp(bootstate, "BOOT") == 0) {
       // DSME_STATE_REBOOT
       // TODO: does getbootstate ever return "BOOT"?
-      reboot_requested = true;
+      set_reboot_requested(true);
   } else if (strcmp(bootstate, "LOCAL") == 0 ||
              strcmp(bootstate, "TEST")  == 0 ||
              strcmp(bootstate, "FLASH") == 0)
   {
       // DSME_STATE_TEST
-      test = true;
+      set_testmode_requested(true);
   } else if ((p = DSME_SKIP_PREFIX(bootstate, "MALF"))) {
       // DSME_STATE_USER with malf information
       must_malf = true;

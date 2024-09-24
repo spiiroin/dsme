@@ -9,14 +9,14 @@ Source1:    dsme.service.in
 Source2:    dsme-rpmlintrc
 Requires:   systemd
 Requires:   ngfd
-Requires:   libdsme >= 0.66.0
+Requires:   libdsme >= 0.67.0
 Requires(preun): systemd
 Requires(post): systemd
 Requires(postun): systemd
 BuildRequires:  pkgconfig(glib-2.0) >= 2.32.0
 BuildRequires:  pkgconfig(dbus-1) >= 1.8
 BuildRequires:  pkgconfig(libiphb) >= 1.2.0
-BuildRequires:  pkgconfig(dsme) >= 0.66.0
+BuildRequires:  pkgconfig(dsme) >= 0.67.0
 BuildRequires:  pkgconfig(libsystemd)
 BuildRequires:  pkgconfig(mce) >= 1.12.3
 BuildRequires:  pkgconfig(libngf0) >= 0.24
