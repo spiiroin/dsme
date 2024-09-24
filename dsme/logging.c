@@ -167,7 +167,6 @@ bool               dsme_log_open              (log_method method, int verbosity,
 void               dsme_log_close             (void);
 void               dsme_log_stop              (void);
 
-
 /* ========================================================================= *
  * Dynamic Configuration
  * ========================================================================= */
@@ -673,6 +672,7 @@ dsme_log_thread(void* param)
                 goto EXIT;
         }
     }
+
 EXIT:
     thread_running = 0;
 

@@ -28,13 +28,12 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 /**
  * @defgroup modules DSME Modules
  */
 
 /**
- * @defgroup processwd Process watchdog 
+ * @defgroup processwd Process watchdog
  * @ingroup modules
  *
  */
@@ -55,7 +54,6 @@
 #include <sys/types.h>
 #include <signal.h>
 
-
 /**
  * @ingroup processwd
  * Defines how may pings need to be ignored before the process is killed.
@@ -68,10 +66,8 @@
  */
 #define ABORT_GRACE_PERIOD_SECONDS 2
 
-
 static void ping_all(void);
 static void subscribe_to_wakeup(void);
-
 
 typedef struct {
     pid_t        pid;
@@ -80,9 +76,7 @@ typedef struct {
     dsme_timer_t kill_timer;
 } dsme_swwd_entry_t;
 
-
 static GSList* processes = 0;
-
 
 static dsme_swwd_entry_t* swwd_entry_new(pid_t pid, endpoint_t* client)
 {
@@ -107,7 +101,7 @@ static void swwd_entry_delete(dsme_swwd_entry_t * proc)
       if (proc->kill_timer) {
           dsme_destroy_timer(proc->kill_timer);
           dsme_log(LOG_NOTICE, "killing process (pid: %i)", proc->pid);
-          kill(proc->pid, SIGKILL); 
+          kill(proc->pid, SIGKILL);
       }
       endpoint_free(proc->client);
       free(proc);
@@ -131,7 +125,6 @@ static gint compare_endpoints(gconstpointer proc, gconstpointer client)
   return !endpoint_same(((dsme_swwd_entry_t*)proc)->client, client);
 }
 
-
 static int abort_timeout_func(void* data)
 {
   GSList* node;
@@ -145,7 +138,7 @@ static int abort_timeout_func(void* data)
       proc->kill_timer = 0; /* the timer has expired */
 
       dsme_log(LOG_NOTICE, "killing process (pid: %i)", pid);
-      kill(pid, SIGKILL); 
+      kill(pid, SIGKILL);
 
       swwd_entry_delete(proc);
       processes = g_slist_delete_link(processes, node);
@@ -178,7 +171,7 @@ static void ping_all(void)
         /* Is it pinged too many times ? */
         if (proc->pingcount == MAXPING) {
             if (proc->kill_timer == 0) {
-                dsme_log(LOG_ERR, "process (pid: %i) not responding to processwd pings," 
+                dsme_log(LOG_ERR, "process (pid: %i) not responding to processwd pings,"
                          " aborting it...", proc->pid);
                 /* give the nonresponsive process chance to abort... */
                 kill(proc->pid, SIGABRT);
@@ -296,7 +289,7 @@ DSME_HANDLER(DSM_MSGTYPE_PROCESSWD_DELETE, conn, msg)
 }
 
 /**
- * 	If socket closed remove it from checking list 
+ * 	If socket closed remove it from checking list
  */
 DSME_HANDLER(DSM_MSGTYPE_CLOSE, conn, msg)
 {
@@ -328,7 +321,7 @@ DSME_HANDLER(DSM_MSGTYPE_CLOSE, conn, msg)
  *   event. dsmemsg_swwd_t
  * - DSM_MSGTYPE_PONG The reply sent by a process for ping. dsmemsg_swwd_t
  *   dsmemsg_timeout_change_t
- */ 
+ */
 module_fn_info_t message_handlers[] = {
       DSME_HANDLER_BINDING(DSM_MSGTYPE_PROCESSWD_CREATE),
       DSME_HANDLER_BINDING(DSM_MSGTYPE_PROCESSWD_DELETE),

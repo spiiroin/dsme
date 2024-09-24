@@ -62,7 +62,6 @@ typedef struct
                     * Initialize to zero.
                     * Actual value set by pot_import_cal_data().
                     */
-
 } pot_cal_data_v0;
 
 // cal block v1 -> data contained in v1
@@ -76,7 +75,6 @@ typedef struct
   int32_t reboots; // number of reboots detected via uptime drops
 
   int32_t updates; // number of times the cal block has been written
-
 } pot_cal_data_v1;
 
 // cal block version currently expected by the logic
@@ -131,7 +129,6 @@ static void uptime_read(struct timeval *tv)
   }
 
 cleanup:
-
   if( file != 0 ) fclose(file);
 
   tv->tv_sec  = (time_t)secs;
@@ -229,7 +226,6 @@ static int pot_import_cal_data(pot_cal_data *pot,
    */
 
 cleanup:
-
   // mark current version
   pot->version = 1;
 
@@ -263,7 +259,6 @@ static int pot_read_cal(pot_cal_data *pot)
   err = pot_import_cal_data(pot, data, size);
 
 cleanup:
-
   if( cal != 0 ) cal_finish(cal);
   free(data);
   return err;
@@ -293,7 +288,6 @@ static int pot_write_cal(const pot_cal_data *pot)
   err = 0;
 
 cleanup:
-
   if( cal != 0 ) cal_finish(cal);
 
   return err;

@@ -100,7 +100,6 @@ static void usage(const char *progname)
     printf(fmt, progname);
 }
 
-
 /**
  * Signal_Handler
  *
@@ -129,7 +128,6 @@ bool dsme_in_valgrind_mode(void)
 {
     return valgrind_mode_enabled;
 }
-
 
 static int parse_verbosity(const char *arg)
 {
@@ -379,7 +377,7 @@ int main(int argc, char *argv[])
       goto EXIT;
   }
 #ifdef DSME_SYSTEMD_ENABLE
-  /* Inform main process that we are ready 
+  /* Inform main process that we are ready
    * Main process will inform systemd
    */
   if (signal_systemd) {

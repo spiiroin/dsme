@@ -22,7 +22,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef DSME_TEST_STUB_DSMEDBUS_H
 #define DSME_TEST_STUB_DSMEDBUS_H
 
@@ -63,7 +62,6 @@ void dsme_dbus_unbind_signals(bool* really_bound,
       *really_bound = false;
   }
 }
-
 
 void dsme_dbus_bind_signals(bool*                             bound_already,
                             const dsme_dbus_signal_binding_t* bindings)

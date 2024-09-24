@@ -45,7 +45,6 @@ typedef enum {
     LOG_METHOD_FILE    /* Output messages to the file */
 } log_method;
 
-
 /* libdsm/dsmesocke IPC */
 typedef struct
 {

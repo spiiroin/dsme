@@ -71,7 +71,6 @@
 
 #define GETBOOTSTATE_PREFIX "getbootstate: "
 
-
 static bool forcemode = false;
 
 static void log_msg(const char* format, ...) __attribute__ ((format (printf, 1, 2)));
@@ -147,7 +146,6 @@ static void log_msg(const char* format, ...)
     errno = saved;
 }
 
-
 static int save_state(const char* state)
 {
     FILE* saved_state_file;
@@ -212,7 +210,6 @@ EXIT:
 
     return ret ?: strdup("USER");
 }
-
 
 static void write_loop_counts(unsigned boots, unsigned wd_resets, time_t when)
 {
@@ -410,14 +407,12 @@ int main(int argc, char** argv)
         }
     }
 
-
     if(get_bootreason(bootreason, MAX_BOOTREASON_LEN) < 0) {
         log_msg("Bootreason could not be read\n");
         return_bootstate("MALF",
                          "SOFTWARE bootloader no bootreason",
                          COUNT_BOOTS);
     }
-
 
     if (!strcmp(bootreason, BOOT_REASON_SEC_VIOLATION)) {
         log_msg("Security violation\n");
@@ -427,7 +422,6 @@ int main(int argc, char** argv)
                          COUNT_BOOTS);
     }
 
-
     if (!strcmp(bootreason, BOOT_REASON_POWER_ON_RESET) ||
         !strcmp(bootreason, BOOT_REASON_SWDG_TIMEOUT)   ||
         !strcmp(bootreason, BOOT_REASON_32K_WDG_TIMEOUT))
@@ -436,7 +430,6 @@ int main(int argc, char** argv)
         const char *new_state = "USER";
 
         char *saved_state = get_saved_state();
-
 
         log_msg("Unexpected reset occured (%s). "
                   "Previous bootstate=%s - selecting %s\n",

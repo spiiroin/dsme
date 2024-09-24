@@ -210,7 +210,6 @@ accept_client(GIOChannel *src, GIOCondition cnd, gpointer aptr)
     add_client(conn), conn = 0;
 
 cleanup:
-
     if( chn )
         g_io_channel_unref(chn);
 

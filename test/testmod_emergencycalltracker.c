@@ -157,7 +157,6 @@ static void test_emergency_call_invalid_state(void)
   unload_emergencycalltracker();
 }
 
-
 /* MAIN */
 
 int main(int argc, char** argv)
@@ -187,7 +186,6 @@ int main(int argc, char** argv)
           return EXIT_SUCCESS;
       }
   }
-
 
   run(test_emergency_call_ongoing);
   run(test_emergency_call_invalid_state);

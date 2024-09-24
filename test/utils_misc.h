@@ -22,7 +22,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef DSME_TEST_MISCUTILS_H
 #define DSME_TEST_MISCUTILS_H
 
@@ -98,7 +97,6 @@ static inline void send_message(const module_t* module, const void* msg)
   fprintf(stderr, " SENT]\n");
   handle_message(&endpoint, module, msg);
 }
-
 
 /* UTILITY */
 

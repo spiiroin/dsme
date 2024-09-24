@@ -47,8 +47,8 @@ static bool send_to_dsme(dsmesock_connection_t* conn, const void* msg)
 	return success;
 }
 
-int main(int argc, char* argv[]) {
-	
+int main(int argc, char* argv[])
+{
 	struct timeval start;
 	struct timeval now;
 	dsmesock_connection_t *conn;
@@ -74,9 +74,9 @@ int main(int argc, char* argv[]) {
 				return EXIT_SUCCESS;
 			}
 		}
-		
+
 		gettimeofday(&now, NULL);
-		
+
 		if (now.tv_sec >= (start.tv_sec + DSME_START_TIMEOUT)) {
 			fprintf(stderr,
 				    "%s: ERROR: Timeout waiting for DSME socket\n",

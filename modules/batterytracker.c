@@ -459,7 +459,6 @@ EXIT:
  */
 static const symbol_t dsme_charger_state_lut[] =
 {
-
     { MCE_CHARGER_STATE_UNKNOWN, DSME_CHARGER_STATE_UNKNOWN },
     { MCE_CHARGER_STATE_ON,      DSME_CHARGER_STATE_ON      },
     { MCE_CHARGER_STATE_OFF,     DSME_CHARGER_STATE_OFF     },
@@ -990,7 +989,6 @@ xmce_running_set(bool running)
     }
 
 cleanup:
-
     return;
 }
 
@@ -1027,7 +1025,6 @@ xmce_tracking_init(void)
     xmce_send_name_owner_query();
 
 cleanup:
-
     return;
 }
 
@@ -1053,7 +1050,6 @@ xmce_tracking_quit(void)
     xmce_forget_battery_level_query();
 
 cleanup:
-
     return;
 }
 
@@ -1120,7 +1116,6 @@ xmce_name_owner_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
     }
 
 cleanup:
-
     dbus_error_free(&err);
 
     modulebase_enter_module(caller);
@@ -1171,7 +1166,6 @@ xmce_name_owner_reply_cb(DBusPendingCall *pc, void *aptr)
     xmce_running_set(dta && *dta);
 
 cleanup:
-
     if( rsp ) dbus_message_unref(rsp);
 
     dbus_error_free(&err);
@@ -1240,7 +1234,6 @@ xmce_send_name_owner_query(void)
     res = true;
 
 cleanup:
-
     if( res )
         dsme_log(LOG_DEBUG, PFIX"mce name owner query sent");
     else
@@ -1301,7 +1294,6 @@ xmce_usb_cable_state_reply_cb(DBusPendingCall *pc, void *aptr)
     dsme_usb_cable_state_set(state);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1421,7 +1413,6 @@ xmce_charger_state_reply_cb(DBusPendingCall *pc, void *aptr)
     dsme_charger_state_set(state);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1541,7 +1532,6 @@ xmce_battery_status_reply_cb(DBusPendingCall *pc, void *aptr)
     dsme_battery_status_set(status);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1661,7 +1651,6 @@ xmce_battery_level_reply_cb(DBusPendingCall *pc, void *aptr)
     dsme_battery_level_set(level);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1828,7 +1817,6 @@ systembus_connect(void)
     xmce_tracking_init();
 
 cleanup:
-
     dbus_error_free(&err);
 }
 
@@ -1868,7 +1856,6 @@ send_charger_state(bool charging)
     modules_broadcast_internally(&msg);
 
 cleanup:
-
     return;
 }
 

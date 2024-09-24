@@ -103,7 +103,6 @@
 /** Where to persistently store alarm state data received from timed */
 #define XTIMED_STATE_FILE     "/var/lib/dsme/timed_state"
 
-
 /** Maximum expected lenght of human readable time stamp */
 #define TIMESTAMP_MAX 64
 
@@ -341,6 +340,7 @@ static void log_time_t(int lev, const char *title, time_t t, time_t now)
 	     tm.tm_min,
 	     tm.tm_sec,
 	     left);
+
 cleanup:
     return;
 }
@@ -592,7 +592,6 @@ xmce_verify_name(void)
     res = true;
 
 cleanup:
-
     if( pc  ) dbus_pending_call_unref(pc);
     if( req ) dbus_message_unref(req);
 
@@ -633,7 +632,6 @@ static bool xmce_cpu_keepalive_wakeup(void)
     res = true;
 
 cleanup:
-
     if( req ) dbus_message_unref(req);
 
     return res;
@@ -811,7 +809,6 @@ cleanup:
  */
 static void linux_alarm_set(time_t delay)
 {
-
     if( linux_alarm_timerfd == -1 )
 	goto cleanup;
 
@@ -862,8 +859,6 @@ static bool linux_alarm_handle_input(void)
     res = true;
 
 cleanup:
-
-
     return res;
 }
 
@@ -885,7 +880,6 @@ static bool android_alarm_init(void)
     }
 
 cleanup:
-
     return android_alarm_fd != -1;
 }
 
@@ -1019,7 +1013,6 @@ static time_t deltatime_get(void)
     dsme_log(LOG_INFO, PFIX"rtc delta is %ld", (long)deltatime_cached);
 
 cleanup:
-
     if( fd != -1 ) close(fd);
 
     return deltatime_cached;
@@ -1050,7 +1043,6 @@ static void deltatime_set(time_t delta)
     }
 
 cleanup:
-
     if( fd != -1 ) close(fd);
 }
 
@@ -1083,14 +1075,12 @@ static void deltatime_update(void)
         deltatime_set(delta);
 
 cleanup:
-
     return;
 }
 
 /* ------------------------------------------------------------------------- *
  * RTC management functionality
  * ------------------------------------------------------------------------- */
-
 
 /** Human readable representation for rtc_need_t enum value
  */
@@ -1265,7 +1255,6 @@ static bool rtc_get_time_raw(struct rtc_time *tod)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1287,7 +1276,6 @@ static time_t rtc_get_time_tm(struct tm *tm)
     result = rtc_time_to_tm(&tod, tm);
 
 cleanup:
-
     return result;
 }
 
@@ -1317,7 +1305,6 @@ static bool rtc_set_time_raw(struct rtc_time *tod)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1343,7 +1330,6 @@ static bool rtc_set_time_tm(struct tm *tm)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1369,7 +1355,6 @@ static bool rtc_set_time_t(time_t t)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1383,7 +1368,6 @@ static bool rtc_set_time_tv(const struct timeval *rtc)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1402,7 +1386,6 @@ static bool rtc_get_time_tv(struct timeval *rtc)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1452,7 +1435,6 @@ static bool rtc_set_alarm_raw(const struct rtc_time *tod, bool enabled)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1479,7 +1461,6 @@ static bool rtc_set_alarm_tm(const struct tm *tm, bool enabled)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1530,7 +1511,6 @@ static bool rtc_set_alarm_after(time_t delay)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1639,7 +1619,6 @@ static bool rtc_handle_input(void)
     result = true;
 
 cleanup:
-
     return result;
 }
 
@@ -1700,7 +1679,6 @@ static bool rtc_attach(void)
     rtc_add_need(RTC_NEED_NONE);
 
 cleanup:
-
     if( fd != -1 ) close(fd);
 
     return rtc_fd != -1;
@@ -2427,7 +2405,6 @@ static char *time_minus(const struct timeval *tv, char *buff, size_t size)
     return *pos = 0, buff;
 }
 
-
 /** Wakeup clients if conditions are met
  *
  * We should arrive here if:
@@ -2539,7 +2516,6 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
     /* and tell hwwd kicker we are alive */
     hwwd_feeder_sync();
 }
-
 
 /** Timer id for delayed wakeup checking
  *
@@ -2853,7 +2829,6 @@ static bool listenfd_init(void)
     result = true;
 
 cleanup:
-
     // all or nothing
     if( !result )
 	listenfd_quit();
@@ -3043,7 +3018,6 @@ cleanup_ack:
     keep_going = TRUE;
 
 cleanup_nak:
-
     if( !keep_going )
 	dsme_log(LOG_CRIT, PFIX"epoll waiting disabled");
 
@@ -3061,7 +3035,6 @@ static void epollfd_quit(void)
 
     if( epollfd != -1 )
 	close(epollfd), epollfd = -1;
-
 }
 
 /** Start the epoll io watch
@@ -3091,7 +3064,6 @@ static bool epollfd_init(void)
     result = true;
 
 cleanup:
-
     if( chan )
 	g_io_channel_unref(chan);
 
@@ -3119,7 +3091,6 @@ static void systembus_connect(void)
     xmce_handle_dbus_connect();
 
 cleanup:
-
     dbus_error_free(&err);
 }
 
@@ -3192,7 +3163,6 @@ DSME_HANDLER(DSM_MSGTYPE_WAIT, conn, msg)
 	 * -> skip wakeup scanning and just feed the hwhw kicker */
 	hwwd_feeder_sync();
     }
-
 }
 
 /** Handle connected to system bus */
@@ -3424,7 +3394,6 @@ void module_init(module_t *handle)
     success = true;
 
 cleanup:
-
     if( success )
         dsme_log(LOG_INFO, PFIX"iphb started");
     else

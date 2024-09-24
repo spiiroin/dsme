@@ -77,7 +77,6 @@ module_fn_info_t message_handlers[] = {
     {0}
 };
 
-
 void module_init(module_t* handle)
 {
     dsme_log(LOG_DEBUG, "shutdownfeedback.so loaded");

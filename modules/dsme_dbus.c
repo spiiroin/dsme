@@ -397,7 +397,6 @@ dsme_dbus_reply_new(const DsmeDbusMessage *request)
     rsp = message_new(request->connection, msg);
 
 EXIT:
-
     if( msg )
         dbus_message_unref(msg);
 
@@ -419,7 +418,6 @@ dsme_dbus_reply_error(const DsmeDbusMessage *request,
     rsp = message_new(request->connection, msg);
 
 EXIT:
-
     if( msg )
         dbus_message_unref(msg);
 
@@ -456,7 +454,6 @@ dsme_dbus_signal_new(const char *sender,
     sig = message_new(con, msg);
 
 EXIT:
-
     if( msg )
         dbus_message_unref(msg);
 
@@ -983,7 +980,6 @@ service_acquire_name(DsmeDbusService *self)
     self->se_acquired = true;
 
 EXIT:
-
     dbus_error_free(&err);
 
     return;
@@ -1016,7 +1012,6 @@ service_release_name(DsmeDbusService *self)
     dsme_log(LOG_DEBUG, "name %s released", self->se_name);
 
 EXIT:
-
     self->se_acquired  = false;
     self->se_requested = false;
 
@@ -1201,7 +1196,6 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
         if( dbus_message_is_method_call(msg,
                                         "org.freedesktop.DBus.Introspectable",
                                         "Introspect") ) {
-
             DBusMessage *rsp = manager_handle_introspect(self, msg);
             if( rsp ) {
                 dbus_connection_send(con, rsp, 0);
@@ -1313,7 +1307,6 @@ static void
 manager_delete(DsmeDbusManager *self)
 {
     if( self ) {
-
         manager_disconnect(self);
 
         manager_rem_handlers_all(self);
@@ -1412,7 +1405,6 @@ manager_disconnect(DsmeDbusManager *self)
     dsme_log(LOG_DEBUG, "disconnected from system bus");
 
 EXIT:
-
     return;
 }
 
@@ -1892,7 +1884,6 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
     ack = true, *pid = dta;
 
 EXIT:
-
     if( req )
         dbus_message_unref(req);
 

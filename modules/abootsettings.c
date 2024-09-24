@@ -157,7 +157,6 @@ static void get_locked(const DsmeDbusMessage* request,
     // Since this function returns locked status,
     // we need to invert unlocked value.
     dsme_dbus_message_append_int(*reply, !unlocked);
-
 }
 
 /* -------------------------------------------------------------------------

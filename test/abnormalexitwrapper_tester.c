@@ -36,7 +36,6 @@ void usr1_handler(int signum)
   waiting = 0;
 }
 
-
 int main()
 {
   printf("\nForkwrapper tester\n");

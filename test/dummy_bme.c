@@ -38,7 +38,6 @@
 #include <poll.h>
 #include <sys/syslog.h>
 
-
 #define BME_SRV_SOCK_PATH       "/tmp/.bmesrv"
 #define BME_SRV_COOKIE          "BMentity"
 
@@ -49,14 +48,12 @@
 #define EM_BATTERY_INFO_REQ                      0x06
 #define EM_BATTERY_TEMP                          0x0004  /* -------------1-- */
 
-
 #define bme_log(L, FMT ...) fprintf(stderr, FMT);
 
 #include <sys/types.h>
 typedef struct {
     uint16_t      type, subtype;
 } tBMEmsgGeneric;
-
 
 struct emsg_battery_info_req {
     uint16_t      type, subtype;
@@ -84,12 +81,9 @@ union emsg_battery_info {
     struct emsg_battery_info_reply reply;
 };
 
-
 union bme_ext_messages {
     union emsg_battery_info battery_info;
-
 };
-
 
 enum {
     UMSD,
@@ -99,10 +93,8 @@ enum {
 
 static volatile sig_atomic_t sig_caught = 0;
 
-
 /* Client's socket descriptor that is in listening state */
 int umsfd = -1;
-
 
 /* Function prototypes */
 void bme_server_shutdown(void);
@@ -113,7 +105,6 @@ int bme_extmsg_handler(int client);
 int bme_reply_client(int client, int status, void *msg, int size);
 int bme_send_status_to_client(int client, int status);
 void bme_shutdown(void);
-
 
 /*
  * Initialize the server. Returns a negative value in case of failure.
@@ -157,7 +148,6 @@ int bme_server_init(void)
     return 0;
 }
 
-
 /*
  * Shut down the server
  */
@@ -168,7 +158,6 @@ void bme_server_shutdown(void)
 	umsfd = -1;
     }
 }
-
 
 /*
  * Handle new client. Returns client's new fd if connection was successful,
@@ -249,7 +238,6 @@ int bme_extmsg_handler(int client)
     return res;
 }
 
-
 /*
  * Reply to the client.
  * Status (32-bit value) is sent first, then reply message.
@@ -264,7 +252,6 @@ int bme_reply_client(int client, int status, void *msg, int size)
     return size;
 }
 
-
 /*
  * Send only a 32-bit status value to the client.
  */
@@ -272,7 +259,6 @@ int bme_send_status_to_client(int client, int status)
 {
     return write(client, &status, sizeof(status));
 }
-
 
 void bme_shutdown()
 {
@@ -299,7 +285,6 @@ int main(int argc, char *argv[])
     ufds[UMSD].events = POLLIN;
     ufds[CCSD].fd = -1;                 /* Connected client */
     ufds[CCSD].events = POLLIN;
-
 
     /*
      * Main loop. We poll socket descriptors, and call internal or external

@@ -157,7 +157,6 @@ dsme_get_crypt_device_for_home(void)
     cdev = work, work = 0;
 
 EXIT:
-
     dsme_free_crypt_device(work);
 
     return cdev;

@@ -60,7 +60,6 @@ void usage(const char *name)
 	printf("	-a --alarm			Change alarm state (0 = not set, 1 = set)\n");
 	printf("	-M --malf			Request MALF state\n");
         printf("	-h --help			Print usage\n");
-
 }
 
 void send_shutdown_req(bool battlow)
@@ -110,7 +109,7 @@ void send_malf_req(void)
   DSM_MSGTYPE_ENTER_MALF msg = DSME_MSG_INIT(DSM_MSGTYPE_ENTER_MALF);
   msg.reason = DSME_MALF_SOFTWARE;
   msg.component = NULL;
-  
+
   dsmesock_send_with_extra(conn, &msg, sizeof(details), details);
   printf("MALF request sent!\n");
 }

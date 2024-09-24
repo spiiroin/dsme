@@ -58,7 +58,6 @@
 #include "stub_timers.h"
 #include "stub_dsme_dbus.h"
 
-
 /* TEST DRIVER */
 #include "testdriver.h"
 
@@ -202,8 +201,6 @@ static void request_shutdown_expecting_shutdown(module_t* state)
 
   expect_shutdown(state);
 }
-
-
 
 /* LIBSTATE TEST CASES */
 
@@ -375,7 +372,6 @@ static void testcase6(void)
   unload_module_under_test(state);
 }
 
-
 static void testcase7(void)
 {
   /* start in actdead */
@@ -423,7 +419,6 @@ static void testcase9(void)
 
   unload_module_under_test(state);
 }
-
 
 static void testcase10(void)
 {
@@ -761,7 +756,6 @@ static void testcase19(void)
   request_shutdown_expecting_actdead(state);
 
   unload_module_under_test(state);
-
 }
 
 static void testcase20(void)
@@ -921,7 +915,6 @@ static void testcase23(void)
   unload_module_under_test(state);
 }
 
-
 /* MAIN */
 
 int main(int argc, char** argv)
@@ -951,7 +944,6 @@ int main(int argc, char** argv)
           return EXIT_SUCCESS;
       }
   }
-
 
   run(testcase1);
   run(testcase2);
@@ -984,4 +976,3 @@ int main(int argc, char** argv)
 
   return EXIT_SUCCESS;
 }
-

@@ -104,7 +104,7 @@
 #define DSME_THERMAL_SHUTDOWN_TIMER       8
 #define DSME_BATTERY_EMPTY_SHUTDOWN_TIMER 8
 
-/** 
+/**
  * Minimum battery level % that is needed before we allow
  * switch from ACTDEAD to USER
  * TODO: don't hard code this but support config value
@@ -116,7 +116,6 @@ typedef enum {
     CHARGER_CONNECTED,
     CHARGER_DISCONNECTED,
 } charger_state_t;
-
 
 /* these are the state bits on which dsme bases its state selection */
 charger_state_t charger_state          = CHARGER_STATE_UNKNOWN;
@@ -326,7 +325,6 @@ static bool need_to_use_reboot(dsme_state_t target_state)
     dsme_log(LOG_DEBUG, PFIX"%s: using '%s'", output_path, param);
 
 EXIT:
-
     if( input_fd != -1 )
         close(input_fd);
 
@@ -347,12 +345,9 @@ static dsme_state_t select_state(void)
   dsme_state_t state;
 
   if (emergency_call_ongoing) {
-
       /* don't touch anything if we have an emergency call going on */
       state = current_state;
-
   } else {
-
       if (test) {
           state = DSME_STATE_TEST;
       } else if (battery_empty) {
@@ -389,7 +384,6 @@ static dsme_state_t select_state(void)
       } else {
           state = DSME_STATE_USER;
       }
-
   }
   return state;
 }
@@ -411,7 +405,6 @@ static void try_to_change_state(dsme_state_t new_state)
            state_name(new_state));
 
   switch (new_state) {
-
     case DSME_STATE_SHUTDOWN: /* Runlevel 0 */ /* FALL THROUGH */
     case DSME_STATE_REBOOT:   /* Runlevel 6 */
       change_state(new_state);
@@ -456,12 +449,12 @@ static void try_to_change_state(dsme_state_t new_state)
               /* actdead init done; runlevel change from actdead to user state */
               if (start_delayed_user_timer(USER_TIMER_MIN_TIMEOUT)) {
                   change_state(new_state);
-              } 
+              }
           } else {
               /* actdead init not done; wait longer to change from actdead to user state */
               if (start_delayed_user_timer(USER_TIMER_MAX_TIMEOUT)) {
                   change_state(new_state);
-              } 
+              }
           }
 #endif /* DSME_SUPPORT_DIRECT_USER_ACTDEAD */
       } else if (current_state == DSME_STATE_USER) {
@@ -488,12 +481,12 @@ static void try_to_change_state(dsme_state_t new_state)
               /* user init done; runlevel change from user to actdead state */
               if (start_delayed_actdead_timer(ACTDEAD_TIMER_MIN_TIMEOUT)) {
                   change_state(new_state);
-              } 
+              }
           } else {
               /* user init not done; wait longer to change from user to actdead state */
               if (start_delayed_actdead_timer(ACTDEAD_TIMER_MAX_TIMEOUT)) {
                   change_state(new_state);
-              } 
+              }
           }
 #endif /* DSME_SUPPORT_DIRECT_USER_ACTDEAD */
       }
@@ -513,7 +506,6 @@ static void try_to_change_state(dsme_state_t new_state)
                new_state);
       break;
   }
-
 }
 
 /**
@@ -544,7 +536,6 @@ static void change_state(dsme_state_t new_state)
   current_state = new_state;
 }
 
-
 static bool is_state_change_request_acceptable(dsme_state_t requested_state)
 {
     bool acceptable = true;
@@ -561,7 +552,6 @@ static bool is_state_change_request_acceptable(dsme_state_t requested_state)
     return acceptable;
 }
 
-
 static void deny_state_change_request(dsme_state_t denied_state,
                                       const char*  reason)
 {
@@ -575,7 +565,6 @@ static void deny_state_change_request(dsme_state_t denied_state,
            (denied_state == DSME_STATE_SHUTDOWN ? "shutdown" : "reboot"),
            reason);
 }
-
 
 static void start_delayed_shutdown_timer(unsigned seconds)
 {
@@ -625,7 +614,6 @@ static bool start_delayed_actdead_timer(unsigned seconds)
 
 static int delayed_actdead_fn(void* unused)
 {
-
   change_runlevel(DSME_STATE_ACTDEAD);
 
   delayed_actdead_timer = 0;
@@ -742,7 +730,6 @@ static void start_charger_disconnect_timer(int delay_s)
 
 static int delayed_charger_disconnect_fn(void* unused)
 {
-
   charger_state = CHARGER_DISCONNECTED;
   change_state_if_necessary();
 
@@ -761,7 +748,6 @@ static void stop_charger_disconnect_timer(void)
       charger_state = CHARGER_DISCONNECTED;
   }
 }
-
 
 DSME_HANDLER(DSM_MSGTYPE_SET_CHARGER_STATE, conn, msg)
 {
@@ -797,7 +783,6 @@ DSME_HANDLER(DSM_MSGTYPE_SET_CHARGER_STATE, conn, msg)
   }
 }
 
-
 DSME_HANDLER(DSM_MSGTYPE_SET_USB_STATE, conn, msg)
 {
     if (mounted_to_pc != msg->mounted_to_pc) {
@@ -806,7 +791,6 @@ DSME_HANDLER(DSM_MSGTYPE_SET_USB_STATE, conn, msg)
         dsme_log(LOG_INFO, PFIX"%smounted over USB", mounted_to_pc ? "" : "not ");
     }
 }
-
 
 // handlers for telinit requests
 static void handle_telinit_NOT_SET(endpoint_t* conn)
@@ -965,7 +949,6 @@ DSME_HANDLER(DSM_MSGTYPE_POWERUP_REQ, conn, msg)
   handle_telinit_USER(conn);
 }
 
-
 DSME_HANDLER(DSM_MSGTYPE_SET_ALARM_STATE, conn, msg)
 {
   dsme_log(LOG_DEBUG,
@@ -976,7 +959,6 @@ DSME_HANDLER(DSM_MSGTYPE_SET_ALARM_STATE, conn, msg)
 
   change_state_if_necessary();
 }
-
 
 DSME_HANDLER(DSM_MSGTYPE_SET_THERMAL_STATUS, conn, msg)
 {
@@ -992,7 +974,6 @@ DSME_HANDLER(DSM_MSGTYPE_SET_THERMAL_STATUS, conn, msg)
       /* there is no going back from being overheated */
   }
 }
-
 
 DSME_HANDLER(DSM_MSGTYPE_SET_EMERGENCY_CALL_STATE, conn, msg)
 {
@@ -1078,7 +1059,6 @@ DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
   }
 }
 
-
 DSME_HANDLER(DSM_MSGTYPE_STATE_QUERY, client, msg)
 {
   DSM_MSGTYPE_STATE_CHANGE_IND ind_msg =
@@ -1089,7 +1069,6 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_QUERY, client, msg)
   ind_msg.state = current_state;
   endpoint_send(client, &ind_msg);
 }
-
 
 /**
  * Reads the RD mode state and returns true if enabled
@@ -1194,7 +1173,6 @@ module_fn_info_t message_handlers[] = {
       {0}
 };
 
-
 static void parse_malf_info(char*  malf_info,
                             char** reason,
                             char** component,
@@ -1270,19 +1248,15 @@ static void set_initial_state_bits(const char* bootstate)
       // TODO: does getbootstate ever return "SHUTDOWN"?
       charger_state      = CHARGER_DISCONNECTED;
       shutdown_requested = true;
-
   } else if ((p = DSME_SKIP_PREFIX(bootstate, "USER"))) {
       // DSME_STATE_USER with possible malf information
-
   } else if ((p = DSME_SKIP_PREFIX(bootstate, "ACT_DEAD"))) {
       // DSME_STATE_ACTDEAD with possible malf information
       shutdown_requested = true;
-
   } else if (strcmp(bootstate, "BOOT") == 0) {
       // DSME_STATE_REBOOT
       // TODO: does getbootstate ever return "BOOT"?
       reboot_requested = true;
-
   } else if (strcmp(bootstate, "LOCAL") == 0 ||
              strcmp(bootstate, "TEST")  == 0 ||
              strcmp(bootstate, "FLASH") == 0)
@@ -1314,7 +1288,6 @@ static void set_initial_state_bits(const char* bootstate)
           parse_malf_info(malf_info, &reason, &component, &details);
           enter_malf(reason, component, details);
           free(malf_info);
-
       } else {
           dsme_log(LOG_NOTICE, PFIX"R&D mode enabled, not entering MALF '%s'", p);
       }

@@ -36,9 +36,7 @@
 #include <unistd.h>
 #include <string.h>
 
-
 #define DSME_THERMAL_FLAG_FILE "/var/lib/dsme/force_shutdown"
-
 
 static void write_thermal_flag(void)
 {

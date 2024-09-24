@@ -54,12 +54,10 @@
 # endif
 #endif
 
-
 static bool save_state_for_getbootstate(dsme_runlevel_t runlevel);
 static bool telinit_internal(dsme_runlevel_t runlevel);
 static void shutdown_internal(dsme_runlevel_t runlevel);
 static bool remount_mmc_readonly(void);
-
 
 static int current_runlevel_in_utmp()
 {
@@ -134,7 +132,6 @@ static bool save_state_in_utmp_and_wtmp(dsme_runlevel_t runlevel)
 
     return saved;
 }
-
 
 static bool save_state_for_getbootstate(dsme_runlevel_t runlevel)
 {
@@ -300,7 +297,6 @@ static bool telinit_internal(dsme_runlevel_t runlevel)
         goto done;
     }
 
-
     // make the call
     // TODO: do not block!
     DBusMessage* reply;
@@ -327,7 +323,6 @@ static bool telinit_internal(dsme_runlevel_t runlevel)
 
     if (reply) dbus_message_unref(reply);
 
-
 done:
     if (call) dbus_message_unref(call);
     if (conn) {
@@ -338,7 +333,6 @@ done:
 
     return runlevel_changed;
 }
-
 
 /*
  * This function will do the shutdown or reboot (based on desired runlevel).
@@ -389,7 +383,6 @@ static void shutdown_internal(dsme_runlevel_t runlevel)
               }
           }
       }
-
   }
 
   return;
@@ -398,7 +391,6 @@ fail_and_exit:
   dsme_log(LOG_CRIT, "Closing to clean-up!");
   dsme_main_loop_quit(EXIT_FAILURE);
 }
-
 
 /*
  * This function tries to find mounted MMC (mmcblk) and remount it
@@ -466,13 +458,11 @@ static bool remount_mmc_readonly(void)
 
       dsme_log(LOG_NOTICE, "MMC remounted read-only");
       return true;
-
   } else {
       dsme_log(LOG_NOTICE, "MMC not mounted");
       return true;
   }
 }
-
 
 DSME_HANDLER(DSM_MSGTYPE_CHANGE_RUNLEVEL, conn, msg)
 {
@@ -484,13 +474,11 @@ DSME_HANDLER(DSM_MSGTYPE_SHUTDOWN, conn, msg)
   shutdown_internal(msg->runlevel);
 }
 
-
 module_fn_info_t message_handlers[] = {
   DSME_HANDLER_BINDING(DSM_MSGTYPE_CHANGE_RUNLEVEL),
   DSME_HANDLER_BINDING(DSM_MSGTYPE_SHUTDOWN),
   { 0 }
 };
-
 
 void module_init(module_t* module)
 {

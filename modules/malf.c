@@ -34,7 +34,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-
 static const char* const malf_reason_name[] = {
     "SOFTWARE",
     "HARDWARE",

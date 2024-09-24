@@ -135,7 +135,6 @@ typedef struct
 
     /** Thermal level configuration array */
     sensor_level_t     sg_level[THERMAL_STATUS_COUNT];
-
 } thermal_sensor_generic_t;
 
 static thermal_sensor_generic_t  *thermal_sensor_generic_create             (const char *name);
@@ -412,7 +411,6 @@ tsg_util_write_file(const char *path, const char *text)
     ack = true;
 
 EXIT:
-
     if( file != -1 )
         TEMP_FAILURE_RETRY(close(file));
 
@@ -698,7 +696,6 @@ thermal_sensor_generic_is_valid(thermal_sensor_generic_t *self)
     is_valid = true;
 
 EXIT:
-
     return is_valid;
 }
 
@@ -860,7 +857,6 @@ thermal_sensor_generic_read_sensor(thermal_sensor_generic_t *self)
         goto EXIT;
 
     if( !self->sg_temp_cb(self->sg_temp_path, &temp) ) {
-
         /* Check if the failure could be because some other
          * process has disabled the sensor */
 
@@ -1446,7 +1442,6 @@ tsg_objects_quit(GSList **list)
     }
 
     g_slist_free(*list), *list = 0;
-
 }
 
 /** Create linked list of thermal objects based on config files

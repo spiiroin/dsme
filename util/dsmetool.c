@@ -223,7 +223,6 @@ static void dsmeipc_send_full(const void *msg_, const void *data, size_t size)
         log_error("dsmesock_send: %m");
         exit(EXIT_FAILURE);
     }
-
 }
 
 static void dsmeipc_send(const void *msg)
@@ -518,7 +517,6 @@ static const char *parse_runlevel(char *str)
     };
 
     for( size_t i = 0;  ; ++i ) {
-
         if( lut[i] == 0 ) {
             log_error("%s: not a valid run level", str);
             exit(EXIT_FAILURE);
@@ -679,7 +677,6 @@ DONE:
     retval = EXIT_SUCCESS;
 
 EXIT:
-
     dsmeipc_disconnect();
 
     return retval;

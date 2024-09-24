@@ -513,7 +513,6 @@ thermal_object_request_update(thermal_object_t *self)
     }
 
 EXIT:
-
     /* If the lower level request failed, notify upper level
      * logic immediately */
 
@@ -653,7 +652,6 @@ thermal_object_handle_update(thermal_object_t *self)
 #endif
 
 EXIT:
-
     if( notify ) {
         /* Update the thermal object itself */
         thermal_manager_handle_object_update(self);

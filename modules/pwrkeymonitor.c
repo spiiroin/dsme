@@ -230,7 +230,6 @@ typedef struct
 {
     GIOChannel *chan;
     guint       watch;
-
 } channel_watch_t;
 
 /** Allocate and initialize an io channel watch structure
@@ -540,7 +539,6 @@ start_pwrkey_monitor(void)
     }
 
 EXIT:
-
     if( dir ) closedir(dir);
 
     if( cnt < 1 )

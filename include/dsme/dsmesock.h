@@ -23,7 +23,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef DSMESOCK_H
 #define DSMESOCK_H
 
@@ -47,7 +46,6 @@ struct dsmesock_connection_t;
    * @{
    */
 
-
 /**
    A callback for client sockets ready to be read.
 
@@ -63,7 +61,6 @@ typedef bool dsmesock_callback(struct dsmesock_connection_t* conn);
 */
 int dsmesock_listen(dsmesock_callback* read_and_queue);
 
-
 /**
    Close listening socket
    Close all client sockets
@@ -71,7 +68,6 @@ int dsmesock_listen(dsmesock_callback* read_and_queue);
    @return nothing
 */
 void dsmesock_shutdown(void);
-
 
   /**
    * @}
@@ -81,6 +77,5 @@ void dsmesock_shutdown(void);
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif

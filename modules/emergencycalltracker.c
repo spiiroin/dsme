@@ -40,7 +40,6 @@
 
 #include <string.h>
 
-
 static void send_emergency_call_status(bool ongoing)
 {
     DSM_MSGTYPE_SET_EMERGENCY_CALL_STATE msg =
@@ -63,7 +62,6 @@ static void mce_call_state_ind(const DsmeDbusMessage* ind)
 
       emergency_call_started = true;
       dsme_log(LOG_DEBUG, "Emergency call started");
-
   } else if (emergency_call_started) {
       /* the emergency call is over */
       send_emergency_call_status(false);

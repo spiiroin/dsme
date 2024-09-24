@@ -197,7 +197,6 @@ send_usb_status(bool mounted_to_pc)
     modules_broadcast_internally(&msg);
 
 cleanup:
-
     return;
 }
 
@@ -240,7 +239,6 @@ evaluate_status(const char *mode, bool *is_charging, bool *is_mounted)
     mounted  = false;
 
 cleanup:
-
     *is_charging = charging;
     *is_mounted  = mounted;
 
@@ -291,7 +289,6 @@ wait_for_usb_moded_cb(gpointer aptr)
     update_status(0);
 
 cleanup:
-
     return FALSE;
 }
 
@@ -359,7 +356,6 @@ xusbmoded_query_mode_cb(DBusPendingCall *pending, void *aptr)
     }
 
 cleanup:
-
     /* Update state; any errors above yield not-connected, not-mounted */
     update_status(dta);
 
@@ -406,7 +402,6 @@ xusbmoded_query_mode_async(void)
     dsme_log(LOG_DEBUG, PFIX"mode_request sent");
 
 cleanup:
-
     if( !res ) {
         dsme_log(LOG_ERR, PFIX"mode_request failed; "
                  "waiting for signal / usb_moded restart");
@@ -449,7 +444,6 @@ xusbmoded_set_runstate(bool running)
     }
 
 cleanup:
-
     return;
 }
 
@@ -486,7 +480,6 @@ xusbmoded_query_owner_cb(DBusPendingCall *pending, void *aptr)
     }
 
 cleanup:
-
     xusbmoded_set_runstate(dta && *dta);
 
     if( rsp ) dbus_message_unref(rsp);
@@ -536,7 +529,6 @@ xusbmoded_query_owner(void)
     res = true;
 
 cleanup:
-
     if( pc  ) dbus_pending_call_unref(pc);
     if( req ) dbus_message_unref(req);
 
@@ -599,7 +591,6 @@ xusbmoded_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
     }
 
 cleanup:
-
     dbus_error_free(&err);
 
     modulebase_enter_module(caller);
@@ -633,7 +624,6 @@ xusbmoded_init_tracking(void)
     xusbmoded_query_owner();
 
 cleanup:
-
     return;
 }
 
@@ -652,7 +642,6 @@ xusbmoded_quit_tracking(void)
     dbus_connection_remove_filter(systembus, xusbmoded_dbus_filter_cb, 0);
 
 cleanup:
-
     return;
 }
 
@@ -678,7 +667,6 @@ systembus_connect(void)
     xusbmoded_init_tracking();
 
 cleanup:
-
     dbus_error_free(&err);
 }
 
@@ -713,7 +701,6 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
     dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
-
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)

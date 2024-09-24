@@ -33,6 +33,7 @@ bool dsme_rd_mode_enabled(void)
     return dsme_rd_mode_get_flags() != 0;
 }
 
-const char* dsme_rd_mode_get_flags(void) {
+const char* dsme_rd_mode_get_flags(void)
+{
     return getenv(DSME_RD_FLAGS_ENV);
 }

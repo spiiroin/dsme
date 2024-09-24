@@ -224,7 +224,6 @@ static void shutdown(dsme_runlevel_t runlevel)
               }
           }
       }
-
   }
 
   return;
@@ -300,7 +299,6 @@ static bool remount_mmc_readonly(void)
 
       dsme_log(LOG_NOTICE, "MMC remounted read-only");
       return true;
-
   } else {
       dsme_log(LOG_NOTICE, "MMC not mounted");
       return true;

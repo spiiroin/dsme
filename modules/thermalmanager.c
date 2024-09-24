@@ -623,7 +623,6 @@ thermal_manager_get_sensor_status(const char *sensor_name,
     ack = true;
 
 EXIT:
-
     --recursing;
 
     return ack;

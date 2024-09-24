@@ -84,7 +84,6 @@ static void reset_wlan_module(void)
         goto cleanup;
 
 cleanup:
-
     if (req) dbus_message_unref(req);
     if (conn) dbus_connection_unref(conn);
     dbus_error_free(&err);
@@ -182,7 +181,6 @@ static void check_loader_needed(void)
         goto cleanup;
 
 cleanup:
-
     if (pc) dbus_pending_call_unref(pc);
     if (req) dbus_message_unref(req);
     if (conn) dbus_connection_unref(conn);
@@ -220,4 +218,3 @@ module_fini(void)
     dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
     dsme_log(LOG_DEBUG, "libwlanloader.so unloaded");
 }
-

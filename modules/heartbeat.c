@@ -86,7 +86,6 @@ static gboolean emit_heartbeat_message(GIOChannel*  source,
     keep_going = true;
 
 cleanup:
-
     if( !keep_going ) {
         watch_id = 0;
         dsme_main_loop_quit(EXIT_FAILURE);
@@ -111,8 +110,8 @@ static bool start_heartbeat(void)
                               G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
                               emit_heartbeat_message,
                               0);
-cleanup:
 
+cleanup:
     if( chn )
         g_io_channel_unref(chn);
 

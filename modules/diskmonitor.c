@@ -555,7 +555,6 @@ diskmon_add_mountpoint(const char *mntpoint, int percent_free, int mb_free)
     diskuse_t *limit = 0;
 
     if( !(limit = diskmon_get_mountpoint(mntpoint)) ) {
-
         limit = diskuse_create(mntpoint);
         diskmon_limit_list = g_slist_prepend(diskmon_limit_list, limit);
     }

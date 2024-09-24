@@ -121,7 +121,6 @@ ngf_callback(NgfClient *client, uint32_t event_id, NgfEventState state, void *us
 
 void dsme_play_vibra(const char *event_name)
 {
-
     if (playing_event_id) {
         /* We already are playing an event, don't start new one */
         dsme_log(LOG_DEBUG, PFIX"Play already going, skip");
@@ -140,8 +139,8 @@ void dsme_play_vibra(const char *event_name)
     dsme_log(LOG_DEBUG, PFIX"PLAY(%s, %d)", event_name, playing_event_id);
 }
 
-void dsme_ini_vibrafeedback(void) {
-
+void dsme_ini_vibrafeedback(void)
+{
     DBusError err = DBUS_ERROR_INIT;
 
     dsme_log(LOG_DEBUG, PFIX"%s()", __FUNCTION__);
@@ -150,12 +149,13 @@ void dsme_ini_vibrafeedback(void) {
                  err.name, err.message);
         goto cleanup;
     }
+
 cleanup:
     dbus_error_free(&err);
 }
 
-void dsme_fini_vibrafeedback(void) {
-
+void dsme_fini_vibrafeedback(void)
+{
     dsme_log(LOG_DEBUG, PFIX"%s()", __FUNCTION__);
     destroy_ngf_client();
     if (dbus_connection) {

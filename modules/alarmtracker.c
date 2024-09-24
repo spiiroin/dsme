@@ -286,7 +286,6 @@ alarmtracker_alarmtime_save(void)
     alarmtracker_alarmtime_cached = alarmtracker_alarmtime_current;
 
 EXIT:
-
     if( fh )
         fclose(fh);
 
@@ -530,7 +529,6 @@ alarmtracker_dbus_next_bootup_event_cb(const DsmeDbusMessage *ind)
     time_t alarmtime = dsme_dbus_message_get_int(ind);
 
     alarmtracker_alarmtime_update(alarmtime);
-
 }
 
 /** Array of dbus signal handlers to install */

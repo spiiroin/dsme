@@ -284,7 +284,6 @@ systembus_watcher_start(void)
         dsme_log(LOG_ERR, ME"SystemBus watch: adding io watch failed");
 
 cleanup:
-
     if( !systembus_watcher_id )
         systembus_watcher_stop();
 
