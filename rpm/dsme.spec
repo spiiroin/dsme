@@ -3,7 +3,7 @@ Summary:    Device State Management Entity
 Version:    0.84.2
 Release:    0
 License:    LGPLv2+
-URL:        https://git.sailfishos.org/mer-core/dsme
+URL:        https://github.com/sailfishos/dsme
 Source0:    %{name}-%{version}.tar.gz
 Source1:    dsme.service.in
 Source2:    dsme-rpmlintrc
@@ -62,7 +62,6 @@ test -e Makefile || (%configure --disable-static \
 %make_build _LIBDIR=%{_libdir}
 
 %install
-rm -rf %{buildroot}
 %make_install _LIBDIR=%{_libdir}
 
 install -d %{buildroot}%{_sysconfdir}/dsme/
@@ -88,7 +87,6 @@ systemctl reload-or-try-restart %{name}.service || :
 systemctl daemon-reload || :
 
 %files
-%defattr(-,root,root,-)
 %dir %{_libdir}/dsme
 %{_libdir}/dsme/*
 %attr(755,root,root)%{_sbindir}/*
@@ -103,11 +101,9 @@ systemctl daemon-reload || :
 /usr/lib/startup/preinit/set_system_time
 
 %files plugin-devel
-%defattr(-,root,root,-)
 %dir %{_includedir}/dsme-plugin
 %{_includedir}/dsme-plugin/*.h
 %{_libdir}/pkgconfig/dsme-plugin.pc
 
 %files tests
-%defattr(-,root,root,-)
 /opt/tests/dsme-tests
