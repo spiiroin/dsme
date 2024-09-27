@@ -53,10 +53,10 @@ static void ngf_callback(NgfClient *client, uint32_t id, NgfEventState state, vo
 
 static void create_ngf_client(void)
 {
-    //dsme_log(LOG_DEBUG, PFIX"%s()", __FUNCTION__);
+    //dsme_log(LOG_DEBUG, PFIX "%s()", __FUNCTION__);
 
     if (ngf_client) {
-        dsme_log(LOG_DEBUG, PFIX"%s() %s", __FUNCTION__, "We already have a connection");
+        dsme_log(LOG_DEBUG, PFIX "%s() %s", __FUNCTION__, "We already have a connection");
         return;
     }
 
@@ -64,12 +64,12 @@ static void create_ngf_client(void)
         dsme_ini_vibrafeedback();
     }
     if (!dbus_connection) {
-        dsme_log(LOG_WARNING, PFIX"No dbus connection. Can't connect to ngf");
+        dsme_log(LOG_WARNING, PFIX "No dbus connection. Can't connect to ngf");
         return;
     }
 
     if ((ngf_client = ngf_client_create(NGF_TRANSPORT_DBUS, dbus_connection)) == NULL) {
-        dsme_log(LOG_ERR, PFIX"Can't create ngf client");
+        dsme_log(LOG_ERR, PFIX "Can't create ngf client");
     } else {
         ngf_client_set_callback(ngf_client, ngf_callback, NULL);
     }
@@ -77,7 +77,7 @@ static void create_ngf_client(void)
 
 static void destroy_ngf_client(void)
 {
-    //dsme_log(LOG_DEBUG, PFIX"%s()", __FUNCTION__);
+    //dsme_log(LOG_DEBUG, PFIX "%s()", __FUNCTION__);
     if (ngf_client) {
         ngf_client_destroy(ngf_client);
         ngf_client = NULL;
@@ -96,7 +96,7 @@ ngf_callback(NgfClient *client, uint32_t event_id, NgfEventState state, void *us
     switch (state) {
         case NGF_EVENT_FAILED:
             state_name = "Failed";
-            dsme_log(LOG_ERR, PFIX"Failed to play id %d", event_id);
+            dsme_log(LOG_ERR, PFIX "Failed to play id %d", event_id);
             play_done = true;
             break;
         case NGF_EVENT_COMPLETED:
@@ -112,7 +112,7 @@ ngf_callback(NgfClient *client, uint32_t event_id, NgfEventState state, void *us
             play_done = true;
             break;
     }
-    dsme_log(LOG_DEBUG, PFIX"%s(%s, %d)", __FUNCTION__, state_name, event_id);
+    dsme_log(LOG_DEBUG, PFIX "%s(%s, %d)", __FUNCTION__, state_name, event_id);
 
     if (play_done) {
         playing_event_id = 0;
@@ -123,7 +123,7 @@ void dsme_play_vibra(const char *event_name)
 {
     if (playing_event_id) {
         /* We already are playing an event, don't start new one */
-        dsme_log(LOG_DEBUG, PFIX"Play already going, skip");
+        dsme_log(LOG_DEBUG, PFIX "Play already going, skip");
         return;
     }
 
@@ -131,21 +131,21 @@ void dsme_play_vibra(const char *event_name)
         create_ngf_client();
     }
     if (!ngf_client) {
-        dsme_log(LOG_ERR, PFIX"Can't play vibra. We don't have ngf client");
+        dsme_log(LOG_ERR, PFIX "Can't play vibra. We don't have ngf client");
         return;
     }
 
     playing_event_id = ngf_client_play_event (ngf_client, event_name, NULL);
-    dsme_log(LOG_DEBUG, PFIX"PLAY(%s, %d)", event_name, playing_event_id);
+    dsme_log(LOG_DEBUG, PFIX "PLAY(%s, %d)", event_name, playing_event_id);
 }
 
 void dsme_ini_vibrafeedback(void)
 {
     DBusError err = DBUS_ERROR_INIT;
 
-    dsme_log(LOG_DEBUG, PFIX"%s()", __FUNCTION__);
+    dsme_log(LOG_DEBUG, PFIX "%s()", __FUNCTION__);
     if (!(dbus_connection = dsme_dbus_get_connection(&err))) {
-        dsme_log(LOG_WARNING, PFIX"can't connect to systembus: %s: %s",
+        dsme_log(LOG_WARNING, PFIX "can't connect to systembus: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
@@ -156,7 +156,7 @@ cleanup:
 
 void dsme_fini_vibrafeedback(void)
 {
-    dsme_log(LOG_DEBUG, PFIX"%s()", __FUNCTION__);
+    dsme_log(LOG_DEBUG, PFIX "%s()", __FUNCTION__);
     destroy_ngf_client();
     if (dbus_connection) {
         dbus_connection_unref(dbus_connection);

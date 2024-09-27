@@ -202,7 +202,7 @@ alarmtracker_alarmtime_schedule_save(void)
     msg.req.pid     = 0;
     msg.data        = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"scheduled status save");
+    dsme_log(LOG_DEBUG, PFIX "scheduled status save");
     modules_broadcast_internally(&msg);
 }
 
@@ -219,19 +219,19 @@ alarmtracker_alarmtime_load(void)
     if( !(fh = fopen(ALARM_STATE_FILE, "r")) ) {
         /* Silently ignore non-existing cache file */
         if( errno != ENOENT )
-            dsme_log(LOG_WARNING, PFIX"%s: can't open: %m",
+            dsme_log(LOG_WARNING, PFIX "%s: can't open: %m",
                      ALARM_STATE_FILE);
         goto EXIT;
     }
 
     long data = 0;
     if( errno = 0, fscanf(fh, "%ld", &data) != 1 ) {
-        dsme_log(LOG_DEBUG, PFIX"%s: read error: %m", ALARM_STATE_FILE);
+        dsme_log(LOG_DEBUG, PFIX "%s: read error: %m", ALARM_STATE_FILE);
         goto EXIT;
     }
 
     alarmtracker_alarmtime_cached  = (time_t)data;
-    dsme_log(LOG_DEBUG, PFIX"Alarm queue head restored: %ld",
+    dsme_log(LOG_DEBUG, PFIX "Alarm queue head restored: %ld",
              alarmtracker_alarmtime_current);
 
 EXIT:
@@ -248,28 +248,28 @@ alarmtracker_alarmtime_save(void)
 {
     FILE *fh = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"execute status save");
+    dsme_log(LOG_DEBUG, PFIX "execute status save");
 
     if( alarmtracker_alarmtime_cached == alarmtracker_alarmtime_current ) {
-        dsme_log(LOG_DEBUG, PFIX"%s is up to date",
+        dsme_log(LOG_DEBUG, PFIX "%s is up to date",
                  ALARM_STATE_FILE);
         goto EXIT;
     }
 
     if( !(fh = fopen(ALARM_STATE_FILE_TMP, "w+")) ) {
-        dsme_log(LOG_WARNING, PFIX"%s: can't open: %m",
+        dsme_log(LOG_WARNING, PFIX "%s: can't open: %m",
                  ALARM_STATE_FILE_TMP);
         goto EXIT;
     }
 
     if( fprintf(fh, "%ld\n", alarmtracker_alarmtime_current) < 0) {
-        dsme_log(LOG_WARNING, PFIX"%s: can't write: %m",
+        dsme_log(LOG_WARNING, PFIX "%s: can't write: %m",
                  ALARM_STATE_FILE_TMP);
         goto EXIT;
     }
 
     if( fflush(fh) == EOF ) {
-        dsme_log(LOG_WARNING, PFIX"%s: can't flush: %m",
+        dsme_log(LOG_WARNING, PFIX "%s: can't flush: %m",
                  ALARM_STATE_FILE_TMP);
         goto EXIT;
     }
@@ -277,12 +277,12 @@ alarmtracker_alarmtime_save(void)
     fclose(fh), fh = 0;
 
     if( rename(ALARM_STATE_FILE_TMP, ALARM_STATE_FILE) == -1 ) {
-        dsme_log(LOG_WARNING, PFIX"%s: can't update: %m",
+        dsme_log(LOG_WARNING, PFIX "%s: can't update: %m",
                  ALARM_STATE_FILE);
         goto EXIT;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"%s updated", ALARM_STATE_FILE);
+    dsme_log(LOG_DEBUG, PFIX "%s updated", ALARM_STATE_FILE);
     alarmtracker_alarmtime_cached = alarmtracker_alarmtime_current;
 
 EXIT:
@@ -299,7 +299,7 @@ alarmtracker_alarmtime_update(time_t alarmtime)
 {
     if( alarmtracker_alarmtime_current != alarmtime ) {
         char prev[32], curr[32];
-        dsme_log(LOG_DEBUG, PFIX"alarmtime: %s-> %s",
+        dsme_log(LOG_DEBUG, PFIX "alarmtime: %s-> %s",
                  alarmtime_repr(alarmtracker_alarmtime_current,
                                 prev, sizeof prev),
                  alarmtime_repr(alarmtime, curr, sizeof curr));
@@ -359,7 +359,7 @@ alarmtracker_alarmstate_broadcast(void)
 
         msg.alarm_set = alarmtracker_alarmstate_current;
 
-        dsme_log(LOG_DEBUG, PFIX"broadcasting alarm state: %s",
+        dsme_log(LOG_DEBUG, PFIX "broadcasting alarm state: %s",
                  alarmtracker_alarmstate_current ? "set" : "not set");
 
         /* inform state module about changed alarm state */
@@ -384,7 +384,7 @@ alarmtracker_alarmstate_schedule_evaluate(int delay)
         alarmtracker_alarmstate_evaluate_id =
             dsme_create_timer_seconds(delay,
                                       alarmtracker_alarmstate_evaluate_cb, 0);
-        dsme_log(LOG_DEBUG, PFIX"evaluate again in %d s", delay);
+        dsme_log(LOG_DEBUG, PFIX "evaluate again in %d s", delay);
     }
 }
 
@@ -396,7 +396,7 @@ alarmtracker_alarmstate_cancel_evaluate(void)
     if( alarmtracker_alarmstate_evaluate_id ) {
         dsme_destroy_timer(alarmtracker_alarmstate_evaluate_id),
             alarmtracker_alarmstate_evaluate_id = 0;
-        dsme_log(LOG_DEBUG, PFIX"re-evaluate canceled");
+        dsme_log(LOG_DEBUG, PFIX "re-evaluate canceled");
     }
 }
 
@@ -411,7 +411,7 @@ alarmtracker_alarmstate_evaluate_cb(void *aptr)
 {
     (void)aptr;
 
-    dsme_log(LOG_DEBUG, PFIX"re-evaluate triggered");
+    dsme_log(LOG_DEBUG, PFIX "re-evaluate triggered");
 
     alarmtracker_alarmstate_evaluate_id = 0;
 
@@ -464,7 +464,7 @@ alarmtracker_alarmstate_evaluate(void)
     }
 
     if( alarmtracker_alarmstate_current != alarm_set ) {
-        dsme_log(LOG_DEBUG, PFIX"alarmstate: %d -> %d",
+        dsme_log(LOG_DEBUG, PFIX "alarmstate: %d -> %d",
                  alarmtracker_alarmstate_current,
                  alarm_set);
         alarmtracker_alarmstate_current = alarm_set;
@@ -495,7 +495,7 @@ static void
 alarmtracker_dsmestate_update(dsme_state_t state)
 {
     if( alarmtracker_dsmestate_current != state ) {
-        dsme_log(LOG_DEBUG, PFIX"dsme_state: %s -> %s",
+        dsme_log(LOG_DEBUG, PFIX "dsme_state: %s -> %s",
                  dsme_state_repr(alarmtracker_dsmestate_current),
                  dsme_state_repr(state));
         alarmtracker_dsmestate_current = state;
@@ -565,13 +565,13 @@ DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
 }
 
 DSME_HANDLER(DSM_MSGTYPE_STATE_QUERY, client, req)
@@ -608,7 +608,7 @@ module_init(module_t *handle)
      * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
      */
 
-    dsme_log(LOG_DEBUG, PFIX"loading plugin");
+    dsme_log(LOG_DEBUG, PFIX "loading plugin");
 
     alarmtracker_alarmtime_load();
     alarmtracker_dsmestate_query();
@@ -619,7 +619,7 @@ module_init(module_t *handle)
 void
 module_fini(void)
 {
-    dsme_log(LOG_DEBUG, PFIX"unloading plugin");
+    dsme_log(LOG_DEBUG, PFIX "unloading plugin");
 
     dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
     alarmtracker_alarmtime_save();

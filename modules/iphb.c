@@ -320,7 +320,7 @@ static void log_time_t(int lev, const char *title, time_t t, time_t now)
     char left[32];
 
     if( t <= 0 ) {
-	dsme_log(lev, PFIX"%s: not set", title);
+	dsme_log(lev, PFIX "%s: not set", title);
 	goto cleanup;
     }
 
@@ -331,7 +331,7 @@ static void log_time_t(int lev, const char *title, time_t t, time_t now)
     memset(&tm, 0, sizeof tm);
     gmtime_r(&t, &tm);
 
-    dsme_log(lev, PFIX"%s: %04d-%02d-%02d %02d:%02d:%02d%s",
+    dsme_log(lev, PFIX "%s: %04d-%02d-%02d %02d:%02d:%02d%s",
 	     title,
 	     tm.tm_year + 1900,
 	     tm.tm_mon + 1,
@@ -357,7 +357,7 @@ static void hwwd_feeder_sync(void)
       static bool already_logged = false;
       if( !already_logged ) {
         already_logged = true;
-        dsme_log(LOG_WARNING, "valgrind mode: parent SIGHUP skipped");
+        dsme_log(LOG_WARNING, PFIX "valgrind mode: parent SIGHUP skipped");
       }
     }
     else {
@@ -399,17 +399,17 @@ static void wakelock_write(const char *path, const char *data, int ignore)
     int file;
 
     if( (file = TEMP_FAILURE_RETRY(open(path, O_WRONLY))) == -1 ) {
-	dsme_log(LOG_WARNING, PFIX"%s: open: %m", path);
+	dsme_log(LOG_WARNING, PFIX "%s: open: %m", path);
     }
     else {
 	int size = strlen(data);
 	errno = 0;
 	if( TEMP_FAILURE_RETRY(write(file, data, size)) != size ) {
 	    if( errno != ignore )
-		dsme_log(LOG_WARNING, PFIX"%s: write: %m", path);
+		dsme_log(LOG_WARNING, PFIX "%s: write: %m", path);
 	}
 	if( TEMP_FAILURE_RETRY(close(file)) == -1 ) {
-	    dsme_log(LOG_WARNING, PFIX"%s: close: %m", path);
+	    dsme_log(LOG_WARNING, PFIX "%s: close: %m", path);
 	}
     }
 }
@@ -422,7 +422,7 @@ static void wakelock_write(const char *path, const char *data, int ignore)
  */
 static void wakelock_lock(const char *name, int ms)
 {
-    dsme_log(LOG_DEBUG, PFIX"LOCK: %s %d", name, ms);
+    dsme_log(LOG_DEBUG, PFIX "LOCK: %s %d", name, ms);
     if( wakelock_supported() ) {
 	char tmp[256];
 	int rc = -1;
@@ -446,7 +446,7 @@ static void wakelock_lock(const char *name, int ms)
  */
 static void wakelock_unlock(const char *name)
 {
-    dsme_log(LOG_DEBUG, PFIX"UNLK: %s", name);
+    dsme_log(LOG_DEBUG, PFIX "UNLK: %s", name);
     if( wakelock_supported() ) {
 	char tmp[256];
 	int rc = snprintf(tmp, sizeof tmp, "%s\n", name);
@@ -502,7 +502,7 @@ xdbus_parse_name_owner_rsp(DBusMessage *rsp)
 			       DBUS_TYPE_STRING, &dta,
 			       DBUS_TYPE_INVALID) ) {
 	if( strcmp(err.name, DBUS_ERROR_NAME_HAS_NO_OWNER) ) {
-	    dsme_log(LOG_WARNING, PFIX"%s: %s", err.name, err.message);
+	    dsme_log(LOG_WARNING, PFIX "%s: %s", err.name, err.message);
 	}
 	goto cleanup;
     }
@@ -526,7 +526,7 @@ static void xmce_set_runstate(bool running)
 {
     if( mce_is_running != running ) {
 	mce_is_running = running;
-	dsme_log(LOG_INFO, PFIX"mce state -> %s",
+	dsme_log(LOG_INFO, PFIX "mce state -> %s",
 		 running ? "running" : "terminated");
     }
 }
@@ -624,7 +624,7 @@ static bool xmce_cpu_keepalive_wakeup(void)
     dbus_message_set_no_reply(req, true);
 
     if( !dbus_connection_send(systembus, req, 0) ) {
-	dsme_log(LOG_WARNING, PFIX"failed to send %s.%s", MCE_REQUEST_IF,
+	dsme_log(LOG_WARNING, PFIX "failed to send %s.%s", MCE_REQUEST_IF,
 		 MCE_CPU_KEEPALIVE_WAKEUP_REQ);
 	goto cleanup;
     }
@@ -683,7 +683,7 @@ xmce_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *user_data)
 			       DBUS_TYPE_STRING, &prev,
 			       DBUS_TYPE_STRING, &curr,
 			       DBUS_TYPE_INVALID) ) {
-	dsme_log(LOG_WARNING, PFIX"%s: %s", err.name, err.message);
+	dsme_log(LOG_WARNING, PFIX "%s: %s", err.name, err.message);
 	goto cleanup;
     }
 
@@ -756,12 +756,12 @@ static bool linux_alarm_init(void)
     if( fd == -1 ) {
 	/* Having alarm via timerfd is just one option - do not
 	 * complain by default if kernel does not support it */
-	dsme_log(LOG_INFO, PFIX"%s: %m", "timerfd_create");
+	dsme_log(LOG_INFO, PFIX "%s: %m", "timerfd_create");
 	goto cleanup;
     }
 
     if( !epollfd_add_fd(fd, &linux_alarm_timerfd)) {
-	dsme_log(LOG_WARNING, PFIX"failed to add timer fd to epoll set");
+	dsme_log(LOG_WARNING, PFIX "failed to add timer fd to epoll set");
 	goto cleanup;
     }
 
@@ -799,7 +799,7 @@ static void linux_alarm_clear(void)
     struct itimerspec it = {{0,0}, {0,0}};
 
     if( timerfd_settime(linux_alarm_timerfd, TFD_TIMER_ABSTIME, &it, 0) == -1 )
-	dsme_log(LOG_ERR, PFIX"timerfd %s: %m", "timerfd_settime");
+	dsme_log(LOG_ERR, PFIX "timerfd %s: %m", "timerfd_settime");
 
 cleanup:
     return;
@@ -817,7 +817,7 @@ static void linux_alarm_set(time_t delay)
     struct timespec now = { .tv_sec = 0, .tv_nsec = 0 };
 
     if( clock_gettime(linux_alarm_clockid, &now) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"timerfd %s: %m", "clock_gettime");
+	dsme_log(LOG_ERR, PFIX "timerfd %s: %m", "clock_gettime");
 	goto cleanup;
     }
 
@@ -827,12 +827,12 @@ static void linux_alarm_set(time_t delay)
     it.it_value.tv_sec += delay;
 
     if( timerfd_settime(linux_alarm_timerfd, TFD_TIMER_ABSTIME, &it, 0) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"timerfd %s: %m", "timerfd_settime");
+	dsme_log(LOG_ERR, PFIX "timerfd %s: %m", "timerfd_settime");
 	goto cleanup;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"timerfd time  : %s", t_repr(now.tv_sec, tmp, sizeof tmp));
-    dsme_log(LOG_DEBUG, PFIX"timerfd alarm : %s", t_repr(it.it_value.tv_sec, tmp, sizeof tmp));
+    dsme_log(LOG_DEBUG, PFIX "timerfd time  : %s", t_repr(now.tv_sec, tmp, sizeof tmp));
+    dsme_log(LOG_DEBUG, PFIX "timerfd alarm : %s", t_repr(it.it_value.tv_sec, tmp, sizeof tmp));
 
 cleanup:
     return;
@@ -855,7 +855,7 @@ static bool linux_alarm_handle_input(void)
 	    goto cleanup;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"timerfd alarm: triggered");
+    dsme_log(LOG_DEBUG, PFIX "timerfd alarm: triggered");
     res = true;
 
 cleanup:
@@ -876,7 +876,7 @@ static bool android_alarm_init(void)
     if( (android_alarm_fd = open(android_alarm_path, O_RDWR)) == -1 ) {
 	/* Using /dev/alarm is optional; do not complain if it is missing */
 	if( errno != ENOENT )
-	    dsme_log(LOG_WARNING, PFIX"%s: %m", android_alarm_path);
+	    dsme_log(LOG_WARNING, PFIX "%s: %m", android_alarm_path);
     }
 
 cleanup:
@@ -908,7 +908,7 @@ static void android_alarm_set(time_t delay)
 
     int get_time = ANDROID_ALARM_GET_TIME(ANDROID_ALARM_RTC);
     if( ioctl(android_alarm_fd, get_time, &now) != 0 ) {
-	dsme_log(LOG_ERR, PFIX"%s: %m", "ANDROID_ALARM_TIME_GET");
+	dsme_log(LOG_ERR, PFIX "%s: %m", "ANDROID_ALARM_TIME_GET");
 	goto cleanup;
     }
 
@@ -917,14 +917,14 @@ static void android_alarm_set(time_t delay)
 
     int set_alarm = ANDROID_ALARM_SET(ANDROID_ALARM_RTC_WAKEUP);
     if( ioctl(android_alarm_fd, set_alarm, &wup) != 0 ) {
-	dsme_log(LOG_ERR, PFIX"%s: %m", "ANDROID_ALARM_SET");
+	dsme_log(LOG_ERR, PFIX "%s: %m", "ANDROID_ALARM_SET");
 	goto cleanup;
     }
 
     if( android_alarm_prev != wup.tv_sec ) {
 	android_alarm_prev = wup.tv_sec;
-	dsme_log(LOG_INFO, PFIX"android time:  %s", t_repr(now.tv_sec, tmp, sizeof tmp));
-	dsme_log(LOG_INFO, PFIX"android alarm: %s", t_repr(wup.tv_sec, tmp, sizeof tmp));
+	dsme_log(LOG_INFO, PFIX "android time:  %s", t_repr(now.tv_sec, tmp, sizeof tmp));
+	dsme_log(LOG_INFO, PFIX "android alarm: %s", t_repr(wup.tv_sec, tmp, sizeof tmp));
     }
 
 cleanup:
@@ -941,13 +941,13 @@ static void android_alarm_clear(void)
     int cmd = ANDROID_ALARM_CLEAR(ANDROID_ALARM_RTC_WAKEUP);
 
     if( ioctl(android_alarm_fd, cmd) != 0 ) {
-	dsme_log(LOG_ERR, PFIX"%s: %m", "ANDROID_ALARM_CLEAR");
+	dsme_log(LOG_ERR, PFIX "%s: %m", "ANDROID_ALARM_CLEAR");
 	goto cleanup;
     }
 
     if( android_alarm_prev != -1 ) {
 	android_alarm_prev = -1;
-	dsme_log(LOG_INFO, PFIX"android alarm wakeup removed");
+	dsme_log(LOG_INFO, PFIX "android alarm wakeup removed");
     }
 
 cleanup:
@@ -995,14 +995,14 @@ static time_t deltatime_get(void)
 
     if( (fd = open(DELTATIME_CACHE_FILE, O_RDONLY)) == -1 ) {
         if( errno != ENOENT )
-            dsme_log(LOG_ERR, PFIX"%s: %s: %m", DELTATIME_CACHE_FILE, "open");
+            dsme_log(LOG_ERR, PFIX "%s: %s: %m", DELTATIME_CACHE_FILE, "open");
         goto cleanup;
     }
 
     char tmp[32];
     int len = read(fd, tmp, sizeof tmp - 1);
     if( len < 0 ) {
-        dsme_log(LOG_ERR, PFIX"%s: %s: %m", DELTATIME_CACHE_FILE, "read");
+        dsme_log(LOG_ERR, PFIX "%s: %s: %m", DELTATIME_CACHE_FILE, "read");
         goto cleanup;
     }
 
@@ -1010,7 +1010,7 @@ static time_t deltatime_get(void)
 
     deltatime_cached = strtol(tmp, 0, 0);
 
-    dsme_log(LOG_INFO, PFIX"rtc delta is %ld", (long)deltatime_cached);
+    dsme_log(LOG_INFO, PFIX "rtc delta is %ld", (long)deltatime_cached);
 
 cleanup:
     if( fd != -1 ) close(fd);
@@ -1026,11 +1026,11 @@ static void deltatime_set(time_t delta)
 
     deltatime_cached = delta;
 
-    dsme_log(LOG_WARNING, PFIX"rtc delta to %ld", (long)deltatime_cached);
+    dsme_log(LOG_WARNING, PFIX "rtc delta to %ld", (long)deltatime_cached);
 
     fd = open(DELTATIME_CACHE_FILE, O_WRONLY|O_CREAT|O_TRUNC, 0644);
     if( fd == -1 ) {
-        dsme_log(LOG_ERR, PFIX"%s: %s: %m", DELTATIME_CACHE_FILE, "open");
+        dsme_log(LOG_ERR, PFIX "%s: %s: %m", DELTATIME_CACHE_FILE, "open");
         goto cleanup;
     }
 
@@ -1038,7 +1038,7 @@ static void deltatime_set(time_t delta)
     int len = snprintf(tmp, sizeof tmp, "%ld\n", (long)delta);
 
     if( len > 0 && len < sizeof tmp && write(fd, tmp, len) == -1 ) {
-        dsme_log(LOG_ERR, PFIX"%s: %s: %m", DELTATIME_CACHE_FILE, "write");
+        dsme_log(LOG_ERR, PFIX "%s: %s: %m", DELTATIME_CACHE_FILE, "write");
         goto cleanup;
     }
 
@@ -1098,7 +1098,7 @@ static gboolean rtc_need_ended_cb(gpointer aptr)
 {
     (void)aptr;
     rtc_need_ended_id = 0;
-    dsme_log(LOG_INFO, PFIX"rtc no longer needed");
+    dsme_log(LOG_INFO, PFIX "rtc no longer needed");
     rtc_detach();
     return G_SOURCE_REMOVE;
 }
@@ -1111,7 +1111,7 @@ static gboolean rtc_need_ended_cb(gpointer aptr)
 static void rtc_set_need(rtc_need_t need)
 {
     if( rtc_need != need ) {
-        dsme_log(LOG_INFO, PFIX"rtc need: %s -> %s",
+        dsme_log(LOG_INFO, PFIX "rtc need: %s -> %s",
                  rtc_need_repr(rtc_need),
                  rtc_need_repr(need));
         rtc_need = need;
@@ -1246,11 +1246,11 @@ static bool rtc_get_time_raw(struct rtc_time *tod)
     memset(tod, 0, sizeof *tod);
 
     if( ioctl(rtc_fd, RTC_RD_TIME, tod) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"%s: %s: %m", rtc_path, "RTC_RD_TIME");
+	dsme_log(LOG_ERR, PFIX "%s: %s: %m", rtc_path, "RTC_RD_TIME");
 	goto cleanup;
     }
 
-    rtc_log_time(LOG_DEBUG, PFIX"rtc time is: ", tod);
+    rtc_log_time(LOG_DEBUG, PFIX "rtc time is: ", tod);
 
     result = true;
 
@@ -1296,11 +1296,11 @@ static bool rtc_set_time_raw(struct rtc_time *tod)
 	/* In many devices the rtc time of day can't be changed
 	 * and a failure to do just activates the "deltatime"
 	 * workaround -> do not complain in default verbosity. */
-	dsme_log(LOG_INFO, PFIX"%s: %s: %m", rtc_path, "RTC_SET_TIME");
+	dsme_log(LOG_INFO, PFIX "%s: %s: %m", rtc_path, "RTC_SET_TIME");
 	goto cleanup;
     }
 
-    rtc_log_time(LOG_INFO, PFIX"set rtc time to: ", tod);
+    rtc_log_time(LOG_INFO, PFIX "set rtc time to: ", tod);
 
     result = true;
 
@@ -1417,12 +1417,12 @@ static bool rtc_set_alarm_raw(const struct rtc_time *tod, bool enabled)
     }
 
     if( enabled )
-	rtc_log_time(LOG_INFO, PFIX"set rtc wakeup alarm at ", tod);
+	rtc_log_time(LOG_INFO, PFIX "set rtc wakeup alarm at ", tod);
     else if( prev.enabled )
-	dsme_log(LOG_INFO, PFIX"disable rtc wakeup alarm");
+	dsme_log(LOG_INFO, PFIX "disable rtc wakeup alarm");
 
     if( ioctl(rtc_fd, RTC_WKALM_SET, &alrm) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"%s: %s: %m", rtc_path, "RTC_WKALM_SET");
+	dsme_log(LOG_ERR, PFIX "%s: %s: %m", rtc_path, "RTC_WKALM_SET");
 	goto cleanup;
     }
 
@@ -1481,9 +1481,9 @@ static bool rtc_set_alarm_after(time_t delay)
     struct tm tm;
     char tmp[TIMESTAMP_MAX];
 
-    dsme_log(LOG_INFO, PFIX"wakeup delay %d", (int)delay);
-    dsme_log(LOG_INFO, PFIX"system : %s", t_repr(sys, tmp, sizeof tmp));
-    dsme_log(LOG_INFO, PFIX"alarm  : %s", t_repr(alm, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "wakeup delay %d", (int)delay);
+    dsme_log(LOG_INFO, PFIX "system : %s", t_repr(sys, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "alarm  : %s", t_repr(alm, tmp, sizeof tmp));
 
     if( !rtc_attach() )
 	goto cleanup;
@@ -1540,12 +1540,12 @@ static void rtc_set_alarm_powerup(void)
 
     /* encrypted home implies: act dead alarms are not supported */
     if( rtc && dsme_home_is_encrypted() ) {
-	dsme_log(LOG_WARNING, PFIX"home encrypted; skip wakeup alarm");
+	dsme_log(LOG_WARNING, PFIX "home encrypted; skip wakeup alarm");
 	rtc = 0;
     }
 
     /* always log the state we leave rtc wakeup on dsme exit */
-    log_time_t(LOG_WARNING, PFIX"powerup via RTC", rtc ? sys+rtc : 0, sys);
+    log_time_t(LOG_WARNING, PFIX "powerup via RTC", rtc ? sys+rtc : 0, sys);
 
     if( rtc_get_time_tm(&tm) != (time_t)-1 ) {
       	tm.tm_sec += rtc;
@@ -1565,10 +1565,10 @@ static bool rtc_handle_input(void)
     bool result = false;
     long status = 0;
 
-    dsme_log(LOG_INFO, PFIX"wakeup via RTC alarm");
+    dsme_log(LOG_INFO, PFIX "wakeup via RTC alarm");
 
     if( rtc_fd == -1 ) {
-	dsme_log(LOG_WARNING, PFIX"failed to read %s: %s",  rtc_path,
+	dsme_log(LOG_WARNING, PFIX "failed to read %s: %s",  rtc_path,
 		"the device node is not opened");
 	goto cleanup;
     }
@@ -1578,7 +1578,7 @@ static bool rtc_handle_input(void)
     errno = 0;
 
     if( read(rtc_fd, &status, sizeof status) != sizeof status ) {
-	dsme_log(LOG_WARNING, PFIX"failed to read %s: %m",  rtc_path);
+	dsme_log(LOG_WARNING, PFIX "failed to read %s: %m",  rtc_path);
 	goto cleanup;
     }
 
@@ -1591,13 +1591,13 @@ static bool rtc_handle_input(void)
 	struct timeval tv;
 
 	if( deltatime_is_needed )
-	    dsme_log(LOG_INFO, PFIX"rtc not writable; not using it as system time source");
+	    dsme_log(LOG_INFO, PFIX "rtc not writable; not using it as system time source");
 	else if( !rtc_get_time_tv(&tv) )
-	    dsme_log(LOG_WARNING, PFIX"failed to read rtc time");
+	    dsme_log(LOG_WARNING, PFIX "failed to read rtc time");
 	else if( settimeofday(&tv, 0) == -1 )
-	    dsme_log(LOG_WARNING, PFIX"failed to set system time");
+	    dsme_log(LOG_WARNING, PFIX "failed to set system time");
 	else
-	    dsme_log(LOG_INFO, PFIX"system time set from rtc");
+	    dsme_log(LOG_INFO, PFIX "system time set from rtc");
 
 	/* Keep the update interrupts active for few more rounds to
 	 * make sure we get stable rtc delta statistics */
@@ -1611,7 +1611,7 @@ static bool rtc_handle_input(void)
 
 	if( --deltatime_updates_todo == 0 ) {
 	    if( ioctl(rtc_fd, RTC_UIE_OFF, 0) == -1 )
-		dsme_log(LOG_WARNING, PFIX"failed to disable update interrupts");
+		dsme_log(LOG_WARNING, PFIX "failed to disable update interrupts");
             rtc_remove_need(RTC_NEED_UPDATES);
 	}
     }
@@ -1638,7 +1638,7 @@ static void rtc_detach(void)
 	epollfd_remove_fd(rtc_fd);
 	close(rtc_fd), rtc_fd = -1;
 
-	dsme_log(LOG_INFO, PFIX"closed %s", rtc_path);
+	dsme_log(LOG_INFO, PFIX "closed %s", rtc_path);
     }
 }
 
@@ -1656,18 +1656,18 @@ static bool rtc_attach(void)
 	goto cleanup;
 
     if( (fd = open(rtc_path, O_RDONLY)) == -1 ) {
-	dsme_log(LOG_WARNING, PFIX"failed to open %s: %m", rtc_path);
+	dsme_log(LOG_WARNING, PFIX "failed to open %s: %m", rtc_path);
 	goto cleanup;
     }
 
     if( !epollfd_add_fd(fd, &rtc_fd)) {
-	dsme_log(LOG_WARNING, PFIX"failed to add rtc fd to epoll set");
+	dsme_log(LOG_WARNING, PFIX "failed to add rtc fd to epoll set");
 	goto cleanup;
     }
 
     /* N.B. rtc_xxx utilities can be called after rtc_fd is set */
     rtc_fd = fd, fd = -1;
-    dsme_log(LOG_INFO, PFIX"opened %s", rtc_path);
+    dsme_log(LOG_INFO, PFIX "opened %s", rtc_path);
 
     /* deal with obviously wrong rtc time values */
     if( !systemtime_initialized ) {
@@ -1728,28 +1728,28 @@ static void kernelfd_open(void)
 	     * Not having it just means we are missing one wakeup source to
 	     * synchronize with i.e. no need to create noise about it on
 	     * default verbosity level */
-	    dsme_log(LOG_INFO, PFIX"kernel does not support iphb wakeups");
+	    dsme_log(LOG_INFO, PFIX "kernel does not support iphb wakeups");
 	}
 	else
-	    dsme_log(LOG_ERR, PFIX"failed to open kernel connection '%s' (%m)",
+	    dsme_log(LOG_ERR, PFIX "failed to open kernel connection '%s' (%m)",
 		     HB_KERNEL_DEVICE);
     }
 
     return;
 
 initialize:
-    dsme_log(LOG_DEBUG, PFIX"opened kernel socket %d to %s, "
+    dsme_log(LOG_DEBUG, PFIX "opened kernel socket %d to %s, "
 	     "wakeup from kernel=%s",
 	     kernelfd,
 	     HB_KERNEL_DEVICE,
 	     msg);
 
     if( write(kernelfd, msg, sizeof msg) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"failed to write kernel message (%m)");
+	dsme_log(LOG_ERR, PFIX "failed to write kernel message (%m)");
 	// TODO: do something clever?
     }
     else if( !epollfd_add_fd(kernelfd, &kernelfd) ) {
-	dsme_log(LOG_ERR, PFIX"failed to add kernel fd to epoll set");
+	dsme_log(LOG_ERR, PFIX "failed to add kernel fd to epoll set");
 	// TODO: do something clever?
     }
 }
@@ -1760,7 +1760,7 @@ static void kernelfd_close(void)
     if( kernelfd != -1 ) {
 	epollfd_remove_fd(kernelfd);
         close(kernelfd);
-        dsme_log(LOG_DEBUG, PFIX"closed kernel socket %d", kernelfd);
+        dsme_log(LOG_DEBUG, PFIX "closed kernel socket %d", kernelfd);
         kernelfd = -1;
     }
 }
@@ -1867,7 +1867,7 @@ static bool client_wakeup(client_t *self, const struct timeval *now)
 
     timersub(now, &self->reqtime, &tv);
 
-    dsme_log(LOG_DEBUG, PFIX"waking up client %s who has slept %ld secs",
+    dsme_log(LOG_DEBUG, PFIX "waking up client %s who has slept %ld secs",
 	     self->pidtxt, (long)tv.tv_sec);
 
     if( client_is_external(self) ) {
@@ -2035,10 +2035,10 @@ static bool client_handle_wait_req(client_t                      *self,
     if( mintime == 0 && maxtime == 0 ) {
 	/* connect/cancel */
         if (!self->pid) {
-            dsme_log(LOG_DEBUG, PFIX"client %s connected", self->pidtxt);
+            dsme_log(LOG_DEBUG, PFIX "client %s connected", self->pidtxt);
         }
 	else {
-            dsme_log(LOG_DEBUG, PFIX"client %s canceled wait", self->pidtxt);
+            dsme_log(LOG_DEBUG, PFIX "client %s canceled wait", self->pidtxt);
             client_woken = true;
         }
 	/* mark as not-started */
@@ -2049,10 +2049,10 @@ static bool client_handle_wait_req(client_t                      *self,
 	mintime = client_adjust_period(mintime);
 
 	if( mintime != req_mintime )
-	    dsme_log(LOG_DEBUG, PFIX"client %s adjusted slot: %d -> %d",
+	    dsme_log(LOG_DEBUG, PFIX "client %s adjusted slot: %d -> %d",
 		     self->pidtxt, req_mintime, mintime);
 
-	dsme_log(LOG_DEBUG, PFIX"client %s wakeup at %d slot",
+	dsme_log(LOG_DEBUG, PFIX "client %s wakeup at %d slot",
 		 self->pidtxt, mintime);
 
 	mintime = maxtime = mintime - (mintime + now->tv_sec) % mintime;
@@ -2066,10 +2066,10 @@ static bool client_handle_wait_req(client_t                      *self,
 	mintime = client_adjust_mintime(mintime, maxtime);
 
 	if( mintime != req_mintime )
-	    dsme_log(LOG_DEBUG, PFIX"client %s adjusted mintime: %d -> %d",
+	    dsme_log(LOG_DEBUG, PFIX "client %s adjusted mintime: %d -> %d",
 		     self->pidtxt, req_mintime, mintime);
 
-	dsme_log(LOG_DEBUG, PFIX"client %s wakeup at %d-%d range",
+	dsme_log(LOG_DEBUG, PFIX "client %s wakeup at %d-%d range",
 		 self->pidtxt, mintime, maxtime);
     }
 
@@ -2084,7 +2084,7 @@ static bool client_handle_wait_req(client_t                      *self,
 	self->wakeup = (req->wakeup != 0);
 
     if( self->wakeup )
-	dsme_log(LOG_DEBUG, PFIX"client %s wakeup flag set", self->pidtxt);
+	dsme_log(LOG_DEBUG, PFIX "client %s wakeup flag set", self->pidtxt);
 
     return client_woken;
 }
@@ -2125,7 +2125,7 @@ static void client_handle_stat_req(client_t *self)
 
     if( send(self->fd, &stats, sizeof stats, flags) != sizeof stats )
     {
-        dsme_log(LOG_ERR, PFIX"failed to send to client %s (%m)",
+        dsme_log(LOG_ERR, PFIX "failed to send to client %s (%m)",
 		 self->pidtxt);
 	// do not drop yet
     }
@@ -2292,7 +2292,7 @@ static void clientlist_rethink_rtc_wakeup(const struct timeval *now)
      * now and then to drive the battery monitoring during suspend */
 #if RTC_MAXIMUM_WAKEUP_TIME
     if( sleeptime < 0 || sleeptime > RTC_MAXIMUM_WAKEUP_TIME ) {
-	dsme_log(LOG_DEBUG, PFIX"truncating sleep: %ld -> %ld seconds",
+	dsme_log(LOG_DEBUG, PFIX "truncating sleep: %ld -> %ld seconds",
 		 (long)sleeptime, (long)RTC_MAXIMUM_WAKEUP_TIME);
 	sleeptime = RTC_MAXIMUM_WAKEUP_TIME;
     }
@@ -2323,7 +2323,7 @@ static gboolean clientlist_handle_wakeup_timeout(gpointer userdata)
 
     wakeup_timer = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"wakeup via normal timer");
+    dsme_log(LOG_DEBUG, PFIX "wakeup via normal timer");
 
     struct timeval   tv_now;
     monotime_get_tv(&tv_now);
@@ -2345,7 +2345,7 @@ static void clientlist_start_wakeup_timeout(const struct timeval *sleep_time)
 
     int ms = sleep_time->tv_sec * 1000 + sleep_time->tv_usec / 1000;
 
-    dsme_log(LOG_DEBUG, PFIX"setting a wakeup in %d ms", ms);
+    dsme_log(LOG_DEBUG, PFIX "setting a wakeup in %d ms", ms);
     wakeup_timer = dsme_create_timer(ms, clientlist_handle_wakeup_timeout, 0);
 }
 
@@ -2424,7 +2424,7 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
     struct timeval tv_to_min;
     char stamp[64];
 
-    dsme_log(LOG_DEBUG, PFIX"check if clients need waking up");
+    dsme_log(LOG_DEBUG, PFIX "check if clients need waking up");
     clientlist_wakeup_clients_cancel();
     clientlist_cancel_wakeup_timeout();
 
@@ -2446,7 +2446,7 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
 	    continue;
 
 	/* mintime passed and maxtime is less than heartbeat away */
-	dsme_log(LOG_DEBUG, PFIX"client %s must be woken up", client->pidtxt);
+	dsme_log(LOG_DEBUG, PFIX "client %s must be woken up", client->pidtxt);
 	must_wake = true;
 	break;
     }
@@ -2457,7 +2457,7 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
 	next = client->next;
 
         if( !client_wait_started(client) ) {
-            dsme_log(LOG_DEBUG, PFIX"client %s not scheduled", client->pidtxt);
+            dsme_log(LOG_DEBUG, PFIX "client %s not scheduled", client->pidtxt);
 	    continue;
         }
 
@@ -2465,7 +2465,7 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
 
 	if( tv_lt(now, &client->mintime) ) {
 	    timersub(&client->mintime, now, &tv_to_min);
-	    dsme_log(LOG_DEBUG, PFIX"client %s min wakeup %s",
+	    dsme_log(LOG_DEBUG, PFIX "client %s min wakeup %s",
 		     client->pidtxt,
 		     time_minus(&tv_to_min, stamp, sizeof stamp));
 
@@ -2481,14 +2481,14 @@ static void clientlist_wakeup_clients_now(const struct timeval *now)
 	}
 	else if( !must_wake && tv_to_max.tv_sec >= DSME_HEARTBEAT_INTERVAL ) {
 	    /* maxtime is at least one heartbeat away */
-	    dsme_log(LOG_DEBUG, PFIX"client %s max wakeup %s",
+	    dsme_log(LOG_DEBUG, PFIX "client %s max wakeup %s",
 		     client->pidtxt,
 		     time_minus(&tv_to_max, stamp, sizeof stamp));
 	}
 	else {
 	    /* due now, wakeup */
 	    if( !client_wakeup(client, now) ) {
-		dsme_log(LOG_ERR, PFIX"failed to send to client %s (%m),"
+		dsme_log(LOG_ERR, PFIX "failed to send to client %s (%m),"
 			 " drop client", client->pidtxt);
 		clientlist_delete_client(client), client = 0;
 	    }
@@ -2562,7 +2562,7 @@ EXIT:
 static void clientlist_wakeup_clients_cancel(void)
 {
     if( clientlist_wakeup_clients_id ) {
-	dsme_log(LOG_DEBUG, PFIX"cancel delayed wakeup checking");
+	dsme_log(LOG_DEBUG, PFIX "cancel delayed wakeup checking");
 	dsme_destroy_timer(clientlist_wakeup_clients_id),
 	    clientlist_wakeup_clients_id = 0;
 	wakelock_unlock(iphb_wakeup);
@@ -2589,7 +2589,7 @@ static void clientlist_wakeup_clients_later(const struct timeval *now)
     (void)now;
 
     if( !clientlist_wakeup_clients_id ) {
-	dsme_log(LOG_DEBUG, PFIX"schedule delayed wakeup checking");
+	dsme_log(LOG_DEBUG, PFIX "schedule delayed wakeup checking");
 	wakelock_lock(iphb_wakeup, -1);
 	clientlist_wakeup_clients_id =
 	    dsme_create_timer(200, clientlist_wakeup_clients_cb, 0);
@@ -2624,7 +2624,7 @@ static void xtimed_alarm_status_cb(const DsmeDbusMessage* ind)
     time_t new_resume  = dsme_dbus_message_get_int(ind);
     time_t sys = time(0);
 
-    dsme_log(LOG_NOTICE, PFIX"alarm state from timed: powerup=%ld, resume=%ld",
+    dsme_log(LOG_NOTICE, PFIX "alarm state from timed: powerup=%ld, resume=%ld",
 	     (long)new_powerup, (long)new_resume);
 
     if( new_powerup < sys || new_powerup >= INT_MAX )
@@ -2655,7 +2655,7 @@ static void xtimed_alarm_status_cb(const DsmeDbusMessage* ind)
  */
 static void xtimed_config_status_cb(const DsmeDbusMessage* ind)
 {
-    dsme_log(LOG_INFO, PFIX"settings change from timed");
+    dsme_log(LOG_INFO, PFIX "settings change from timed");
 
     /* rethink will sync rtc time with system time */
     struct timeval now;
@@ -2674,34 +2674,34 @@ static void xtimed_status_save(void)
   int rc;
 
   if( remove(temp) == -1 && errno != ENOENT ) {
-    dsme_log(LOG_ERR, PFIX"%s: %s: %m", temp, "remove");
+    dsme_log(LOG_ERR, PFIX "%s: %s: %m", temp, "remove");
     goto cleanup;
   }
 
   if( !(file = fopen(temp, "w")) ) {
-    dsme_log(LOG_ERR, PFIX"%s: %s: %m", temp, "open");
+    dsme_log(LOG_ERR, PFIX "%s: %s: %m", temp, "open");
     goto cleanup;
   }
 
   rc = fprintf(file, "%ld %ld\n", (long)alarm_powerup, (long)alarm_resume);
   if( rc < 0 ) {
-    dsme_log(LOG_ERR, PFIX"%s: %s: %m", temp, "write");
+    dsme_log(LOG_ERR, PFIX "%s: %s: %m", temp, "write");
     goto cleanup;
   }
 
   if( fflush(file) == EOF ) {
-    dsme_log(LOG_ERR, PFIX"%s: %s: %m", temp, "flush");
+    dsme_log(LOG_ERR, PFIX "%s: %s: %m", temp, "flush");
     goto cleanup;
   }
 
   rc = fclose(file), file = 0;
   if( rc == EOF ) {
-    dsme_log(LOG_ERR, PFIX"%s: %s: %m", temp, "close");
+    dsme_log(LOG_ERR, PFIX "%s: %s: %m", temp, "close");
     goto cleanup;
   }
 
   if( rename(temp, path) == -1 ) {
-    dsme_log(LOG_ERR, PFIX"%s: rename to %s: %m", temp, path);
+    dsme_log(LOG_ERR, PFIX "%s: rename to %s: %m", temp, path);
   }
 
 cleanup:
@@ -2718,14 +2718,14 @@ static void xtimed_status_load(void)
 
   if( !(file = fopen(path, "r")) ) {
       if( errno != ENOENT )
-	  dsme_log(LOG_ERR, PFIX"%s: %s: %m", path, "open");
+	  dsme_log(LOG_ERR, PFIX "%s: %s: %m", path, "open");
     goto cleanup;
   }
 
   long powerup = 0, resume = 0;
 
   if( fscanf(file, "%ld %ld", &powerup, &resume) != 2 ) {
-    dsme_log(LOG_ERR, PFIX"%s: %s: did not get two values", path, "read");
+    dsme_log(LOG_ERR, PFIX "%s: %s: did not get two values", path, "read");
     goto cleanup;
   }
   alarm_powerup = (time_t)powerup;
@@ -2746,13 +2746,13 @@ static void listenfd_handle_connect(void)
     int newfd = accept(listenfd, 0, 0);
 
     if( newfd == -1 ) {
-	dsme_log(LOG_ERR, PFIX"failed to accept client (%m)");
+	dsme_log(LOG_ERR, PFIX "failed to accept client (%m)");
     }
     else {
 	client_t *client = client_new_external(newfd);
 	if (epollfd_add_fd(newfd, client)) {
 	    clientlist_add_client(client);
-	    dsme_log(LOG_DEBUG, PFIX"new client added to list");
+	    dsme_log(LOG_DEBUG, PFIX "new client added to list");
 	}
 	else {
 	    clientlist_delete_client(client);
@@ -2771,7 +2771,7 @@ static void listenfd_quit(void)
     }
 
     if( unlink(HB_SOCKET_PATH) == -1 && errno != ENOENT ) {
-        dsme_log(LOG_WARNING, PFIX"failed to remove client listen socket %s: %m",
+        dsme_log(LOG_WARNING, PFIX "failed to remove client listen socket %s: %m",
 		 HB_SOCKET_PATH);
     }
 }
@@ -2788,13 +2788,13 @@ static bool listenfd_init(void)
     struct sockaddr_un addr;
 
     if( unlink(HB_SOCKET_PATH) == -1 && errno != ENOENT ) {
-        dsme_log(LOG_WARNING, PFIX"failed to remove client listen socket %s: %m",
+        dsme_log(LOG_WARNING, PFIX "failed to remove client listen socket %s: %m",
 		 HB_SOCKET_PATH);
 	// try to continue anyway
     }
 
     if( (listenfd = socket(PF_UNIX, SOCK_STREAM, 0)) < 0 ) {
-        dsme_log(LOG_ERR, PFIX"failed to open client listen socket: %m");
+        dsme_log(LOG_ERR, PFIX "failed to open client listen socket: %m");
         goto cleanup;
     }
 
@@ -2802,22 +2802,22 @@ static bool listenfd_init(void)
     strcpy(addr.sun_path, HB_SOCKET_PATH);
 
     if( bind(listenfd, (struct sockaddr *) &addr, sizeof(addr)) == -1 ) {
-        dsme_log(LOG_ERR, PFIX"failed to bind client listen socket to %s: %m",
+        dsme_log(LOG_ERR, PFIX "failed to bind client listen socket to %s: %m",
                  HB_SOCKET_PATH);
         goto cleanup;
     }
 
     if( chmod(HB_SOCKET_PATH, mode) == -1 ) {
-        dsme_log(LOG_ERR, PFIX"failed to chmod %o '%s': %m", (int)mode, HB_SOCKET_PATH);
+        dsme_log(LOG_ERR, PFIX "failed to chmod %o '%s': %m", (int)mode, HB_SOCKET_PATH);
         goto cleanup;
     }
 
     if( listen(listenfd, 5) == -1 ) {
-        dsme_log(LOG_ERR, PFIX"failed to listen client socket: %m");
+        dsme_log(LOG_ERR, PFIX "failed to listen client socket: %m");
         goto cleanup;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"opened client socket %d to %s",
+    dsme_log(LOG_DEBUG, PFIX "opened client socket %d to %s",
 	     listenfd,
 	     HB_SOCKET_PATH);
 
@@ -2854,7 +2854,7 @@ static bool epollfd_add_fd(int fd, void* ptr)
     ev.data.ptr = ptr;
 
     if( epoll_ctl(epollfd, EPOLL_CTL_ADD, fd, &ev) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"failed to add fd=%d to epoll set: %m", fd);
+	dsme_log(LOG_ERR, PFIX "failed to add fd=%d to epoll set: %m", fd);
 	return false;
     }
 
@@ -2868,7 +2868,7 @@ static bool epollfd_add_fd(int fd, void* ptr)
 static void epollfd_remove_fd(int fd)
 {
     if( epoll_ctl(epollfd, EPOLL_CTL_DEL, fd, 0) == -1 ) {
-	dsme_log(LOG_ERR, PFIX"failed to remove fd=%d from epoll set: %m", fd);
+	dsme_log(LOG_ERR, PFIX "failed to remove fd=%d from epoll set: %m", fd);
     }
 }
 
@@ -2886,7 +2886,7 @@ static bool epollfd_handle_client_req(struct epoll_event* event,
     client_t *client       = event->data.ptr;
 
     if( event->events & (EPOLLERR | EPOLLRDHUP | EPOLLHUP) ) {
-        dsme_log(LOG_DEBUG, PFIX"client %s disappeared",
+        dsme_log(LOG_DEBUG, PFIX "client %s disappeared",
                  client->pidtxt);
         goto drop_client_and_fail;
     }
@@ -2894,7 +2894,7 @@ static bool epollfd_handle_client_req(struct epoll_event* event,
     struct _iphb_req_t req = { 0 };
 
     if( recv(client->fd, &req, sizeof req, MSG_WAITALL) <= 0 ) {
-        dsme_log(LOG_ERR, PFIX"failed to read from client %s: %m",
+        dsme_log(LOG_ERR, PFIX "failed to read from client %s: %m",
                  client->pidtxt);
         goto drop_client_and_fail;
     }
@@ -2909,7 +2909,7 @@ static bool epollfd_handle_client_req(struct epoll_event* event,
             break;
 
         default:
-            dsme_log(LOG_ERR, PFIX"client %s gave invalid command 0x%x, drop it",
+            dsme_log(LOG_ERR, PFIX "client %s gave invalid command 0x%x, drop it",
                      client->pidtxt,
                      (unsigned int)req.cmd);
             goto drop_client_and_fail;
@@ -2953,7 +2953,7 @@ static gboolean epollfd_iowatch_cb(GIOChannel*  source,
     /* Abandon watch if we get abnorman conditions from glib */
     if (condition & ~(G_IO_IN | G_IO_PRI))
     {
-	dsme_log(LOG_ERR, PFIX"epoll waiting I/O error reported");
+	dsme_log(LOG_ERR, PFIX "epoll waiting I/O error reported");
 	goto cleanup_nak;
     }
 
@@ -2963,7 +2963,7 @@ static gboolean epollfd_iowatch_cb(GIOChannel*  source,
 	if( errno == EINTR || errno == EAGAIN )
 	    goto cleanup_ack;
 
-        dsme_log(LOG_ERR, PFIX"epoll waiting failed (%m)");
+        dsme_log(LOG_ERR, PFIX "epoll waiting failed (%m)");
 	goto cleanup_nak;
     }
 
@@ -3019,7 +3019,7 @@ cleanup_ack:
 
 cleanup_nak:
     if( !keep_going )
-	dsme_log(LOG_CRIT, PFIX"epoll waiting disabled");
+	dsme_log(LOG_CRIT, PFIX "epoll waiting disabled");
 
     wakelock_unlock(rtc_input);
     modulebase_enter_module(caller);
@@ -3047,7 +3047,7 @@ static bool epollfd_init(void)
     GIOChannel *chan = 0;
 
     if( (epollfd = epoll_create(10)) == -1 ) {
-        dsme_log(LOG_ERR, PFIX"failed to open epoll fd (%m)");
+        dsme_log(LOG_ERR, PFIX "failed to open epoll fd (%m)");
 	goto cleanup;
     }
 
@@ -3083,7 +3083,7 @@ static void systembus_connect(void)
     DBusError err = DBUS_ERROR_INIT;
 
     if( !(systembus = dsme_dbus_get_connection(&err)) ) {
-	dsme_log(LOG_WARNING, PFIX"can't connect to systembus: %s: %s",
+	dsme_log(LOG_WARNING, PFIX "can't connect to systembus: %s: %s",
 		 err.name, err.message);
 	goto cleanup;
     }
@@ -3131,7 +3131,7 @@ DSME_HANDLER(DSM_MSGTYPE_HEARTBEAT, conn, msg)
 {
     struct timeval   tv_now;
 
-    dsme_log(LOG_DEBUG, PFIX"HEARTBEAT from HWWD");
+    dsme_log(LOG_DEBUG, PFIX "HEARTBEAT from HWWD");
     monotime_get_tv(&tv_now);
     clientlist_wakeup_clients_now(&tv_now);
 }
@@ -3139,7 +3139,7 @@ DSME_HANDLER(DSM_MSGTYPE_HEARTBEAT, conn, msg)
 /** Handle WAIT requests from internal clients */
 DSME_HANDLER(DSM_MSGTYPE_WAIT, conn, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"WAIT req from an internal client");
+    dsme_log(LOG_DEBUG, PFIX "WAIT req from an internal client");
 
     struct timeval   tv_now;
     monotime_get_tv(&tv_now);
@@ -3168,7 +3168,7 @@ DSME_HANDLER(DSM_MSGTYPE_WAIT, conn, msg)
 /** Handle connected to system bus */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_INFO, PFIX"DBUS_CONNECTED");
+    dsme_log(LOG_INFO, PFIX "DBUS_CONNECTED");
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
 }
@@ -3176,7 +3176,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 /** Handle disconnected from system bus */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_INFO, PFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_INFO, PFIX "DBUS_DISCONNECT");
     systembus_disconnect();
 }
 
@@ -3202,7 +3202,7 @@ static time_t get_mtime(const char *path)
 	return st.st_mtime;
 
     if( errno != ENOENT )
-	dsme_log(LOG_ERR, PFIX"%s: failed to get mtime: %m", path);
+	dsme_log(LOG_ERR, PFIX "%s: failed to get mtime: %m", path);
 
     return 0;
 }
@@ -3231,10 +3231,10 @@ static time_t mintime_fetch(void)
     time_t    t_system  = time(0);
     char      tmp[TIMESTAMP_MAX];
 
-    dsme_log(LOG_INFO, PFIX"builtin %s", t_repr(t_builtin, tmp, sizeof tmp));
-    dsme_log(LOG_INFO, PFIX"release %s", t_repr(t_release, tmp, sizeof tmp));
-    dsme_log(LOG_INFO, PFIX"saved   %s", t_repr(t_saved,   tmp, sizeof tmp));
-    dsme_log(LOG_INFO, PFIX"system  %s", t_repr(t_system,  tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "builtin %s", t_repr(t_builtin, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "release %s", t_repr(t_release, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "saved   %s", t_repr(t_saved,   tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "system  %s", t_repr(t_system,  tmp, sizeof tmp));
 
     if( t_saved < t_builtin )
 	t_saved = t_builtin;
@@ -3253,7 +3253,7 @@ static void mintime_store(void)
     static const char *path =  SAVED_TIME_FILE;
     int fd = open(path, O_WRONLY|O_CREAT|O_TRUNC, 0644);
     if( fd == -1 )
-	dsme_log(LOG_ERR, PFIX"%s: failed to open for writing: %m", path);
+	dsme_log(LOG_ERR, PFIX "%s: failed to open for writing: %m", path);
     else
 	close(fd);
 }
@@ -3269,9 +3269,9 @@ static void systemtime_init(void)
     time_t t_min = mintime_fetch();
     time_t t_rtc = rtc_get_time_tm(&tm);
 
-    dsme_log(LOG_INFO, PFIX"min at %s", t_repr(t_min, tmp, sizeof tmp));
-    dsme_log(LOG_INFO, PFIX"rtc at %s", t_repr(t_rtc, tmp, sizeof tmp));
-    dsme_log(LOG_INFO, PFIX"sys at %s", t_repr(t_sys, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "min at %s", t_repr(t_min, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "rtc at %s", t_repr(t_rtc, tmp, sizeof tmp));
+    dsme_log(LOG_INFO, PFIX "sys at %s", t_repr(t_sys, tmp, sizeof tmp));
 
     /* Take possible cached sys-time vs rtc-time delta into account */
 
@@ -3280,7 +3280,7 @@ static void systemtime_init(void)
     if( delta != 0 ) {
 	/* If we have cached delta time; before accepting it
 	 * check if RTC_SET_TIME actually fails */
-        dsme_log(LOG_INFO, PFIX"rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
+        dsme_log(LOG_INFO, PFIX "rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
         if( !rtc_set_time_t(t_rtc) )
             deltatime_is_needed = true;
 	else
@@ -3296,7 +3296,7 @@ static void systemtime_init(void)
 
     if( t_rtc < t_min ) {
         t_rtc = t_min;
-        dsme_log(LOG_INFO, PFIX"rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
+        dsme_log(LOG_INFO, PFIX "rtc to %s", t_repr(t_rtc, tmp, sizeof tmp));
         if( !rtc_set_time_t(t_rtc) )
             deltatime_is_needed = true;
     }
@@ -3305,10 +3305,10 @@ static void systemtime_init(void)
      * it is ahead of the system time */
 
     if( delta == 0 || t_sys < t_rtc ) {
-        dsme_log(LOG_INFO, PFIX"sys to %s", t_repr(t_rtc, tmp, sizeof tmp));
+        dsme_log(LOG_INFO, PFIX "sys to %s", t_repr(t_rtc, tmp, sizeof tmp));
         struct timeval tv = { .tv_sec = t_rtc, .tv_usec = 0 };
         if( settimeofday(&tv, 0) == -1 )
-            dsme_log(LOG_WARNING, PFIX"failed to set system time");
+            dsme_log(LOG_WARNING, PFIX "failed to set system time");
 
         /* system time should now be within 1 second from rtc time */
     }
@@ -3319,7 +3319,7 @@ static void systemtime_init(void)
      */
 
     if( ioctl(rtc_fd, RTC_UIE_ON, 0) == -1 ) {
-        dsme_log(LOG_WARNING, PFIX"failed to enable update interrupts");
+        dsme_log(LOG_WARNING, PFIX "failed to enable update interrupts");
     }
     else {
         rtc_add_need(RTC_NEED_UPDATES);
@@ -3348,7 +3348,7 @@ void module_init(module_t *handle)
 {
     bool success = false;
 
-    dsme_log(LOG_INFO, PFIX"iphb.so loaded");
+    dsme_log(LOG_INFO, PFIX "iphb.so loaded");
 
     this_module = handle;
 
@@ -3378,26 +3378,26 @@ void module_init(module_t *handle)
      * from dsme too if they are available. */
     if( linux_alarm_init() ) {
 	/* We should get timerfd wakeup even if the device is suspended. */
-        dsme_log(LOG_INFO, PFIX"using timerfd alarm to resume");
+        dsme_log(LOG_INFO, PFIX "using timerfd alarm to resume");
     }
     else if( android_alarm_init() ) {
 	/* On suspend the next to occur alarm device wakeup is programmed
 	 * to rtc. By using the interface from dsme, the wakeup we need
 	 * for iphb purposes should end up considered too. */
-        dsme_log(LOG_NOTICE, PFIX"using android alarm to resume");
+        dsme_log(LOG_NOTICE, PFIX "using android alarm to resume");
     }
     else {
 	/* Assume that nothing interferes with rtc ioctl + read. */
-        dsme_log(LOG_NOTICE, PFIX"using rtc alarm to resume");
+        dsme_log(LOG_NOTICE, PFIX "using rtc alarm to resume");
     }
 
     success = true;
 
 cleanup:
     if( success )
-        dsme_log(LOG_INFO, PFIX"iphb started");
+        dsme_log(LOG_INFO, PFIX "iphb started");
     else
-	dsme_log(LOG_ERR, PFIX"iphb not started");
+	dsme_log(LOG_ERR, PFIX "iphb not started");
 
     return;
 }
@@ -3418,9 +3418,9 @@ void module_fini(void)
     /* store system time to rtc */
     struct timeval tv_sys, tv_rtc;
     if( !rtc_get_time_tv(&tv_rtc) )
-	dsme_log(LOG_ERR, PFIX"could not get rtc time");
+	dsme_log(LOG_ERR, PFIX "could not get rtc time");
     else if( !realtime_get_tv(&tv_sys) )
-	dsme_log(LOG_ERR, PFIX"could not get system time");
+	dsme_log(LOG_ERR, PFIX "could not get system time");
     else {
 	struct timeval t;
 	timersub(&tv_sys, &tv_rtc, &t);
@@ -3430,11 +3430,11 @@ void module_fini(void)
 	 */
 
 	if( !t.tv_sec )
-	    dsme_log(LOG_CRIT, PFIX"RTC in sync with system time");
+	    dsme_log(LOG_CRIT, PFIX "RTC in sync with system time");
 	else if( !rtc_set_time_tv(&tv_sys) )
-	    dsme_log(LOG_ERR, PFIX"could not set rtc time");
+	    dsme_log(LOG_ERR, PFIX "could not set rtc time");
 	else
-	    dsme_log(LOG_CRIT, PFIX"RTC updated to system time");
+	    dsme_log(LOG_CRIT, PFIX "RTC updated to system time");
     }
 
     /* save last-known-system-time */
@@ -3465,5 +3465,5 @@ void module_fini(void)
     wakelock_unlock(rtc_wakeup);
     wakelock_unlock(rtc_input);
 
-    dsme_log(LOG_INFO, PFIX"iphb.so unloaded");
+    dsme_log(LOG_INFO, PFIX "iphb.so unloaded");
 }

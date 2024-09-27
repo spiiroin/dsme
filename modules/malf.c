@@ -34,6 +34,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#define PFIX "malf: "
+
 static const char* const malf_reason_name[] = {
     "SOFTWARE",
     "HARDWARE",
@@ -50,8 +52,7 @@ static bool enter_malf(DSME_MALF_REASON reason,
         reason = DSME_MALF_SOFTWARE;
     }
 
-    dsme_log(LOG_INFO,
-             "enter_malf '%s' '%s' '%s'",
+    dsme_log(LOG_INFO, PFIX "enter_malf '%s' '%s' '%s'",
              malf_reason_name[reason],
              component ? component : "(no component)",
              details ? details : "(no details)");
@@ -67,13 +68,13 @@ static bool enter_malf(DSME_MALF_REASON reason,
         0
     };
     if ((pid = fork()) < 0) {
-        dsme_log(LOG_CRIT, "fork failed, exiting");
+        dsme_log(LOG_CRIT, PFIX "fork failed, exiting");
         dsme_main_loop_quit(EXIT_FAILURE);
         return false;
     } else if (pid == 0) {
         execv("/usr/sbin/enter_malf", args);
 
-        dsme_log(LOG_CRIT, "entering MALF failed");
+        dsme_log(LOG_CRIT, PFIX "entering MALF failed");
         return false;
     }
 
@@ -81,11 +82,11 @@ static bool enter_malf(DSME_MALF_REASON reason,
         if (rc < 0 && errno == ECHILD)
             break;
     if (rc != pid || WEXITSTATUS(status) != 0) {
-        dsme_log(LOG_CRIT, "enter_malf return value != 0, entering MALF failed");
+        dsme_log(LOG_CRIT, PFIX "enter_malf return value != 0, entering MALF failed");
         return false;
     }
 
-    dsme_log(LOG_CRIT, "entering MALF state");
+    dsme_log(LOG_CRIT, PFIX "entering MALF state");
     return true;
 }
 
@@ -112,10 +113,10 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t* module)
 {
-    dsme_log(LOG_DEBUG, "malf.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "malf.so loaded");
 }
 
 void module_fini(void)
 {
-    dsme_log(LOG_DEBUG, "malf.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "malf.so unloaded");
 }

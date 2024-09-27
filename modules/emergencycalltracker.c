@@ -40,6 +40,8 @@
 
 #include <string.h>
 
+#define PFIX "emergencycalltracker: "
+
 static void send_emergency_call_status(bool ongoing)
 {
     DSM_MSGTYPE_SET_EMERGENCY_CALL_STATE msg =
@@ -61,13 +63,13 @@ static void mce_call_state_ind(const DsmeDbusMessage* ind)
       send_emergency_call_status(true);
 
       emergency_call_started = true;
-      dsme_log(LOG_DEBUG, "Emergency call started");
+      dsme_log(LOG_DEBUG, PFIX "Emergency call started");
   } else if (emergency_call_started) {
       /* the emergency call is over */
       send_emergency_call_status(false);
 
       emergency_call_started = false;
-      dsme_log(LOG_DEBUG, "Emergency call is over");
+      dsme_log(LOG_DEBUG, PFIX "Emergency call is over");
   }
 }
 
@@ -80,13 +82,13 @@ static bool dbus_signals_bound = false;
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-  dsme_log(LOG_DEBUG, "emergencycalltracker: DBUS_CONNECTED");
+  dsme_log(LOG_DEBUG, PFIX "emergencycalltracker: DBUS_CONNECTED");
   dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-  dsme_log(LOG_DEBUG, "emergencycalltracker: DBUS_DISCONNECT");
+  dsme_log(LOG_DEBUG, PFIX "emergencycalltracker: DBUS_DISCONNECT");
 }
 
 module_fn_info_t message_handlers[] = {
@@ -101,12 +103,12 @@ void module_init(module_t* handle)
    * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
    */
 
-  dsme_log(LOG_DEBUG, "emergencycalltracker.so loaded");
+  dsme_log(LOG_DEBUG, PFIX "emergencycalltracker.so loaded");
 }
 
 void module_fini(void)
 {
   dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
 
-  dsme_log(LOG_DEBUG, "emergencycalltracker.so unloaded");
+  dsme_log(LOG_DEBUG, PFIX "emergencycalltracker.so unloaded");
 }

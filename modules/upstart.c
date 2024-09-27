@@ -74,11 +74,10 @@ static int current_runlevel_in_utmp()
     if (utmp_runlevel) {
         runlevel = utmp_runlevel->ut_pid % 256;
         int prevlevel = utmp_runlevel->ut_pid / 256;
-        dsme_log(LOG_DEBUG,
-                 "read from utmp: %c (%d), %c (%d)",
+        dsme_log(LOG_DEBUG, PFIX "read from utmp: %c (%d), %c (%d)",
                  prevlevel, prevlevel, runlevel, runlevel);
     } else {
-        dsme_log(LOG_DEBUG, "could not read from utmp");
+        dsme_log(LOG_DEBUG, PFIX "could not read from utmp");
     }
     endutxent();
 
@@ -122,8 +121,7 @@ static bool save_state_in_utmp_and_wtmp(dsme_runlevel_t runlevel)
     setutxent();
     if (pututxline(&utmp)) {
         saved = true;
-        dsme_log(LOG_DEBUG,
-                 "saved to utmp: %c (%d), %c (%d)",
+        dsme_log(LOG_DEBUG, PFIX "saved to utmp: %c (%d), %c (%d)",
                  prevlevel, prevlevel, runlevel, runlevel);
     }
     endutxent();
@@ -221,7 +219,7 @@ static bool telinit_internal(dsme_runlevel_t runlevel)
 
     conn = dbus_connection_open_private("unix:abstract=/com/ubuntu/upstart", &error);
     if (!conn) {
-        dsme_log(LOG_CRIT, "Cannot connect to upstart");
+        dsme_log(LOG_CRIT, PFIX "Cannot connect to upstart");
         goto done;
     }
     call = dbus_message_new_method_call(0,
@@ -235,7 +233,7 @@ static bool telinit_internal(dsme_runlevel_t runlevel)
     // marshal message name
     const char* name = "runlevel";
     if (!dbus_message_iter_append_basic(&iter, DBUS_TYPE_STRING, &name)) {
-        dsme_log(LOG_CRIT, "Cannot append to message");
+        dsme_log(LOG_CRIT, PFIX "Cannot append to message");
         goto done;
     }
 
@@ -245,29 +243,29 @@ static bool telinit_internal(dsme_runlevel_t runlevel)
                                           "s",
                                           &env_iter))
     {
-        dsme_log(LOG_CRIT, "Cannot append to message");
+        dsme_log(LOG_CRIT, PFIX "Cannot append to message");
         goto done;
     } else {
         char* s = 0;
         if (asprintf(&s, "RUNLEVEL=%c", '0'+runlevel) == -1) {
-            dsme_log(LOG_CRIT, "asprintf failed");
+            dsme_log(LOG_CRIT, PFIX "asprintf failed");
             dbus_message_iter_abandon_container(&iter, &env_iter);
             goto done;
         }
         if (!dbus_message_iter_append_basic(&env_iter, DBUS_TYPE_STRING, &s)) {
-            dsme_log(LOG_CRIT, "Cannot append to message");
+            dsme_log(LOG_CRIT, PFIX "Cannot append to message");
             dbus_message_iter_abandon_container(&iter, &env_iter);
             goto done;
         }
         free(s); // TODO: needed?
         s = 0; // TODO: needed?
         if (asprintf(&s, "HABA=tsuh") == -1) {
-            dsme_log(LOG_CRIT, "asprintf failed");
+            dsme_log(LOG_CRIT, PFIX "asprintf failed");
             dbus_message_iter_abandon_container(&iter, &env_iter);
             goto done;
         }
         if (!dbus_message_iter_append_basic(&env_iter, DBUS_TYPE_STRING, &s)) {
-            dsme_log(LOG_CRIT, "Cannot append to message");
+            dsme_log(LOG_CRIT, PFIX "Cannot append to message");
             dbus_message_iter_abandon_container(&iter, &env_iter);
             goto done;
         }
@@ -275,25 +273,25 @@ static bool telinit_internal(dsme_runlevel_t runlevel)
         s = 0; // TODO: needed?
     }
     if (!dbus_message_iter_close_container(&iter, &env_iter)) {
-        dsme_log(LOG_CRIT, "Cannot close container");
+        dsme_log(LOG_CRIT, PFIX "Cannot close container");
         goto done;
     }
 
     // marshal 'wait'
     int wait = false;
     if (!dbus_message_iter_append_basic(&iter, DBUS_TYPE_BOOLEAN, &wait)) {
-        dsme_log(LOG_CRIT, "Cannot append to message");
+        dsme_log(LOG_CRIT, PFIX "Cannot append to message");
         goto done;
     }
 
     if (!save_state_in_utmp_and_wtmp(runlevel))
     {
-        dsme_log(LOG_CRIT, "Error saving state in utmp");
+        dsme_log(LOG_CRIT, PFIX "Error saving state in utmp");
         goto done;
     }
 
     if (!save_state_for_getbootstate(runlevel)) {
-        dsme_log(LOG_CRIT, "Error saving state for getbootstate");
+        dsme_log(LOG_CRIT, PFIX "Error saving state for getbootstate");
         goto done;
     }
 
@@ -302,18 +300,18 @@ static bool telinit_internal(dsme_runlevel_t runlevel)
     DBusMessage* reply;
     reply = dbus_connection_send_with_reply_and_block(conn, call, -1, &error);
     if (dbus_error_is_set(&error)) {
-        dsme_log(LOG_CRIT, "D-Bus sending failed: %s", error.message);
+        dsme_log(LOG_CRIT, PFIX "D-Bus sending failed: %s", error.message);
         goto done;
     }
 
     // inspect the response
     if (dbus_message_get_type(reply) == DBUS_MESSAGE_TYPE_ERROR) {
-        dsme_log(LOG_CRIT, "Got an error reply");
+        dsme_log(LOG_CRIT, PFIX "Got an error reply");
         dbus_message_unref(reply);
         goto done;
     }
     if (dbus_message_get_type(reply) != DBUS_MESSAGE_TYPE_METHOD_RETURN) {
-        dsme_log(LOG_CRIT, "Got an unknown reply type");
+        dsme_log(LOG_CRIT, PFIX "Got an unknown reply type");
         dbus_message_unref(reply);
         goto done;
     }
@@ -344,10 +342,10 @@ static void shutdown_internal(dsme_runlevel_t runlevel)
       (runlevel != DSME_RUNLEVEL_SHUTDOWN) &&
       (runlevel != DSME_RUNLEVEL_MALF))
   {
-      dsme_log(LOG_DEBUG, "Shutdown request to bad runlevel (%d)", runlevel);
+      dsme_log(LOG_DEBUG, PFIX "Shutdown request to bad runlevel (%d)", runlevel);
       return;
   }
-  dsme_log(LOG_CRIT,
+  dsme_log(LOG_CRIT, PFIX "%s",
            runlevel == DSME_RUNLEVEL_SHUTDOWN ? "Shutdown" :
            runlevel == DSME_RUNLEVEL_REBOOT   ? "Reboot"   :
                                                 "Malf");
@@ -355,7 +353,7 @@ static void shutdown_internal(dsme_runlevel_t runlevel)
   /* If runlevel change fails, handle the shutdown/reboot by DSME */
   if (!telinit_internal(runlevel))
   {
-      dsme_log(LOG_CRIT, "Doing forced shutdown/reboot");
+      dsme_log(LOG_CRIT, PFIX "Doing forced shutdown/reboot");
       sync();
 
       (void)remount_mmc_readonly();
@@ -363,22 +361,22 @@ static void shutdown_internal(dsme_runlevel_t runlevel)
       if (runlevel == DSME_RUNLEVEL_SHUTDOWN ||
           runlevel == DSME_RUNLEVEL_MALF)
       {
-          dsme_log(LOG_CRIT, "Issuing poweroff");
+          dsme_log(LOG_CRIT, PFIX "Issuing poweroff");
           if (system("/sbin/poweroff") != 0) {
-              dsme_log(LOG_ERR, "/sbin/poweroff failed, trying again in 3s");
+              dsme_log(LOG_ERR, PFIX "/sbin/poweroff failed, trying again in 3s");
               sleep(3);
               if (system("/sbin/poweroff") != 0) {
-                  dsme_log(LOG_ERR, "/sbin/poweroff failed again");
+                  dsme_log(LOG_ERR, PFIX "/sbin/poweroff failed again");
                   goto fail_and_exit;
               }
           }
       } else {
-          dsme_log(LOG_CRIT, "Issuing reboot");
+          dsme_log(LOG_CRIT, PFIX "Issuing reboot");
           if (system("/sbin/reboot") != 0) {
-              dsme_log(LOG_ERR, "/sbin/reboot failed, trying again in 3s");
+              dsme_log(LOG_ERR, PFIX "/sbin/reboot failed, trying again in 3s");
               sleep(3);
               if (system("/sbin/reboot") != 0) {
-                  dsme_log(LOG_ERR, "/sbin/reboot failed again");
+                  dsme_log(LOG_ERR, PFIX "/sbin/reboot failed again");
                   goto fail_and_exit;
               }
           }
@@ -388,7 +386,7 @@ static void shutdown_internal(dsme_runlevel_t runlevel)
   return;
 
 fail_and_exit:
-  dsme_log(LOG_CRIT, "Closing to clean-up!");
+  dsme_log(LOG_CRIT, PFIX "Closing to clean-up!");
   dsme_main_loop_quit(EXIT_FAILURE);
 }
 
@@ -410,7 +408,7 @@ static bool remount_mmc_readonly(void)
   /* Let's try to find the MMC in /proc/mounts */
   mounts_file = fopen("/proc/mounts", "r");
   if (!mounts_file) {
-      dsme_log(LOG_WARNING, "Can't open /proc/mounts. Leaving MMC as is");
+      dsme_log(LOG_WARNING, PFIX "Can't open /proc/mounts. Leaving MMC as is");
       return false;
   }
 
@@ -433,33 +431,33 @@ static bool remount_mmc_readonly(void)
       pid_t pid;
       pid_t rc;
 
-      dsme_log(LOG_WARNING, "MMC seems to be mounted, trying to mount read-only (%s %s).", device, mntpoint);
+      dsme_log(LOG_WARNING, PFIX "MMC seems to be mounted, trying to mount read-only (%s %s).", device, mntpoint);
 
       args[1] = (char*)&device;
       args[2] = (char*)&mntpoint;
       /* try to remount read-only */
       if ((pid = fork()) < 0) {
-          dsme_log(LOG_CRIT, "fork failed, no way to remount");
+          dsme_log(LOG_CRIT, PFIX "fork failed, no way to remount");
           return false;
       } else if (pid == 0) {
           execv("/bin/mount", args);
           execv("/sbin/mount", args);
 
-          dsme_log(LOG_ERR, "remount failed, no mount cmd found");
+          dsme_log(LOG_ERR, PFIX "remount failed, no mount cmd found");
           return false;
       }
       while ((rc = wait(&status)) != pid)
           if (rc < 0 && errno == ECHILD)
               break;
       if (rc != pid || WEXITSTATUS(status) != 0) {
-          dsme_log(LOG_ERR, "mount return value != 0, no can do.");
+          dsme_log(LOG_ERR, PFIX "mount return value != 0, no can do.");
           return false;
       }
 
-      dsme_log(LOG_NOTICE, "MMC remounted read-only");
+      dsme_log(LOG_NOTICE, PFIX "MMC remounted read-only");
       return true;
   } else {
-      dsme_log(LOG_NOTICE, "MMC not mounted");
+      dsme_log(LOG_NOTICE, PFIX "MMC not mounted");
       return true;
   }
 }
@@ -482,10 +480,10 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t* module)
 {
-  dsme_log(LOG_DEBUG, "upstart.so loaded");
+  dsme_log(LOG_DEBUG, PFIX "upstart.so loaded");
 }
 
 void module_fini(void)
 {
-  dsme_log(LOG_DEBUG, "upstart.so unloaded");
+  dsme_log(LOG_DEBUG, PFIX "upstart.so unloaded");
 }

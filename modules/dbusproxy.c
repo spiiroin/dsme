@@ -100,8 +100,7 @@ static void get_state(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 {
   char* sender = dsme_dbus_endpoint_name(request);
-  dsme_log(LOG_NOTICE,
-           "powerup request received over D-Bus from %s",
+  dsme_log(LOG_NOTICE, PFIX "powerup request received over D-Bus from %s",
            sender ? sender : "(unknown)");
   free(sender);
 
@@ -113,8 +112,7 @@ static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 {
   char* sender = dsme_dbus_endpoint_name(request);
-  dsme_log(LOG_NOTICE,
-           "reboot request received over D-Bus from %s",
+  dsme_log(LOG_NOTICE, PFIX "reboot request received over D-Bus from %s",
            sender ? sender : "(unknown)");
   free(sender);
 
@@ -127,8 +125,7 @@ static void req_shutdown(const DsmeDbusMessage* request,
                          DsmeDbusMessage**      reply)
 {
   char* sender = dsme_dbus_endpoint_name(request);
-  dsme_log(LOG_NOTICE,
-           "shutdown request received over D-Bus from %s",
+  dsme_log(LOG_NOTICE, PFIX "shutdown request received over D-Bus from %s",
            sender ? sender : "(unknown)");
   free(sender);
 
@@ -376,8 +373,7 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_REQ_DENIED_IND, server, msg)
 {
     const char* denied_request = shutdown_action_name(msg->state);
 
-    dsme_log(LOG_WARNING,
-             "proxying %s request denial due to %s to D-Bus",
+    dsme_log(LOG_WARNING, PFIX "proxying %s request denial due to %s to D-Bus",
              denied_request,
              (const char*)DSMEMSG_EXTRA(msg));
 
@@ -392,14 +388,14 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_REQ_DENIED_IND, server, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECT");
 
     dsme_dbus_connect();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
 
     dsme_dbus_bind_methods(&dbus_broadcast_bound,
                            dsme_service,
@@ -419,7 +415,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-  dsme_log(LOG_DEBUG, "dbusproxy: DBUS_DISCONNECT");
+  dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
   dsme_dbus_disconnect();
   dbus_connected = false;
 }
@@ -466,7 +462,7 @@ void module_init(module_t* handle)
    * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
    */
 
-  dsme_log(LOG_DEBUG, "dbusproxy.so loaded");
+  dsme_log(LOG_DEBUG, PFIX "dbusproxy.so loaded");
 }
 
 void module_fini(void)
@@ -490,5 +486,5 @@ void module_fini(void)
     g_free(dsme_version);
     dsme_version = 0;
 
-    dsme_log(LOG_DEBUG, "dbusproxy.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "dbusproxy.so unloaded");
 }

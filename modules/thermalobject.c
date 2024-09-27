@@ -169,7 +169,7 @@ thermal_object_create(const thermal_sensor_vtab_t *vtab, void *data)
     self->to_sensor_vtab = vtab;
     self->to_sensor_data = data;
 
-    dsme_log(LOG_DEBUG, PFIX"%s: created", thermal_object_get_name(self));
+    dsme_log(LOG_DEBUG, PFIX "%s: created", thermal_object_get_name(self));
 
     return self;
 }
@@ -186,7 +186,7 @@ thermal_object_delete(thermal_object_t *self)
 
     thermal_manager_unregister_object(self);
 
-    dsme_log(LOG_DEBUG, PFIX"%s: deleted", thermal_object_get_name(self));
+    dsme_log(LOG_DEBUG, PFIX "%s: deleted", thermal_object_get_name(self));
 
     if( thermal_object_has_valid_sensor_vtab(self) )
         self->to_sensor_vtab->tsv_delete_cb(self);
@@ -365,14 +365,14 @@ thermal_object_log_status(const thermal_object_t *self)
     }
     int temperature = thermal_object_get_temperature(self);
 
-    dsme_log(LOG_DEBUG, PFIX"%s: %dC %s", thermal_object_get_name(self),
+    dsme_log(LOG_DEBUG, PFIX "%s: %dC %s", thermal_object_get_name(self),
              temperature, thermal_status_name(self->to_status_curr));
 
     if( !did_open ) {
         did_open = true;
 
         if( !(log_file = fopen(log_path, "a")) ) {
-            dsme_log(LOG_ERR, PFIX"%s: Error opening thermal log: %m",
+            dsme_log(LOG_ERR, PFIX "%s: Error opening thermal log: %m",
                      log_path);
         }
     }
@@ -483,7 +483,7 @@ thermal_object_request_update(thermal_object_t *self)
     /* Skip if request has already been passed to lower level
      */
     if( self->to_request_pending ) {
-        dsme_log(LOG_DEBUG, PFIX"%s: still waiting for temperature",
+        dsme_log(LOG_DEBUG, PFIX "%s: still waiting for temperature",
                  thermal_object_get_name(self));
         goto EXIT;
     }
@@ -494,7 +494,7 @@ thermal_object_request_update(thermal_object_t *self)
      */
     self->to_request_pending = true, success = false;
 
-    dsme_log(LOG_DEBUG, PFIX"%s: requesting temperature",
+    dsme_log(LOG_DEBUG, PFIX "%s: requesting temperature",
              thermal_object_get_name(self));
 
     const char *depends_on = thermal_object_get_depends_on(self);
@@ -517,7 +517,7 @@ EXIT:
      * logic immediately */
 
     if( !success ) {
-        dsme_log(LOG_ERR, PFIX"%s: error requesting temperature",
+        dsme_log(LOG_ERR, PFIX "%s: error requesting temperature",
                  thermal_object_get_name(self));
         thermal_object_handle_update(self);
     }
@@ -562,7 +562,7 @@ thermal_object_handle_update(thermal_object_t *self)
 
     /* Get sensor status from sensor backend */
     if( !thermal_object_get_sensor_status(self, &status, &temperature) ) {
-        dsme_log(LOG_DEBUG, PFIX"%s: temperature request failed",
+        dsme_log(LOG_DEBUG, PFIX "%s: temperature request failed",
                  thermal_object_get_name(self));
         goto EXIT;
     }
@@ -571,13 +571,13 @@ thermal_object_handle_update(thermal_object_t *self)
      * and we drop obviously wrong values
      */
     if( temperature < IGNORE_TEMP_BELOW || temperature > IGNORE_TEMP_ABOVE ) {
-        dsme_log(LOG_WARNING, PFIX"%s: invalid temperature reading: %dC",
+        dsme_log(LOG_WARNING, PFIX "%s: invalid temperature reading: %dC",
                  thermal_object_get_name(self),
                  temperature);
         goto EXIT;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"%s: temperature=%d status=%s",
+    dsme_log(LOG_DEBUG, PFIX "%s: temperature=%d status=%s",
              thermal_object_get_name(self),
              temperature,
              thermal_status_repr(status));
@@ -592,7 +592,7 @@ thermal_object_handle_update(thermal_object_t *self)
      */
     if( self->to_status_curr == status ) {
         if( self->to_status_next != status )
-            dsme_log(LOG_NOTICE, PFIX"%s: transition to status=%s %s at temperature=%d",
+            dsme_log(LOG_NOTICE, PFIX "%s: transition to status=%s %s at temperature=%d",
                      thermal_object_get_name(self),
                      thermal_status_repr(self->to_status_next),
                      "canceled",
@@ -614,7 +614,7 @@ thermal_object_handle_update(thermal_object_t *self)
         self->to_status_next = status;
         self->to_status_change_started = now;
 
-        dsme_log(LOG_NOTICE, PFIX"%s: transition to status=%s %s at temperature=%d",
+        dsme_log(LOG_NOTICE, PFIX "%s: transition to status=%s %s at temperature=%d",
                  thermal_object_get_name(self),
                  thermal_status_repr(self->to_status_next),
                  "started",
@@ -626,7 +626,7 @@ thermal_object_handle_update(thermal_object_t *self)
                     THERMAL_STATUS_TRANSITION_DELAY);
 
     if( now <= limit ) {
-            dsme_log(LOG_NOTICE, PFIX"%s: transition to status=%s %s at temperature=%d",
+            dsme_log(LOG_NOTICE, PFIX "%s: transition to status=%s %s at temperature=%d",
                      thermal_object_get_name(self),
                      thermal_status_repr(self->to_status_next),
                      "pending",
@@ -636,7 +636,7 @@ thermal_object_handle_update(thermal_object_t *self)
 
     /* The new status stayed active long enough, better believe it */
 
-    dsme_log(LOG_NOTICE, PFIX"%s: transition to status=%s %s at temperature=%d",
+    dsme_log(LOG_NOTICE, PFIX "%s: transition to status=%s %s at temperature=%d",
              thermal_object_get_name(self),
              thermal_status_repr(self->to_status_next),
              "accepted",

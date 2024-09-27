@@ -54,6 +54,8 @@
 #include <sys/types.h>
 #include <signal.h>
 
+#define PFIX "processwd: "
+
 /**
  * @ingroup processwd
  * Defines how may pings need to be ignored before the process is killed.
@@ -83,7 +85,7 @@ static dsme_swwd_entry_t* swwd_entry_new(pid_t pid, endpoint_t* client)
   dsme_swwd_entry_t* proc =
     (dsme_swwd_entry_t*)malloc(sizeof(dsme_swwd_entry_t));
   if (proc == NULL) {
-      dsme_log(LOG_CRIT, "%s", strerror(errno));
+      dsme_log(LOG_CRIT, PFIX "%s", strerror(errno));
   } else {
       proc->pid        = pid;
       proc->pingcount  = 0;
@@ -100,7 +102,7 @@ static void swwd_entry_delete(dsme_swwd_entry_t * proc)
   if (proc) {
       if (proc->kill_timer) {
           dsme_destroy_timer(proc->kill_timer);
-          dsme_log(LOG_NOTICE, "killing process (pid: %i)", proc->pid);
+          dsme_log(LOG_NOTICE, PFIX "killing process (pid: %i)", proc->pid);
           kill(proc->pid, SIGKILL);
       }
       endpoint_free(proc->client);
@@ -137,7 +139,7 @@ static int abort_timeout_func(void* data)
 
       proc->kill_timer = 0; /* the timer has expired */
 
-      dsme_log(LOG_NOTICE, "killing process (pid: %i)", pid);
+      dsme_log(LOG_NOTICE, PFIX "killing process (pid: %i)", pid);
       kill(pid, SIGKILL);
 
       swwd_entry_delete(proc);
@@ -149,7 +151,7 @@ static int abort_timeout_func(void* data)
 
 DSME_HANDLER(DSM_MSGTYPE_WAKEUP, conn, msg)
 {
-    dsme_log(LOG_DEBUG, "processwd: ping");
+    dsme_log(LOG_DEBUG, PFIX "processwd: ping");
     ping_all();
 
     subscribe_to_wakeup();
@@ -171,7 +173,7 @@ static void ping_all(void)
         /* Is it pinged too many times ? */
         if (proc->pingcount == MAXPING) {
             if (proc->kill_timer == 0) {
-                dsme_log(LOG_ERR, "process (pid: %i) not responding to processwd pings,"
+                dsme_log(LOG_ERR, PFIX "process (pid: %i) not responding to processwd pings,"
                          " aborting it...", proc->pid);
                 /* give the nonresponsive process chance to abort... */
                 kill(proc->pid, SIGABRT);
@@ -183,7 +185,7 @@ static void ping_all(void)
                                               GINT_TO_POINTER(proc->pid));
                 if (proc->kill_timer == 0) {
                     /* timer creation failed; kill the process immediately */
-                    dsme_log(LOG_ERR, "...kill due to timer failure: %s", strerror(errno));
+                    dsme_log(LOG_ERR, PFIX "...kill due to timer failure: %s", strerror(errno));
                     kill(proc->pid, SIGKILL);
 
                     swwd_entry_delete(proc);
@@ -196,7 +198,7 @@ static void ping_all(void)
 
             msg.pid = proc->pid;
             endpoint_send(proc->client, &msg);
-            dsme_log(LOG_DEBUG, "sent ping to pid %i", proc->pid);
+            dsme_log(LOG_DEBUG, PFIX "sent ping to pid %i", proc->pid);
         }
     }
 }
@@ -221,7 +223,7 @@ DSME_HANDLER(DSM_MSGTYPE_PROCESSWD_CREATE, client, msg)
 
   if (g_slist_find_custom(processes, GINT_TO_POINTER(msg->pid), compare_pids)) {
       /* Already there - just ignore and return */
-      dsme_log(LOG_DEBUG, "Process WD requested for existing pid");
+      dsme_log(LOG_DEBUG, PFIX "Process WD requested for existing pid");
       return;
   }
 
@@ -232,7 +234,7 @@ DSME_HANDLER(DSM_MSGTYPE_PROCESSWD_CREATE, client, msg)
 
   processes = g_slist_prepend(processes, proc);
 
-  dsme_log(LOG_DEBUG, "Added process (pid: %i) to processwd", proc->pid);
+  dsme_log(LOG_DEBUG, PFIX "Added process (pid: %i) to processwd", proc->pid);
 }
 
 /**
@@ -246,14 +248,13 @@ DSME_HANDLER(DSM_MSGTYPE_PROCESSWD_PONG, conn, msg)
   node = g_slist_find_custom(processes, GINT_TO_POINTER(msg->pid), compare_pids);
   if (!node) {
       /* Already there - just ignore and return */
-      dsme_log(LOG_WARNING, "ProcessWD PONG for non-existing pid %i", msg->pid);
+      dsme_log(LOG_WARNING, PFIX "ProcessWD PONG for non-existing pid %i", msg->pid);
       return;
   }
 
   proc = (dsme_swwd_entry_t *)(node->data);
   if (proc) {
-      dsme_log(LOG_DEBUG,
-               "pong for pid %i after %d ping(s)",
+      dsme_log(LOG_DEBUG, PFIX "pong for pid %i after %d ping(s)",
                msg->pid,
                proc->pingcount);
       proc->pingcount = 0;
@@ -270,8 +271,7 @@ static void swwd_del(pid_t pid)
 
   node = g_slist_find_custom(processes, GINT_TO_POINTER(pid), compare_pids);
   if (!node) {
-      dsme_log(LOG_DEBUG,
-               "no process registered to use processwd with pid %i",
+      dsme_log(LOG_DEBUG, PFIX "no process registered to use processwd with pid %i",
                pid);
       /* Nothing to delete - just ignore and return */
       return;
@@ -280,7 +280,7 @@ static void swwd_del(pid_t pid)
   proc = (dsme_swwd_entry_t*)(node->data);
   swwd_entry_delete(proc);
   processes = g_slist_delete_link(processes, node);
-  dsme_log(LOG_DEBUG, "removed exited process (pid %d) from process wd", pid);
+  dsme_log(LOG_DEBUG, PFIX "removed exited process (pid %d) from process wd", pid);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_PROCESSWD_DELETE, conn, msg)
@@ -301,14 +301,14 @@ DSME_HANDLER(DSM_MSGTYPE_CLOSE, conn, msg)
   while ((node = g_slist_find_custom(node, conn, compare_endpoints))) {
       if (node->data) {
           proc = (dsme_swwd_entry_t *)(node->data);
-          dsme_log(LOG_DEBUG, "process socket closed, killing process with pid %i", proc->pid);
+          dsme_log(LOG_DEBUG, PFIX "process socket closed, killing process with pid %i", proc->pid);
           kill(proc->pid, SIGKILL);
           swwd_entry_delete(proc);
       }
       deleted = node;
       node = g_slist_next(node);
       processes = g_slist_delete_link(processes, deleted);
-      dsme_log(LOG_DEBUG, "removed process with closed socket from process wd");
+      dsme_log(LOG_DEBUG, PFIX "removed process with closed socket from process wd");
   }
 }
 
@@ -333,7 +333,7 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t *handle)
 {
-  dsme_log(LOG_DEBUG, "processwd.so loaded");
+  dsme_log(LOG_DEBUG, PFIX "processwd.so loaded");
 
   subscribe_to_wakeup();
 }
@@ -348,5 +348,5 @@ void module_fini(void)
 
   // TODO: cancel wakeup subscription
 
-  dsme_log(LOG_DEBUG, "processwd.so unloaded");
+  dsme_log(LOG_DEBUG, PFIX "processwd.so unloaded");
 }

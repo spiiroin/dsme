@@ -615,19 +615,19 @@ thermal_sensor_generic_is_valid(thermal_sensor_generic_t *self)
         goto EXIT;
 
     if( !self->sg_name ) {
-        dsme_log(LOG_ERR, PFIX"sensor object without a name");
+        dsme_log(LOG_ERR, PFIX "sensor object without a name");
         goto EXIT;
     }
 
     if( !self->sg_temp_cb ) {
-        dsme_log(LOG_ERR, PFIX"%s: %s",
+        dsme_log(LOG_ERR, PFIX "%s: %s",
                  thermal_sensor_generic_get_name(self),
                  "no temperature callback defined");
         goto EXIT;
     }
 
     if( !self->sg_temp_path ) {
-        dsme_log(LOG_ERR, PFIX"%s: %s",
+        dsme_log(LOG_ERR, PFIX "%s: %s",
                  thermal_sensor_generic_get_name(self),
                  "no temperature source defined");
         goto EXIT;
@@ -635,28 +635,28 @@ thermal_sensor_generic_is_valid(thermal_sensor_generic_t *self)
 
     if( !self->sg_is_meta &&
         access(self->sg_temp_path, R_OK) != 0 ) {
-        dsme_log(LOG_ERR, PFIX"%s: %s: %m",
+        dsme_log(LOG_ERR, PFIX "%s: %s: %m",
                  thermal_sensor_generic_get_name(self), self->sg_temp_path);
         goto EXIT;
     }
 
     if( self->sg_mode_path ) {
         if( self->sg_is_meta ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(self),
                      "mode control file specified for meta sensor");
             goto EXIT;
         }
 
         if( access(self->sg_mode_path, W_OK) != 0 ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s: %m",
+            dsme_log(LOG_ERR, PFIX "%s: %s: %m",
                      thermal_sensor_generic_get_name(self),
                      self->sg_mode_path);
             goto EXIT;
         }
 
         if( !self->sg_mode_enable ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(self),
                      "enable value not defined");
             goto EXIT;
@@ -669,7 +669,7 @@ thermal_sensor_generic_is_valid(thermal_sensor_generic_t *self)
 
     for( int i = 0; i < THERMAL_STATUS_COUNT; ++i ) {
         if( self->sg_level[i].sl_mintemp == INVALID_TEMPERATURE ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(self),
                      "temperature limits not defined");
             goto EXIT;
@@ -677,7 +677,7 @@ thermal_sensor_generic_is_valid(thermal_sensor_generic_t *self)
         if( self->sg_level[i].sl_minwait < 1 ||
             self->sg_level[i].sl_maxwait < 5 ||
             self->sg_level[i].sl_maxwait < self->sg_level[i].sl_minwait ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(self),
                      "invalid wait period defined");
             goto EXIT;
@@ -686,7 +686,7 @@ thermal_sensor_generic_is_valid(thermal_sensor_generic_t *self)
 
     for( int i = 1; i < THERMAL_STATUS_COUNT; ++i ) {
         if( self->sg_level[i-1].sl_mintemp > self->sg_level[i].sl_mintemp ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(self),
                      "temperature limits not ascending");
             goto EXIT;
@@ -818,7 +818,7 @@ thermal_sensor_generic_sensor_is_enabled(const thermal_sensor_generic_t *self)
     is_enabled = false;
 
     if( !(mode = tsg_util_read_file(self->sg_mode_path)) ) {
-        dsme_log(LOG_WARNING, PFIX"%s: failed to read sensor mode: %m",
+        dsme_log(LOG_WARNING, PFIX "%s: failed to read sensor mode: %m",
                  thermal_sensor_generic_get_name(self));
         goto EXIT;
     }
@@ -865,22 +865,22 @@ thermal_sensor_generic_read_sensor(thermal_sensor_generic_t *self)
 
         /* Attempt to re-enale and read again */
 
-        dsme_log(LOG_WARNING, PFIX"%s: sensor is disabled; re-enabling",
+        dsme_log(LOG_WARNING, PFIX "%s: sensor is disabled; re-enabling",
                  thermal_sensor_generic_get_name(self));
 
         if( !thermal_sensor_generic_enable_sensor(self, true) ) {
-            dsme_log(LOG_WARNING, PFIX"%s: enabling failed",
+            dsme_log(LOG_WARNING, PFIX "%s: enabling failed",
                      thermal_sensor_generic_get_name(self));
             goto EXIT;
         }
 
         if( !self->sg_temp_cb(self->sg_temp_path, &temp) ) {
-            dsme_log(LOG_WARNING, PFIX"%s: reading still failed",
+            dsme_log(LOG_WARNING, PFIX "%s: reading still failed",
                      thermal_sensor_generic_get_name(self));
             goto EXIT;
         }
 
-        dsme_log(LOG_DEBUG, PFIX"%s: succesfully re-enabled",
+        dsme_log(LOG_DEBUG, PFIX "%s: succesfully re-enabled",
                  thermal_sensor_generic_get_name(self));
     }
 
@@ -1251,17 +1251,17 @@ tsg_objects_register_all(GSList **list)
             continue;
 
         if( !thermal_sensor_generic_is_valid(sensor) ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(sensor),
                      "sensor config is not valid");
         }
         else if( !thermal_sensor_generic_enable_sensor(sensor, true) ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(sensor),
                      "sensor could not be enabled");
         }
         else if( !thermal_sensor_generic_read_sensor(sensor) ) {
-            dsme_log(LOG_ERR, PFIX"%s: %s",
+            dsme_log(LOG_ERR, PFIX "%s: %s",
                      thermal_sensor_generic_get_name(sensor),
                      "sensor could not be read");
         }
@@ -1351,7 +1351,7 @@ tsg_objects_read_config(GSList **list, const char *config)
             sensor = tsg_objects_add_sensor(list, tsg_util_slice_str(&pos));
         }
         else if( !sensor ) {
-            dsme_log(LOG_ERR, PFIX"%s:%d: stray configuration item: %s",
+            dsme_log(LOG_ERR, PFIX "%s:%d: stray configuration item: %s",
                      config, line, key);
         }
         else if( !strcmp(key, CONFIG_KW_TEMP) ) {
@@ -1376,7 +1376,7 @@ tsg_objects_read_config(GSList **list, const char *config)
                                                      tsg_util_read_temp_mC);
             }
             else {
-                dsme_log(LOG_ERR, PFIX"%s:%d: unknown/missing temp type: %s",
+                dsme_log(LOG_ERR, PFIX "%s:%d: unknown/missing temp type: %s",
                          config, line, type);
                 thermal_sensor_generic_set_temp_func(sensor, 0);
             }
@@ -1405,7 +1405,7 @@ tsg_objects_read_config(GSList **list, const char *config)
                                              mintemp, minwait, maxwait);
         }
         else {
-            dsme_log(LOG_ERR, PFIX"%s:%d: unknown item: %s",
+            dsme_log(LOG_ERR, PFIX "%s:%d: unknown item: %s",
                      config, line, key);
             continue;
         }
@@ -1413,7 +1413,7 @@ tsg_objects_read_config(GSList **list, const char *config)
         /* Check if line contains unparsed elements */
         pos = tsg_util_slice_token(pos, 0, 0);
         if( *pos != 0 && *pos != '#' ) {
-            dsme_log(LOG_WARNING, PFIX"%s:%d: excess elements: %s",
+            dsme_log(LOG_WARNING, PFIX "%s:%d: excess elements: %s",
                      config, line, pos);
         }
     }
@@ -1456,7 +1456,7 @@ tsg_objects_init(GSList **list)
     glob_t gl = {};
 
     if( glob(pat, GLOB_ERR, 0, &gl) != 0 ) {
-        dsme_log(LOG_WARNING, PFIX"No thermal config files found");
+        dsme_log(LOG_WARNING, PFIX "No thermal config files found");
         goto EXIT;
     }
 
@@ -1486,7 +1486,7 @@ static GSList *objects_list = 0;
  */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
     tsg_objects_init(&objects_list);
 }
 
@@ -1498,7 +1498,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
  */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
     tsg_objects_quit(&objects_list);
 }
 
@@ -1519,7 +1519,7 @@ module_init(module_t *handle)
 {
     (void)handle;
 
-    dsme_log(LOG_DEBUG, PFIX"loaded");
+    dsme_log(LOG_DEBUG, PFIX "loaded");
 }
 
 /** Exit hook that DSME plugins need to implement
@@ -1528,5 +1528,5 @@ void
 module_fini(void)
 {
     tsg_objects_quit(&objects_list);
-    dsme_log(LOG_DEBUG, PFIX"unloaded");
+    dsme_log(LOG_DEBUG, PFIX "unloaded");
 }
