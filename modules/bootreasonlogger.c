@@ -132,7 +132,7 @@ static const char * get_timestamp(void)
             timestamp = date_time;
     }
     else
-        dsme_log(LOG_ERR, PFIX"failed to get timestamp");
+        dsme_log(LOG_ERR, PFIX "failed to get timestamp");
 
     return timestamp;
 }
@@ -152,7 +152,7 @@ static void write_log(const char *state, const char *reason)
     }
 
     if (! success) {
-        dsme_log(LOG_ERR, PFIX"can't write into %s", BOOT_LOG_FILE);
+        dsme_log(LOG_ERR, PFIX "can't write into %s", BOOT_LOG_FILE);
     }
 }
 
@@ -164,13 +164,13 @@ static int get_cmd_line_value(char* get_value, int max_len, const char* key)
     FILE *file = 0;
 
     if( !(file = fopen(path, "r")) ) {
-        dsme_log(LOG_ERR, PFIX"Could not open %s: %m", path);
+        dsme_log(LOG_ERR, PFIX "Could not open %s: %m", path);
         goto EXIT;
     }
 
     char cmdline[MAX_CMDLINE_LEN];
     if( !fgets(cmdline, sizeof cmdline, file) ) {
-        dsme_log(LOG_ERR, PFIX"Could not read %s: %m", path);
+        dsme_log(LOG_ERR, PFIX "Could not read %s: %m", path);
         goto EXIT;
     }
 
@@ -245,8 +245,7 @@ static void log_shutdown(void)
 
 DSME_HANDLER(DSM_MSGTYPE_SET_BATTERY_STATE, conn, battery)
 {
-    dsme_log(LOG_DEBUG,
-             PFIX"battery %s state received",
+    dsme_log(LOG_DEBUG, PFIX "battery %s state received",
              battery->empty ? "empty" : "not empty");
 
     write_log("Received: battery ", battery->empty ? "empty" : "not empty");
@@ -271,8 +270,7 @@ DSME_HANDLER(DSM_MSGTYPE_SET_THERMAL_STATUS, conn, msg)
     else
         temp_status = "normal";
 
-    dsme_log(LOG_DEBUG,
-             PFIX"temp (%s) state: %s (%dC)", msg->sensor_name, temp_status, msg->temperature);
+    dsme_log(LOG_DEBUG, PFIX "temp (%s) state: %s (%dC)", msg->sensor_name, temp_status, msg->temperature);
     snprintf(str, sizeof(str), "device (%s) temp status %s (%dC)", msg->sensor_name, temp_status, msg->temperature);
     write_log("Received:", str);
     if (overheated)
@@ -331,7 +329,7 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t* handle)
 {
-    dsme_log(LOG_DEBUG, "bootreasonlogger.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "bootreasonlogger.so loaded");
     log_startup();
     saved_shutdown_reason = SD_REASON_UNKNOWN;
 }
@@ -339,5 +337,5 @@ void module_init(module_t* handle)
 void module_fini(void)
 {
     log_shutdown();
-    dsme_log(LOG_DEBUG, "bootreasonlogger.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "bootreasonlogger.so unloaded");
 }

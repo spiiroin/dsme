@@ -27,7 +27,6 @@
 
 #include <dsme/messages.h>
 
-
 typedef enum {
     DSME_MALF_SOFTWARE,
     DSME_MALF_HARDWARE,

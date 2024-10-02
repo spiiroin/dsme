@@ -32,7 +32,7 @@
 // to request a disk space check:
 // dbus-send --system --print-reply --dest=com.nokia.diskmonitor /com/nokia/diskmonitor/request com.nokia.diskmonitor.request.req_check
 
-#define LOGPFIX "diskmonitor: "
+#define PFIX "diskmonitor: "
 
 #include <iphbd/iphb_internal.h>
 
@@ -317,7 +317,7 @@ get_boottime(void)
 {
     struct timespec ts = { 0, 0 };
     if( clock_gettime(CLOCK_BOOTTIME, &ts) == -1 ) {
-        dsme_log(LOG_ERR, LOGPFIX"CLOCK_BOOTTIME: %m");
+        dsme_log(LOG_ERR, PFIX "CLOCK_BOOTTIME: %m");
     }
     return ts.tv_sec;
 }
@@ -393,7 +393,7 @@ diskuse_set_limit(diskuse_t *self, int percent_free, int mb_free)
     memset(&stfs, 0, sizeof stfs);
 
     if( statfs(self->mntpoint, &stfs) == -1 ) {
-        dsme_log(LOG_WARNING, LOGPFIX"%s: statfs failed: %m", self->mntpoint);
+        dsme_log(LOG_WARNING, PFIX "%s: statfs failed: %m", self->mntpoint);
         goto EXIT;
     }
 
@@ -424,7 +424,7 @@ diskuse_set_limit(diskuse_t *self, int percent_free, int mb_free)
 EXIT:
     self->mb_limit = (int)mb_lim;
 
-    dsme_log(LOG_DEBUG, "%s: limit=%dMB", self->mntpoint, self->mb_limit);
+    dsme_log(LOG_DEBUG, PFIX "%s: limit=%dMB", self->mntpoint, self->mb_limit);
 }
 
 /** Get current logical disk use state
@@ -450,7 +450,7 @@ diskuse_update_state(diskuse_t *self)
     memset(&stfs, 0, sizeof stfs);
 
     if( statfs(self->mntpoint, &stfs) == -1 ) {
-        dsme_log(LOG_WARNING, LOGPFIX"%s: statfs failed: %m", self->mntpoint);
+        dsme_log(LOG_WARNING, PFIX "%s: statfs failed: %m", self->mntpoint);
         goto EXIT;
     }
 
@@ -471,7 +471,7 @@ EXIT:
     else
         self->state = DISKSPACE_STATE_NORMAL;
 
-    dsme_log(LOG_DEBUG, "%s: avail=%dMB state=%s", self->mntpoint,
+    dsme_log(LOG_DEBUG, PFIX "%s: avail=%dMB state=%s", self->mntpoint,
              self->mb_avail, diskspace_state_repr(self->state));
 
     return self->state;
@@ -487,7 +487,7 @@ diskuse_evaluate(diskuse_t *self, unsigned check_tag)
 
     self->check_tag = check_tag;
 
-    dsme_log(LOG_DEBUG, LOGPFIX"check mountpoint: %s", self->mntpoint);
+    dsme_log(LOG_DEBUG, PFIX "check mountpoint: %s", self->mntpoint);
 
     diskspace_state_t prev = diskuse_get_state(self);
     diskspace_state_t curr = diskuse_update_state(self);
@@ -504,7 +504,7 @@ diskuse_evaluate(diskuse_t *self, unsigned check_tag)
     }
     else
     {
-      dsme_log(LOG_WARNING, "%s: avail=%dMB limit=%dmb state=%s->%s",
+      dsme_log(LOG_WARNING, PFIX "%s: avail=%dMB limit=%dmb state=%s->%s",
                self->mntpoint,
                self->mb_avail,
                self->mb_limit,
@@ -555,7 +555,6 @@ diskmon_add_mountpoint(const char *mntpoint, int percent_free, int mb_free)
     diskuse_t *limit = 0;
 
     if( !(limit = diskmon_get_mountpoint(mntpoint)) ) {
-
         limit = diskuse_create(mntpoint);
         diskmon_limit_list = g_slist_prepend(diskmon_limit_list, limit);
     }
@@ -592,7 +591,7 @@ diskmon_load_config(void)
 
     if( !(input = fopen(diskmon_config, "r")) ) {
         if( errno != ENOENT )
-            dsme_log(LOG_ERR, "%s: open failed: %m", diskmon_config);
+            dsme_log(LOG_ERR, PFIX "%s: open failed: %m", diskmon_config);
         goto EXIT;
     }
 
@@ -680,7 +679,7 @@ diskmon_schedule_wakeup(void)
 
     /* Never reschedule wakeups to happen at later time */
     if( next_check_time > curtime && next_check_time < timeout ) {
-        dsme_log(LOG_DEBUG, LOGPFIX"skipping wakeup re-schedule");
+        dsme_log(LOG_DEBUG, PFIX "skipping wakeup re-schedule");
         goto EXIT;
     }
 
@@ -692,7 +691,7 @@ diskmon_schedule_wakeup(void)
     msg.req.pid     = 0;
     msg.data        = 0;
 
-    dsme_log(LOG_DEBUG, LOGPFIX"schedule next wakeup in: %d ... %d seconds",
+    dsme_log(LOG_DEBUG, PFIX "schedule next wakeup in: %d ... %d seconds",
              msg.req.mintime, msg.req.maxtime);
 
     modules_broadcast_internally(&msg);
@@ -713,7 +712,7 @@ diskmon_check_disk_usage(void)
     if( !init_done_received )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, LOGPFIX"check disk space usage");
+    dsme_log(LOG_DEBUG, PFIX "check disk space usage");
     last_check_time = get_boottime();
 
     if( !(fh = setmntent(_PATH_MOUNTED, "r")) )
@@ -752,8 +751,7 @@ static void handle_check_req_cb(const DsmeDbusMessage* request, DsmeDbusMessage*
         diskmon_schedule_wakeup();
     }
     else {
-        dsme_log(LOG_DEBUG,
-                 LOGPFIX"only %d seconds from the last disk space check request, skip this request",
+        dsme_log(LOG_DEBUG, PFIX "only %d seconds from the last disk space check request, skip this request",
                  (int)seconds_from_last_check);
     }
 
@@ -764,7 +762,7 @@ static void handle_check_req_cb(const DsmeDbusMessage* request, DsmeDbusMessage*
  */
 static void handle_init_done_sig_cb(const DsmeDbusMessage* ind)
 {
-    dsme_log(LOG_DEBUG, LOGPFIX"init_done received");
+    dsme_log(LOG_DEBUG, PFIX "init_done received");
 
     init_done_received = true;
     diskmon_schedule_wakeup();
@@ -777,7 +775,7 @@ static void handle_inactivity_sig_cb(const DsmeDbusMessage* sig)
     const bool inactive                 = dsme_dbus_message_get_bool(sig);
     const bool new_device_active_state  = !inactive;
 
-    dsme_log(LOG_DEBUG, LOGPFIX"device %s signal received",
+    dsme_log(LOG_DEBUG, PFIX "device %s signal received",
              new_device_active_state ? "active" : "inactive");
 
     if( new_device_active_state == device_active ) {
@@ -793,7 +791,7 @@ static void handle_inactivity_sig_cb(const DsmeDbusMessage* sig)
         /* If the last check has not been done recently enough,
          * check immediately on activation. */
         if( seconds_from_last_check >= INTERVAL_WHEN_ACTIVATED ) {
-            dsme_log(LOG_DEBUG, LOGPFIX"%d seconds from the last check",
+            dsme_log(LOG_DEBUG, PFIX "%d seconds from the last check",
                      seconds_from_last_check);
             diskmon_check_disk_usage();
         }
@@ -815,7 +813,7 @@ static void handle_inactivity_sig_cb(const DsmeDbusMessage* sig)
  */
 DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
 {
-    dsme_log(LOG_DEBUG, LOGPFIX"iphb timer wakeup");
+    dsme_log(LOG_DEBUG, PFIX "iphb timer wakeup");
 
     /* Clear expecting-wakeup-at timestamp */
     next_check_time = 0;
@@ -829,7 +827,7 @@ DSME_HANDLER(DSM_MSGTYPE_WAKEUP, client, msg)
  */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, LOGPFIX"DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
 
     dsme_dbus_bind_methods(&dbus_broadcast_bound,
                            diskmonitor_service,
@@ -848,7 +846,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
     /* If dsme was restarted after bootup is finished, init-done signal
      * is not going to come again -> check flag file for initial state */
     if( access("/run/systemd/boot-status/init-done", F_OK) == 0 ) {
-        dsme_log(LOG_DEBUG, LOGPFIX"init_done already passed");
+        dsme_log(LOG_DEBUG, PFIX "init_done already passed");
         init_done_received = true;
         diskmon_schedule_wakeup();
     }
@@ -858,7 +856,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
  */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, LOGPFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
 }
 
 /** Callback for handling logical disk use state change events
@@ -867,7 +865,7 @@ DSME_HANDLER(DSM_MSGTYPE_DISK_SPACE, conn, msg)
 {
     const char* mount_path = DSMEMSG_EXTRA(msg);
 
-    dsme_log(LOG_DEBUG, LOGPFIX"send %s disk space notification for: %s",
+    dsme_log(LOG_DEBUG, PFIX "send %s disk space notification for: %s",
              diskspace_state_repr(msg->diskspace_state), mount_path);
 
     DsmeDbusMessage* sig =
@@ -901,7 +899,7 @@ module_fn_info_t message_handlers[] =
 void
 module_init(module_t* module)
 {
-    dsme_log(LOG_DEBUG, "diskmonitor.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "diskmonitor.so loaded");
 
     if( !diskmon_load_config() )
         diskmon_use_defaults();
@@ -930,5 +928,5 @@ module_fini(void)
 
     diskmon_free_config();
 
-    dsme_log(LOG_DEBUG, "diskmonitor.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "diskmonitor.so unloaded");
 }

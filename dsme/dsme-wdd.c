@@ -66,14 +66,12 @@
 
 #define DSME_MAXPING 5
 
-
 static void signal_handler(int  signum);
 static void usage(const char *  progname);
 static int  daemonize(void);
 static void mainloop(unsigned sleep_interval,
                      int      pipe_to_child,
                      int      pipe_from_child);
-
 
 static volatile bool run = true;
 
@@ -157,7 +155,6 @@ static int daemonize(void)
             break;
     }
 
-
     /* Detach tty */
     setsid();
 
@@ -201,12 +198,10 @@ static int daemonize(void)
     }
     close(i);
 
-
     /* signals */
     signal(SIGTSTP, SIG_IGN);   /* ignore tty signals */
     signal(SIGTTOU, SIG_IGN);
     signal(SIGTTIN, SIG_IGN);
-
 
     return 0;
 }
@@ -272,7 +267,6 @@ static void parse_options(int   argc,   /* in  */
     }
 }
 
-
 static bool set_nonblocking(int fd)
 {
     bool set = false;
@@ -289,7 +283,6 @@ static bool set_nonblocking(int fd)
 
     return set;
 }
-
 
 static void ping(int pipe)
 {
@@ -334,7 +327,6 @@ static bool pong(int pipe)
 
     return got_pong;
 }
-
 
 static void mainloop(unsigned sleep_interval,
                      int      pipe_to_child,
@@ -463,7 +455,6 @@ static bool kill_and_wait(pid_t pid, int sig, int max_wait)
   }
 
 EXIT:
-
   /* Cancel alarm and reset signal handler back to defaults */
   alarm(0);
   signal(SIGALRM, SIG_DFL);
@@ -599,7 +590,6 @@ int main(int argc, char *argv[])
     signal(SIGUSR1, signal_handler);
 #endif
 
-
     // protect from oom
     if (!protect_from_oom()) {
         fprintf(stderr, ME "Couldn't protect from oom: %s\n", strerror(errno));
@@ -686,7 +676,6 @@ int main(int argc, char *argv[])
                 DSME_SERVER_PATH,
                 strerror(errno));
         _exit(EXIT_FAILURE);
-
     } else {
         // parent
 

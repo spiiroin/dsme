@@ -39,6 +39,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#define PFIX "runlevel: "
+
 static bool change_runlevel(dsme_runlevel_t runlevel);
 static bool remount_mmc_readonly(void);
 
@@ -66,7 +68,7 @@ system_wrapper(const char *command)
     char        trapped[32] = "";
     const char *dumped      = "";
 
-    dsme_log(LOG_NOTICE, "Executing: %s", command);
+    dsme_log(LOG_NOTICE, PFIX "Executing: %s", command);
 
     if( (status = system(command)) == -1 ) {
         snprintf(exited, sizeof exited, " exec=failed");
@@ -88,7 +90,7 @@ system_wrapper(const char *command)
         }
     }
 
-    dsme_log(LOG_NOTICE, "Executed:  %s -%s%s%s result=%d",
+    dsme_log(LOG_NOTICE, PFIX "Executed:  %s -%s%s%s result=%d",
              command, exited, trapped, dumped, result);
 
     return result;
@@ -115,7 +117,7 @@ locate_systemctl_binary(void)
             break;
     }
 
-    dsme_log(LOG_DEBUG, "systemctl binary = %s", path ?: "unknown");
+    dsme_log(LOG_DEBUG, PFIX "systemctl binary = %s", path ?: "unknown");
     return path;
 }
 
@@ -138,7 +140,7 @@ static bool change_runlevel(dsme_runlevel_t runlevel)
       return false;
   }
   if (system_wrapper(command) != 0) {
-      dsme_log(LOG_CRIT, "failed to change runlevel, trying again in 2s");
+      dsme_log(LOG_CRIT, PFIX "failed to change runlevel, trying again in 2s");
       sleep(2);
       return system_wrapper(command) == 0;
   }
@@ -161,10 +163,10 @@ static void shutdown(dsme_runlevel_t runlevel)
       (runlevel != DSME_RUNLEVEL_SHUTDOWN) &&
       (runlevel != DSME_RUNLEVEL_MALF))
   {
-      dsme_log(LOG_WARNING, "Shutdown request to bad runlevel (%d)", runlevel);
+      dsme_log(LOG_WARNING, PFIX "Shutdown request to bad runlevel (%d)", runlevel);
       return;
   }
-  dsme_log(LOG_NOTICE,
+  dsme_log(LOG_NOTICE, PFIX "%s",
            runlevel == DSME_RUNLEVEL_SHUTDOWN ? "Shutdown" :
            runlevel == DSME_RUNLEVEL_REBOOT   ? "Reboot"   :
                                                 "Malf");
@@ -177,18 +179,18 @@ static void shutdown(dsme_runlevel_t runlevel)
       } else if (runlevel == DSME_RUNLEVEL_REBOOT) {
           snprintf(command, sizeof command, "%s --no-block reboot", systemctl);
       } else {
-          dsme_log(LOG_WARNING, "MALF not supported by our systemd implementation");
+          dsme_log(LOG_WARNING, PFIX "MALF not supported by our systemd implementation");
           goto fail_and_exit;
       }
       if (system_wrapper(command) != 0) {
-          dsme_log(LOG_WARNING, "command %s failed: %m", command);
+          dsme_log(LOG_WARNING, PFIX "command %s failed: %m", command);
           /* We ignore error. No retry or anything else */
       }
   }
   /* If runlevel change fails, handle the shutdown/reboot by DSME */
   else if (!change_runlevel(runlevel))
   {
-      dsme_log(LOG_CRIT, "Doing forced shutdown/reboot");
+      dsme_log(LOG_CRIT, PFIX "Doing forced shutdown/reboot");
       sync();
 
       (void)remount_mmc_readonly();
@@ -202,10 +204,10 @@ static void shutdown(dsme_runlevel_t runlevel)
               snprintf(command, sizeof(command), "/usr/sbin/poweroff");
           }
           if (system_wrapper(command) != 0) {
-              dsme_log(LOG_ERR, "%s failed, trying again in 3s", command);
+              dsme_log(LOG_ERR, PFIX "%s failed, trying again in 3s", command);
               sleep(3);
               if (system_wrapper(command) != 0) {
-                  dsme_log(LOG_ERR, "%s failed again", command);
+                  dsme_log(LOG_ERR, PFIX "%s failed again", command);
                   goto fail_and_exit;
               }
           }
@@ -216,21 +218,20 @@ static void shutdown(dsme_runlevel_t runlevel)
               snprintf(command, sizeof(command), "/usr/sbin/reboot");
           }
           if (system_wrapper(command) != 0) {
-              dsme_log(LOG_ERR, "%s failed, trying again in 3s", command);
+              dsme_log(LOG_ERR, PFIX "%s failed, trying again in 3s", command);
               sleep(3);
               if (system_wrapper(command) != 0) {
-                  dsme_log(LOG_ERR, "%s failed again", command);
+                  dsme_log(LOG_ERR, PFIX "%s failed again", command);
                   goto fail_and_exit;
               }
           }
       }
-
   }
 
   return;
 
 fail_and_exit:
-  dsme_log(LOG_CRIT, "Closing to clean-up!");
+  dsme_log(LOG_CRIT, PFIX "Closing to clean-up!");
   dsme_main_loop_quit(EXIT_FAILURE);
 }
 
@@ -252,7 +253,7 @@ static bool remount_mmc_readonly(void)
   /* Let's try to find the MMC in /proc/mounts */
   mounts_file = fopen("/proc/mounts", "r");
   if (!mounts_file) {
-      dsme_log(LOG_WARNING, "Can't open /proc/mounts. Leaving MMC as is");
+      dsme_log(LOG_WARNING, PFIX "Can't open /proc/mounts. Leaving MMC as is");
       return false;
   }
 
@@ -275,34 +276,33 @@ static bool remount_mmc_readonly(void)
       pid_t pid;
       pid_t rc;
 
-      dsme_log(LOG_WARNING, "MMC seems to be mounted, trying to mount read-only (%s %s).", device, mntpoint);
+      dsme_log(LOG_WARNING, PFIX "MMC seems to be mounted, trying to mount read-only (%s %s).", device, mntpoint);
 
       args[1] = (char*)&device;
       args[2] = (char*)&mntpoint;
       /* try to remount read-only */
       if ((pid = fork()) < 0) {
-          dsme_log(LOG_CRIT, "fork failed, exiting");
+          dsme_log(LOG_CRIT, PFIX "fork failed, exiting");
           return false;
       } else if (pid == 0) {
           execv("/bin/mount", args);
           execv("/sbin/mount", args);
 
-          dsme_log(LOG_ERR, "remount failed, no mount cmd found");
+          dsme_log(LOG_ERR, PFIX "remount failed, no mount cmd found");
           return false;
       }
       while ((rc = wait(&status)) != pid)
           if (rc < 0 && errno == ECHILD)
               break;
       if (rc != pid || WEXITSTATUS(status) != 0) {
-          dsme_log(LOG_ERR, "mount return value != 0, no can do.");
+          dsme_log(LOG_ERR, PFIX "mount return value != 0, no can do.");
           return false;
       }
 
-      dsme_log(LOG_NOTICE, "MMC remounted read-only");
+      dsme_log(LOG_NOTICE, PFIX "MMC remounted read-only");
       return true;
-
   } else {
-      dsme_log(LOG_NOTICE, "MMC not mounted");
+      dsme_log(LOG_NOTICE, PFIX "MMC not mounted");
       return true;
   }
 }
@@ -325,10 +325,10 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t* module)
 {
-  dsme_log(LOG_DEBUG, "runlevel.so loaded");
+  dsme_log(LOG_DEBUG, PFIX "runlevel.so loaded");
 }
 
 void module_fini(void)
 {
-  dsme_log(LOG_DEBUG, "runlevel.so unloaded");
+  dsme_log(LOG_DEBUG, PFIX "runlevel.so unloaded");
 }

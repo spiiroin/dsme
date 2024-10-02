@@ -42,30 +42,30 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_CHANGE_IND, conn, msg)
 {
     if ((msg->state == DSME_STATE_SHUTDOWN) ||
         (msg->state == DSME_STATE_REBOOT)) {
-        //dsme_log(LOG_DEBUG, PFIX"shutdown/reboot state received");
+        //dsme_log(LOG_DEBUG, PFIX "shutdown/reboot state received");
         dsme_play_vibra(pwroff_event_name);
     }
 }
 
 DSME_HANDLER(DSM_MSGTYPE_REBOOT_REQ, conn, msg)
 {
-    // dsme_log(LOG_DEBUG, PFIX"reboot reques received");
+    // dsme_log(LOG_DEBUG, PFIX "reboot reques received");
 }
 
 DSME_HANDLER(DSM_MSGTYPE_SHUTDOWN_REQ, conn, msg)
 {
-    //dsme_log(LOG_DEBUG, PFIX"shutdown reques received");
+    //dsme_log(LOG_DEBUG, PFIX "shutdown reques received");
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, conn, msg)
 {
-    dsme_log(LOG_INFO, PFIX"DBUS_CONNECTED");
+    dsme_log(LOG_INFO, PFIX "DBUS_CONNECTED");
     dsme_ini_vibrafeedback();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, conn, msg)
 {
-    dsme_log(LOG_INFO, PFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_INFO, PFIX "DBUS_DISCONNECT");
 }
 
 module_fn_info_t message_handlers[] = {
@@ -77,14 +77,13 @@ module_fn_info_t message_handlers[] = {
     {0}
 };
 
-
 void module_init(module_t* handle)
 {
-    dsme_log(LOG_DEBUG, "shutdownfeedback.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "shutdownfeedback.so loaded");
 }
 
 void module_fini(void)
 {
     dsme_fini_vibrafeedback();
-    dsme_log(LOG_DEBUG, "shutdownfeedback.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "shutdownfeedback.so unloaded");
 }

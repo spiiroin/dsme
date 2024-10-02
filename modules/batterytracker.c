@@ -378,7 +378,7 @@ init_done_set(bool reached)
     if( init_done == reached )
         goto EXIT;
 
-    dsme_log(LOG_INFO, PFIX"init_done: %s -> %s",
+    dsme_log(LOG_INFO, PFIX "init_done: %s -> %s",
              bool_repr(init_done),
              bool_repr(reached));
     init_done = reached;
@@ -440,7 +440,7 @@ static void dsme_usb_cable_state_set(dsme_usb_cable_state_t state)
     if( dsme_usb_cable_state == state )
         goto EXIT;
 
-    dsme_log(LOG_INFO, PFIX"dsme_usb_cable_state: %s -> %s",
+    dsme_log(LOG_INFO, PFIX "dsme_usb_cable_state: %s -> %s",
              dsme_usb_cable_state_repr(dsme_usb_cable_state),
              dsme_usb_cable_state_repr(state));
     dsme_usb_cable_state = state;
@@ -459,7 +459,6 @@ EXIT:
  */
 static const symbol_t dsme_charger_state_lut[] =
 {
-
     { MCE_CHARGER_STATE_UNKNOWN, DSME_CHARGER_STATE_UNKNOWN },
     { MCE_CHARGER_STATE_ON,      DSME_CHARGER_STATE_ON      },
     { MCE_CHARGER_STATE_OFF,     DSME_CHARGER_STATE_OFF     },
@@ -486,7 +485,7 @@ static void dsme_charger_state_set(dsme_charger_state_t state)
     if( dsme_charger_state == state )
         goto EXIT;
 
-    dsme_log(LOG_INFO, PFIX"dsme_charger_state: %s -> %s",
+    dsme_log(LOG_INFO, PFIX "dsme_charger_state: %s -> %s",
              dsme_charger_state_repr(dsme_charger_state),
              dsme_charger_state_repr(state));
     dsme_charger_state = state;
@@ -538,7 +537,7 @@ static void dsme_battery_status_set(dsme_battery_status_t status)
     if( dsme_battery_status == status )
         goto EXIT;
 
-    dsme_log(LOG_INFO, PFIX"dsme_battery_status: %s -> %s",
+    dsme_log(LOG_INFO, PFIX "dsme_battery_status: %s -> %s",
              dsme_battery_status_repr(dsme_battery_status),
              dsme_battery_status_repr(status));
     dsme_battery_status = status;
@@ -582,7 +581,7 @@ static void dsme_battery_level_set(dsme_battery_level_t level)
     if( dsme_battery_level == level )
         goto EXIT;
 
-    dsme_log(LOG_INFO, PFIX"dsme_battery_level: %s -> %s",
+    dsme_log(LOG_INFO, PFIX "dsme_battery_level: %s -> %s",
              dsme_battery_level_repr(dsme_battery_level),
              dsme_battery_level_repr(level));
     dsme_battery_level = level;
@@ -609,7 +608,7 @@ dsme_state_set(dsme_state_t state)
     if( dsme_state == state )
         goto EXIT;
 
-    dsme_log(LOG_INFO, PFIX"dsme_state: %s -> %s",
+    dsme_log(LOG_INFO, PFIX "dsme_state: %s -> %s",
              dsme_state_repr(dsme_state),
              dsme_state_repr(state));
 
@@ -633,7 +632,7 @@ alarm_active_set(bool active)
     if( alarm_active == active )
         goto EXIT;
 
-    dsme_log(LOG_INFO, PFIX"alarm_active: %s -> %s",
+    dsme_log(LOG_INFO, PFIX "alarm_active: %s -> %s",
              bool_repr(alarm_active),
              bool_repr(active));
 
@@ -658,7 +657,7 @@ static dsme_timer_t alarm_holdon_id = 0;
 
 static int alarm_holdon_cb(void* unused)
 {
-    dsme_log(LOG_INFO, PFIX"Alarm hold on time is over");
+    dsme_log(LOG_INFO, PFIX "Alarm hold on time is over");
     alarm_holdon_id = 0;
 
     /* Simulate end-of-alarm */
@@ -671,7 +670,7 @@ static void
 alarm_holdon_start(void)
 {
     if( !alarm_holdon_id ) {
-        dsme_log(LOG_INFO, PFIX"Alarm hold on time started");
+        dsme_log(LOG_INFO, PFIX "Alarm hold on time started");
         alarm_holdon_id =
             dsme_create_timer_seconds(ALARM_DELAYED_TIMEOUT,
                                       alarm_holdon_cb, NULL);
@@ -682,7 +681,7 @@ static void
 alarm_holdon_cancel(void)
 {
     if( alarm_holdon_id ) {
-        dsme_log(LOG_INFO, PFIX"Alarm hold on time canceled");
+        dsme_log(LOG_INFO, PFIX "Alarm hold on time canceled");
         dsme_destroy_timer(alarm_holdon_id),
             alarm_holdon_id = 0;
     }
@@ -735,7 +734,7 @@ static void config_load(void)
 
     if( !(input = fopen(BATTERY_LEVEL_CONFIG_FILE, "r")) ) {
         if( errno != ENOENT )
-            dsme_log(LOG_ERR, PFIX"%s: can't read config: %m",
+            dsme_log(LOG_ERR, PFIX "%s: can't read config: %m",
                      BATTERY_LEVEL_CONFIG_FILE);
         goto EXIT;
     }
@@ -750,7 +749,7 @@ static void config_load(void)
         /* Must define at least "min_level" and "polling time".
          */
         if( values < 2 ) {
-            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: not enough data",
+            dsme_log(LOG_ERR, PFIX "%s:%zd: %s: not enough data",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i]);
             goto EXIT;
@@ -771,7 +770,7 @@ static void config_load(void)
          * Polling times should also make sense  10-1000s
          */
         if( temp[i].polling_time < 10 || temp[i].polling_time > 1000 ) {
-            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: invalid polling_time=%d",
+            dsme_log(LOG_ERR, PFIX "%s:%zd: %s: invalid polling_time=%d",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i],
                      temp[i].polling_time);
@@ -779,7 +778,7 @@ static void config_load(void)
         }
 
         if( temp[i].min_level < 0 || temp[i].min_level > 100 ) {
-            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: invalid min_level=%d",
+            dsme_log(LOG_ERR, PFIX "%s:%zd: %s: invalid min_level=%d",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i],
                      temp[i].min_level);
@@ -787,7 +786,7 @@ static void config_load(void)
         }
 
         if( (i > 0) && temp[i-1].min_level <= temp[i].min_level ) {
-            dsme_log(LOG_ERR, PFIX"%s:%zd: %s: min_level=%d is not descending",
+            dsme_log(LOG_ERR, PFIX "%s:%zd: %s: min_level=%d is not descending",
                      BATTERY_LEVEL_CONFIG_FILE, i+1,
                      config_level_name[i],
                      temp[i].min_level);
@@ -803,14 +802,14 @@ EXIT:
 
     if( success ) {
         memcpy(config_level_data, temp, sizeof config_level_data);
-        dsme_log(LOG_INFO, PFIX"Using battery level values from %s",
+        dsme_log(LOG_INFO, PFIX "Using battery level values from %s",
                  BATTERY_LEVEL_CONFIG_FILE);
     }
     else {
-        dsme_log(LOG_DEBUG, PFIX"Using internal battery level values");
+        dsme_log(LOG_DEBUG, PFIX "Using internal battery level values");
     }
 
-    dsme_log(LOG_DEBUG, PFIX"Shutdown limit is < %d%%",
+    dsme_log(LOG_DEBUG, PFIX "Shutdown limit is < %d%%",
              config_level_data[DSME_BATTERY_CONFIG_WARNING].min_level);
 }
 
@@ -890,7 +889,7 @@ static int battery_empty_rethink_cb(void *aptr)
          */
         if( request_shutdown && condition_alarm_is_active() ) {
             request_shutdown = false;
-            dsme_log(LOG_DEBUG, PFIX"Active alarm - do not shutdown");
+            dsme_log(LOG_DEBUG, PFIX "Active alarm - do not shutdown");
         }
 
         /* Before starting shutdown, check charging. If charging is
@@ -900,13 +899,13 @@ static int battery_empty_rethink_cb(void *aptr)
          */
         if( request_shutdown && condition_charging_is_on() ) {
             request_shutdown = false;
-            dsme_log(LOG_DEBUG, PFIX"Charging - do not shutdown");
+            dsme_log(LOG_DEBUG, PFIX "Charging - do not shutdown");
         }
 
         /* If charging in USER state, make sure level won't drop too much, keep min 1% */
         if( !request_shutdown && condition_level_is_critical() ) {
             request_shutdown = true;
-            dsme_log(LOG_INFO, PFIX"Battery level keeps dropping - must shutdown");
+            dsme_log(LOG_INFO, PFIX "Battery level keeps dropping - must shutdown");
         }
 
         /* In any case we must not change direction in the middle
@@ -915,12 +914,12 @@ static int battery_empty_rethink_cb(void *aptr)
          * attempt to bypass act dead mode */
         if( request_shutdown && !init_done ) {
             request_shutdown = false;
-            dsme_log(LOG_DEBUG, PFIX"Mid boot up - must not shutdown");
+            dsme_log(LOG_DEBUG, PFIX "Mid boot up - must not shutdown");
         }
     }
 
     if( shutdown_requested != request_shutdown ) {
-        dsme_log(LOG_CRIT, PFIX"Battery empty shutdown %s",
+        dsme_log(LOG_CRIT, PFIX "Battery empty shutdown %s",
                  request_shutdown ? "requested" : "canceled");
 
         shutdown_requested = request_shutdown;
@@ -966,7 +965,7 @@ static bool xmce_running = false;
 static void
 xmce_running_set(bool running)
 {
-    dsme_log(LOG_DEBUG, PFIX"xmce_running=%d running=%d",
+    dsme_log(LOG_DEBUG, PFIX "xmce_running=%d running=%d",
              xmce_running, running);
 
     if( xmce_running == running )
@@ -974,7 +973,7 @@ xmce_running_set(bool running)
 
     xmce_running = running;
 
-    dsme_log(LOG_DEBUG, PFIX"mce is %s",  xmce_running ? "running" : "stopped");
+    dsme_log(LOG_DEBUG, PFIX "mce is %s",  xmce_running ? "running" : "stopped");
 
     if( xmce_running ) {
         xmce_send_usb_cable_state_query();
@@ -990,7 +989,6 @@ xmce_running_set(bool running)
     }
 
 cleanup:
-
     return;
 }
 
@@ -1027,7 +1025,6 @@ xmce_tracking_init(void)
     xmce_send_name_owner_query();
 
 cleanup:
-
     return;
 }
 
@@ -1053,7 +1050,6 @@ xmce_tracking_quit(void)
     xmce_forget_battery_level_query();
 
 cleanup:
-
     return;
 }
 
@@ -1109,18 +1105,17 @@ xmce_name_owner_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
                                DBUS_TYPE_STRING, &prev,
                                DBUS_TYPE_STRING, &curr,
                                DBUS_TYPE_INVALID) ) {
-        dsme_log(LOG_WARNING, PFIX"name owner signal: %s: %s",
+        dsme_log(LOG_WARNING, PFIX "name owner signal: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
 
     if( !strcmp(name, MCE_SERVICE) ) {
-        dsme_log(LOG_DEBUG, PFIX"mce name owner: %s", curr);
+        dsme_log(LOG_DEBUG, PFIX "mce name owner: %s", curr);
         xmce_running_set(*curr != 0);
     }
 
 cleanup:
-
     dbus_error_free(&err);
 
     modulebase_enter_module(caller);
@@ -1154,24 +1149,23 @@ xmce_name_owner_reply_cb(DBusPendingCall *pc, void *aptr)
 
     if( dbus_set_error_from_message(&err, rsp) ) {
         if( strcmp(err.name, DBUS_ERROR_NAME_HAS_NO_OWNER) ) {
-            dsme_log(LOG_WARNING, PFIX"mce name owner error reply: %s: %s",
+            dsme_log(LOG_WARNING, PFIX "mce name owner error reply: %s: %s",
                      err.name, err.message);
         }
     }
     else if( !dbus_message_get_args(rsp, &err,
                                DBUS_TYPE_STRING, &dta,
                                DBUS_TYPE_INVALID) ) {
-        dsme_log(LOG_WARNING, PFIX"mce name owner parse error: %s: %s",
+        dsme_log(LOG_WARNING, PFIX "mce name owner parse error: %s: %s",
                  err.name, err.message);
     }
     else {
-        dsme_log(LOG_DEBUG, PFIX"mce name owner reply: %s", dta);
+        dsme_log(LOG_DEBUG, PFIX "mce name owner reply: %s", dta);
     }
 
     xmce_running_set(dta && *dta);
 
 cleanup:
-
     if( rsp ) dbus_message_unref(rsp);
 
     dbus_error_free(&err);
@@ -1186,7 +1180,7 @@ xmce_forget_mce_name_owner_query(void)
     if( !xmce_name_owner_query_pc )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, PFIX"forget mce name owner query");
+    dsme_log(LOG_DEBUG, PFIX "forget mce name owner query");
     dbus_pending_call_cancel(xmce_name_owner_query_pc);
     dbus_pending_call_unref(xmce_name_owner_query_pc),
         xmce_name_owner_query_pc = 0;
@@ -1202,7 +1196,7 @@ EXIT:
 static void
 xmce_send_name_owner_query(void)
 {
-    dsme_log(LOG_DEBUG, PFIX"mce name owner query");
+    dsme_log(LOG_DEBUG, PFIX "mce name owner query");
 
     bool             res  = false;
     DBusMessage     *req  = 0;
@@ -1240,11 +1234,10 @@ xmce_send_name_owner_query(void)
     res = true;
 
 cleanup:
-
     if( res )
-        dsme_log(LOG_DEBUG, PFIX"mce name owner query sent");
+        dsme_log(LOG_DEBUG, PFIX "mce name owner query sent");
     else
-        dsme_log(LOG_ERR, PFIX"failed to send mce name owner query");
+        dsme_log(LOG_ERR, PFIX "failed to send mce name owner query");
 
     if( pc )
         dbus_pending_call_unref(pc);
@@ -1282,7 +1275,7 @@ xmce_usb_cable_state_reply_cb(DBusPendingCall *pc, void *aptr)
         goto cleanup;
 
     if( dbus_set_error_from_message(&err, rsp) ) {
-        dsme_log(LOG_ERR, PFIX"cable_state error reply: %s: %s",
+        dsme_log(LOG_ERR, PFIX "cable_state error reply: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
@@ -1291,17 +1284,16 @@ xmce_usb_cable_state_reply_cb(DBusPendingCall *pc, void *aptr)
                                DBUS_TYPE_STRING, &arg,
                                DBUS_TYPE_INVALID) )
     {
-        dsme_log(LOG_ERR, PFIX"cable_state parse error: %s: %s",
+        dsme_log(LOG_ERR, PFIX "cable_state parse error: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"cable_state reply: %s", arg);
+    dsme_log(LOG_DEBUG, PFIX "cable_state reply: %s", arg);
     dsme_usb_cable_state_t state = dsme_usb_cable_state_parse(arg);
     dsme_usb_cable_state_set(state);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1317,7 +1309,7 @@ xmce_forget_usb_cable_state_query(void)
     if( !xmce_usb_cable_state_query_pc )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, PFIX"forget cable_state query");
+    dsme_log(LOG_DEBUG, PFIX "forget cable_state query");
     dbus_pending_call_cancel(xmce_usb_cable_state_query_pc);
     dbus_pending_call_unref(xmce_usb_cable_state_query_pc),
         xmce_usb_cable_state_query_pc = 0;
@@ -1362,9 +1354,9 @@ xmce_send_usb_cable_state_query(void)
 
 cleanup:
     if( res )
-        dsme_log(LOG_DEBUG, PFIX"cable_state query sent");
+        dsme_log(LOG_DEBUG, PFIX "cable_state query sent");
     else
-        dsme_log(LOG_ERR, PFIX"failed to send cable_state query");
+        dsme_log(LOG_ERR, PFIX "failed to send cable_state query");
 
     if( pc )
         dbus_pending_call_unref(pc);
@@ -1402,7 +1394,7 @@ xmce_charger_state_reply_cb(DBusPendingCall *pc, void *aptr)
         goto cleanup;
 
     if( dbus_set_error_from_message(&err, rsp) ) {
-        dsme_log(LOG_ERR, PFIX"charger_state error reply: %s: %s",
+        dsme_log(LOG_ERR, PFIX "charger_state error reply: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
@@ -1411,17 +1403,16 @@ xmce_charger_state_reply_cb(DBusPendingCall *pc, void *aptr)
                                DBUS_TYPE_STRING, &arg,
                                DBUS_TYPE_INVALID) )
     {
-        dsme_log(LOG_ERR, PFIX"charger_state parse error: %s: %s",
+        dsme_log(LOG_ERR, PFIX "charger_state parse error: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"charger_state reply: %s", arg);
+    dsme_log(LOG_DEBUG, PFIX "charger_state reply: %s", arg);
     dsme_charger_state_t state = dsme_charger_state_parse(arg);
     dsme_charger_state_set(state);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1437,7 +1428,7 @@ xmce_forget_charger_state_query(void)
     if( !xmce_charger_state_query_pc )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, PFIX"forget charger_state query");
+    dsme_log(LOG_DEBUG, PFIX "forget charger_state query");
     dbus_pending_call_cancel(xmce_charger_state_query_pc);
     dbus_pending_call_unref(xmce_charger_state_query_pc),
         xmce_charger_state_query_pc = 0;
@@ -1482,9 +1473,9 @@ xmce_send_charger_state_query(void)
 
 cleanup:
     if( res )
-        dsme_log(LOG_DEBUG, PFIX"charger_state query sent");
+        dsme_log(LOG_DEBUG, PFIX "charger_state query sent");
     else
-        dsme_log(LOG_ERR, PFIX"failed to send charger_state query");
+        dsme_log(LOG_ERR, PFIX "failed to send charger_state query");
 
     if( pc )
         dbus_pending_call_unref(pc);
@@ -1522,7 +1513,7 @@ xmce_battery_status_reply_cb(DBusPendingCall *pc, void *aptr)
         goto cleanup;
 
     if( dbus_set_error_from_message(&err, rsp) ) {
-        dsme_log(LOG_ERR, PFIX"battery_status error reply: %s: %s",
+        dsme_log(LOG_ERR, PFIX "battery_status error reply: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
@@ -1531,17 +1522,16 @@ xmce_battery_status_reply_cb(DBusPendingCall *pc, void *aptr)
                                DBUS_TYPE_STRING, &arg,
                                DBUS_TYPE_INVALID) )
     {
-        dsme_log(LOG_ERR, PFIX"battery_status parse error: %s: %s",
+        dsme_log(LOG_ERR, PFIX "battery_status parse error: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"battery_status reply: %s", arg);
+    dsme_log(LOG_DEBUG, PFIX "battery_status reply: %s", arg);
     dsme_battery_status_t status = dsme_battery_status_parse(arg);
     dsme_battery_status_set(status);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1557,7 +1547,7 @@ xmce_forget_battery_status_query(void)
     if( !xmce_battery_status_query_pc )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, PFIX"forget battery_status query");
+    dsme_log(LOG_DEBUG, PFIX "forget battery_status query");
     dbus_pending_call_cancel(xmce_battery_status_query_pc);
     dbus_pending_call_unref(xmce_battery_status_query_pc),
         xmce_battery_status_query_pc = 0;
@@ -1602,9 +1592,9 @@ xmce_send_battery_status_query(void)
 
 cleanup:
     if( res )
-        dsme_log(LOG_DEBUG, PFIX"battery_status query sent");
+        dsme_log(LOG_DEBUG, PFIX "battery_status query sent");
     else
-        dsme_log(LOG_ERR, PFIX"failed to send battery_status query");
+        dsme_log(LOG_ERR, PFIX "failed to send battery_status query");
 
     if( pc )
         dbus_pending_call_unref(pc);
@@ -1642,7 +1632,7 @@ xmce_battery_level_reply_cb(DBusPendingCall *pc, void *aptr)
         goto cleanup;
 
     if( dbus_set_error_from_message(&err, rsp) ) {
-        dsme_log(LOG_ERR, PFIX"battery_level error reply: %s: %s",
+        dsme_log(LOG_ERR, PFIX "battery_level error reply: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
@@ -1651,17 +1641,16 @@ xmce_battery_level_reply_cb(DBusPendingCall *pc, void *aptr)
                                DBUS_TYPE_INT32, &arg,
                                DBUS_TYPE_INVALID) )
     {
-        dsme_log(LOG_ERR, PFIX"battery_level parse error: %s: %s",
+        dsme_log(LOG_ERR, PFIX "battery_level parse error: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"battery_level reply: %d", (int)arg);
+    dsme_log(LOG_DEBUG, PFIX "battery_level reply: %d", (int)arg);
     dsme_battery_level_t level = arg;
     dsme_battery_level_set(level);
 
 cleanup:
-
     if( rsp )
         dbus_message_unref(rsp);
 
@@ -1677,7 +1666,7 @@ xmce_forget_battery_level_query(void)
     if( !xmce_battery_level_query_pc )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, PFIX"forget battery_level query");
+    dsme_log(LOG_DEBUG, PFIX "forget battery_level query");
     dbus_pending_call_cancel(xmce_battery_level_query_pc);
     dbus_pending_call_unref(xmce_battery_level_query_pc),
         xmce_battery_level_query_pc = 0;
@@ -1722,9 +1711,9 @@ xmce_send_battery_level_query(void)
 
 cleanup:
     if( res )
-        dsme_log(LOG_DEBUG, PFIX"battery_level query sent");
+        dsme_log(LOG_DEBUG, PFIX "battery_level query sent");
     else
-        dsme_log(LOG_ERR, PFIX"failed to send battery_level query");
+        dsme_log(LOG_ERR, PFIX "failed to send battery_level query");
 
     if( pc )
         dbus_pending_call_unref(pc);
@@ -1743,7 +1732,7 @@ xmce_usb_cable_state_signal_cb(const DsmeDbusMessage* ind)
 {
     const char *arg = dsme_dbus_message_get_string(ind);
 
-    dsme_log(LOG_DEBUG, PFIX"dbus signal: %s(%s)",
+    dsme_log(LOG_DEBUG, PFIX "dbus signal: %s(%s)",
              MCE_USB_CABLE_STATE_SIG, arg);
 
     dsme_usb_cable_state_t state = dsme_usb_cable_state_parse(arg);
@@ -1757,7 +1746,7 @@ xmce_charger_state_signal_cb(const DsmeDbusMessage* ind)
 {
     const char *arg = dsme_dbus_message_get_string(ind);
 
-    dsme_log(LOG_DEBUG, PFIX"dbus signal: %s(%s)",
+    dsme_log(LOG_DEBUG, PFIX "dbus signal: %s(%s)",
              MCE_CHARGER_STATE_SIG, arg);
 
     dsme_charger_state_t state = dsme_charger_state_parse(arg);
@@ -1771,7 +1760,7 @@ xmce_battery_status_signal_cb(const DsmeDbusMessage* ind)
 {
     const char *arg = dsme_dbus_message_get_string(ind);
 
-    dsme_log(LOG_DEBUG, PFIX"dbus signal: %s(%s)",
+    dsme_log(LOG_DEBUG, PFIX "dbus signal: %s(%s)",
              MCE_BATTERY_STATUS_SIG, arg);
 
     dsme_battery_status_t status = dsme_battery_status_parse(arg);
@@ -1785,7 +1774,7 @@ xmce_battery_level_signal_cb(const DsmeDbusMessage* ind)
 {
     int arg = dsme_dbus_message_get_int(ind);
 
-    dsme_log(LOG_DEBUG, PFIX"dbus signal: %s(%d)",
+    dsme_log(LOG_DEBUG, PFIX "dbus signal: %s(%d)",
              MCE_BATTERY_STATUS_SIG, arg);
 
     dsme_battery_level_t level = arg;
@@ -1820,7 +1809,7 @@ systembus_connect(void)
     DBusError err = DBUS_ERROR_INIT;
 
     if( !(systembus = dsme_dbus_get_connection(&err)) ) {
-        dsme_log(LOG_WARNING, PFIX"can't connect to systembus: %s: %s",
+        dsme_log(LOG_WARNING, PFIX "can't connect to systembus: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
@@ -1828,7 +1817,6 @@ systembus_connect(void)
     xmce_tracking_init();
 
 cleanup:
-
     dbus_error_free(&err);
 }
 
@@ -1861,21 +1849,20 @@ send_charger_state(bool charging)
     if( prev == charging )
         goto cleanup;
 
-    dsme_log(LOG_DEBUG, PFIX"broadcast: charger_state=%s", bool_repr(charging));
+    dsme_log(LOG_DEBUG, PFIX "broadcast: charger_state=%s", bool_repr(charging));
 
     DSM_MSGTYPE_SET_CHARGER_STATE msg = DSME_MSG_INIT(DSM_MSGTYPE_SET_CHARGER_STATE);
     prev = msg.connected = charging;
     modules_broadcast_internally(&msg);
 
 cleanup:
-
     return;
 }
 
 static void
 send_battery_state(bool empty)
 {
-    dsme_log(LOG_DEBUG, PFIX"broadcast: battery_state=%s",
+    dsme_log(LOG_DEBUG, PFIX "broadcast: battery_state=%s",
              empty ? "empty" : "not-empty");
 
     DSM_MSGTYPE_SET_BATTERY_STATE msg =
@@ -1887,7 +1874,7 @@ send_battery_state(bool empty)
 static void
 send_battery_level(dsme_battery_level_t level)
 {
-    dsme_log(LOG_DEBUG, PFIX"broadcast: battery_level=%s",
+    dsme_log(LOG_DEBUG, PFIX "broadcast: battery_level=%s",
              dsme_battery_level_repr(level));
 
     DSM_MSGTYPE_SET_BATTERY_LEVEL msg =
@@ -1899,7 +1886,7 @@ send_battery_level(dsme_battery_level_t level)
 static void
 send_dsme_state_query(void)
 {
-    dsme_log(LOG_DEBUG, PFIX"query: dsme_state");
+    dsme_log(LOG_DEBUG, PFIX "query: dsme_state");
 
     DSM_MSGTYPE_STATE_QUERY query = DSME_MSG_INIT(DSM_MSGTYPE_STATE_QUERY);
     modules_broadcast_internally(&query);
@@ -1911,27 +1898,27 @@ send_dsme_state_query(void)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
     systembus_disconnect();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_STATE_CHANGE_IND, server, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"STATE_CHANGE_IND %s",
+    dsme_log(LOG_DEBUG, PFIX "STATE_CHANGE_IND %s",
              dsme_state_repr(msg->state));
     dsme_state_set(msg->state);
 }
 
 DSME_HANDLER(DSM_MSGTYPE_SET_ALARM_STATE, conn, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"SET_ALARM_STATE %s",
+    dsme_log(LOG_DEBUG, PFIX "SET_ALARM_STATE %s",
              bool_repr(msg->alarm_set));
     alarm_active_set(msg->alarm_set);
 }
@@ -1953,7 +1940,7 @@ module_fn_info_t message_handlers[] =
 void
 module_init(module_t *handle)
 {
-    dsme_log(LOG_DEBUG, PFIX"loading");
+    dsme_log(LOG_DEBUG, PFIX "loading");
 
     /* Cache module handle */
     this_module = handle;
@@ -1971,7 +1958,7 @@ module_init(module_t *handle)
 void
 module_fini(void)
 {
-    dsme_log(LOG_DEBUG, PFIX"unloading");
+    dsme_log(LOG_DEBUG, PFIX "unloading");
 
     /* Make sure D-Bus signal handlers get unregistered */
     dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);

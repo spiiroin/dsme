@@ -139,25 +139,24 @@ static void get_locked(const DsmeDbusMessage* request,
 {
     int unlocked = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"get_locked");
+    dsme_log(LOG_DEBUG, PFIX "get_locked");
 
     // Read device info and get unlocked value.
     if( !get_unlocked_value(&unlocked) )
     {
-        dsme_log(LOG_ERR, PFIX"Error: Failed to read dev info");
+        dsme_log(LOG_ERR, PFIX "Error: Failed to read dev info");
 
         *reply = dsme_dbus_reply_error( request, DBUS_ERROR_IO_ERROR,
                                        "Failed to read device info" );
         return;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"return locked to client");
+    dsme_log(LOG_DEBUG, PFIX "return locked to client");
 
     *reply = dsme_dbus_reply_new(request);
     // Since this function returns locked status,
     // we need to invert unlocked value.
     dsme_dbus_message_append_int(*reply, !unlocked);
-
 }
 
 /* -------------------------------------------------------------------------
@@ -173,7 +172,7 @@ static void set_locked(const DsmeDbusMessage* request,
 {
     int locked = -1;
 
-    dsme_log(LOG_DEBUG, PFIX"set_locked");
+    dsme_log(LOG_DEBUG, PFIX "set_locked");
 
     // Get input value
     locked = dsme_dbus_message_get_int(request);
@@ -181,7 +180,7 @@ static void set_locked(const DsmeDbusMessage* request,
     // Check that input value is 0 or 1.
     if( locked != 0 && locked != 1 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: Invalid input value");
+        dsme_log(LOG_ERR, PFIX "Error: Invalid input value");
 
         *reply = dsme_dbus_reply_error(request, DBUS_ERROR_INVALID_ARGS,
                                        "Invalid input value");
@@ -192,14 +191,14 @@ static void set_locked(const DsmeDbusMessage* request,
     // Since we have lock value we need to invert it.
     if( !set_unlocked_value(!locked) )
     {
-        dsme_log(LOG_ERR, PFIX"Error: Failed to write dev info");
+        dsme_log(LOG_ERR, PFIX "Error: Failed to write dev info");
 
         *reply = dsme_dbus_reply_error(request, DBUS_ERROR_IO_ERROR,
                                        "Failed to write device info");
         return;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"return OK");
+    dsme_log(LOG_DEBUG, PFIX "return OK");
 
     *reply = dsme_dbus_reply_new(request);
     // Return message to client.
@@ -239,12 +238,12 @@ static const dsme_dbus_binding_t dbus_methods_array[] =
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DSM_MSGTYPE_DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DSM_MSGTYPE_DBUS_CONNECTED");
 
     // Check that plug-in is initialized.
     if( abootsettings_init )
     {
-        dsme_log(LOG_DEBUG, PFIX"bind methods");
+        dsme_log(LOG_DEBUG, PFIX "bind methods");
         dsme_dbus_bind_methods(&dbus_methods_bound,
                                abootsettings_service,
                                abootsettings_path,
@@ -255,7 +254,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DSM_MSGTYPE_DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DSM_MSGTYPE_DBUS_DISCONNECT");
 }
 
 module_fn_info_t message_handlers[] =
@@ -273,7 +272,7 @@ void module_init(module_t* handle)
 {
     GKeyFile* key_file = NULL;
 
-    dsme_log(LOG_DEBUG, PFIX"module_init");
+    dsme_log(LOG_DEBUG, PFIX "module_init");
 
     key_file = g_key_file_new();
 
@@ -297,14 +296,14 @@ void module_init(module_t* handle)
             }
             else
             {
-                dsme_log(LOG_ERR, PFIX"%s: deviceinfo partition not defined",
+                dsme_log(LOG_ERR, PFIX "%s: deviceinfo partition not defined",
                          ABOOTSET_INI);
             }
         }
         else
         {
             dsme_log(error->code == G_FILE_ERROR_NOENT ? LOG_DEBUG : LOG_ERR,
-                     PFIX"%s: INI file could not be loaded: %s",
+                     PFIX "%s: INI file could not be loaded: %s",
                      ABOOTSET_INI, error->message);
         }
 
@@ -312,12 +311,12 @@ void module_init(module_t* handle)
         g_clear_error(&error);
     }
 
-    dsme_log(LOG_DEBUG, PFIX"module_init done");
+    dsme_log(LOG_DEBUG, PFIX "module_init done");
 }
 
 void module_fini(void)
 {
-    dsme_log(LOG_DEBUG, PFIX"module_fini");
+    dsme_log(LOG_DEBUG, PFIX "module_fini");
 
     dsme_dbus_unbind_methods(&dbus_methods_bound,
                              abootsettings_service,
@@ -342,7 +341,7 @@ void module_fini(void)
  */
 static bool open_partition(int flag)
 {
-    dsme_log(LOG_DEBUG, PFIX"open_partition");
+    dsme_log(LOG_DEBUG, PFIX "open_partition");
 
     // If we have file descriptor open, return true.
     if( partition != -1 )
@@ -359,12 +358,12 @@ static bool open_partition(int flag)
 
     if( partition == -1 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: Can't open partition (%d)",
+        dsme_log(LOG_ERR, PFIX "Error: Can't open partition (%d)",
             partition);
         return false;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"Partition open successful");
+    dsme_log(LOG_DEBUG, PFIX "Partition open successful");
     return true;
 }
 
@@ -376,7 +375,7 @@ static void close_partition()
 {
     if( partition != -1 )
     {
-        dsme_log(LOG_DEBUG, PFIX"Close partition (%d)", partition);
+        dsme_log(LOG_DEBUG, PFIX "Close partition (%d)", partition);
         close(partition);
         partition = -1;
     }
@@ -394,11 +393,11 @@ static bool set_emmc_block_size()
     int ret = 0;
     block_size = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"set_emmc_block_size");
+    dsme_log(LOG_DEBUG, PFIX "set_emmc_block_size");
 
     if( partition == -1 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: partition not open");
+        dsme_log(LOG_ERR, PFIX "Error: partition not open");
         return false;
     }
 
@@ -406,13 +405,13 @@ static bool set_emmc_block_size()
 
     if( ret < 0 || block_size <= 0 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: ioctl = %d, block size = %d",
+        dsme_log(LOG_ERR, PFIX "Error: ioctl = %d, block size = %d",
             ret, block_size);
         block_size = 0;
         return false;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"block size = %d", block_size);
+    dsme_log(LOG_DEBUG, PFIX "block size = %d", block_size);
 
     return true;
 }
@@ -428,24 +427,24 @@ static bool set_file_offset()
     off_t partition_size = 0;
     devinfo_data_offset = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"set_file_offset");
+    dsme_log(LOG_DEBUG, PFIX "set_file_offset");
 
     if( partition == -1 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: partition not open");
+        dsme_log(LOG_ERR, PFIX "Error: partition not open");
         return false;
     }
 
     if( !set_emmc_block_size() )
     {
-        dsme_log(LOG_ERR, PFIX"Error: failed to get block size");
+        dsme_log(LOG_ERR, PFIX "Error: failed to get block size");
         return false;
     }
 
     // Get partition size.
     partition_size = lseek(partition, 0, SEEK_END);
 
-    dsme_log(LOG_DEBUG, PFIX"Partition size = %llu",
+    dsme_log(LOG_DEBUG, PFIX "Partition size = %llu",
         (unsigned long long)partition_size);
 
     // Set file pointer to start.
@@ -453,7 +452,7 @@ static bool set_file_offset()
 
     if( partition_size <= block_size )
     {
-        dsme_log(LOG_ERR, PFIX"Error: Partition size");
+        dsme_log(LOG_ERR, PFIX "Error: Partition size");
         return false;
     }
 
@@ -462,10 +461,10 @@ static bool set_file_offset()
 
     if( devinfo_data_offset <= 0 )
     {
-         dsme_log(LOG_ERR, PFIX"Error: offset null");
+         dsme_log(LOG_ERR, PFIX "Error: offset null");
          return false;
     }
-    dsme_log(LOG_DEBUG, PFIX"Offset = %llu",
+    dsme_log(LOG_DEBUG, PFIX "Offset = %llu",
         (unsigned long long)devinfo_data_offset);
 
     return true;
@@ -483,7 +482,7 @@ static int encode_device_info(device_info *dev, char* buf)
     int size = 0;
     int32_t value = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"decode_device_info");
+    dsme_log(LOG_DEBUG, PFIX "decode_device_info");
 
     if( buf == NULL || dev == NULL )
     {
@@ -580,11 +579,11 @@ static int encode_device_info(device_info *dev, char* buf)
     else
     {
         // No support for this version.
-        dsme_log(LOG_ERR, PFIX"Error: This version not supported");
+        dsme_log(LOG_ERR, PFIX "Error: This version not supported");
         return 0;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"encoded size = %d", size);
+    dsme_log(LOG_DEBUG, PFIX "encoded size = %d", size);
 
     return size;
 }
@@ -601,13 +600,13 @@ static bool decode_device_info(device_info* dev, char* buf)
     int size = 0;
     int32_t value = 0;
 
-    dsme_log(LOG_DEBUG, PFIX"decode_device_info");
+    dsme_log(LOG_DEBUG, PFIX "decode_device_info");
 
     // Copy version number
 
     memcpy(&value, buf, sizeof value);
     size = sizeof value;
-    dsme_log(LOG_DEBUG, PFIX"Device info version (%d)", value);
+    dsme_log(LOG_DEBUG, PFIX "Device info version (%d)", value);
 
     // Save current device info version
     device_info_version = value;
@@ -626,7 +625,7 @@ static bool decode_device_info(device_info* dev, char* buf)
         // Check that we have magic
         if( memcmp(dev->magic, DEVICE_MAGIC, DEVICE_MAGIC_SIZE) )
         {
-            dsme_log(LOG_ERR, PFIX"Device magic not found");
+            dsme_log(LOG_ERR, PFIX "Device magic not found");
             return false;
         }
 
@@ -643,7 +642,7 @@ static bool decode_device_info(device_info* dev, char* buf)
         }
         else
         {
-            dsme_log(LOG_ERR, PFIX"is_unlocked value not in range");
+            dsme_log(LOG_ERR, PFIX "is_unlocked value not in range");
             return false;
         }
 
@@ -658,7 +657,7 @@ static bool decode_device_info(device_info* dev, char* buf)
         }
         else
         {
-            dsme_log(LOG_ERR, PFIX"is_tampered value not in range");
+            dsme_log(LOG_ERR, PFIX "is_tampered value not in range");
             return false;
         }
 
@@ -675,7 +674,7 @@ static bool decode_device_info(device_info* dev, char* buf)
             }
             else
             {
-                dsme_log(LOG_ERR, PFIX"is_unlock_critical value not in range");
+                dsme_log(LOG_ERR, PFIX "is_unlock_critical value not in range");
                 return false;
             }
         }
@@ -692,7 +691,7 @@ static bool decode_device_info(device_info* dev, char* buf)
             }
             else
             {
-                dsme_log(LOG_ERR, PFIX"is_verified value not in range");
+                dsme_log(LOG_ERR, PFIX "is_verified value not in range");
                 return false;
             }
         }
@@ -708,7 +707,7 @@ static bool decode_device_info(device_info* dev, char* buf)
         }
         else
         {
-            dsme_log(LOG_ERR, PFIX"charger_screen value not in range");
+            dsme_log(LOG_ERR, PFIX "charger_screen value not in range");
             return false;
         }
 
@@ -746,7 +745,7 @@ static bool decode_device_info(device_info* dev, char* buf)
             }
             else
             {
-                dsme_log(LOG_ERR, PFIX"verity_mode value not in range");
+                dsme_log(LOG_ERR, PFIX "verity_mode value not in range");
                 return false;
             }
 
@@ -760,7 +759,7 @@ static bool decode_device_info(device_info* dev, char* buf)
     }
     else
     {
-      dsme_log(LOG_ERR, PFIX"Error: Version not supported");
+      dsme_log(LOG_ERR, PFIX "Error: Version not supported");
       return false;
     }
 }
@@ -774,25 +773,25 @@ static bool read_device_info_from_disk()
     char data[DEVINFO_BUF_SIZE];
     memset(data, 0, DEVINFO_BUF_SIZE);
 
-    dsme_log(LOG_DEBUG, PFIX"read_device_info_from_disk");
+    dsme_log(LOG_DEBUG, PFIX "read_device_info_from_disk");
 
     // Set file pointer to offset e.g. last block of partition.
     if( lseek(partition, devinfo_data_offset, SEEK_SET) < 0 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: Failed to seek to offser");
+        dsme_log(LOG_ERR, PFIX "Error: Failed to seek to offser");
         return false;
     }
 
     if( block_size > DEVINFO_BUF_SIZE )
     {
-        dsme_log(LOG_ERR, PFIX"Error: block size too big");
+        dsme_log(LOG_ERR, PFIX "Error: block size too big");
         return false;
     }
 
     // Read device info.
     if( read(partition, &data, block_size) < block_size )
     {
-        dsme_log(LOG_ERR, PFIX"Error: Failed to read");
+        dsme_log(LOG_ERR, PFIX "Error: Failed to read");
         return false;
     }
 
@@ -810,19 +809,19 @@ static bool write_device_info_to_disk()
     char* data_ptr = &data[0];
     memset(data, 0, DEVINFO_BUF_SIZE);
 
-    dsme_log(LOG_DEBUG, PFIX"write_device_info");
+    dsme_log(LOG_DEBUG, PFIX "write_device_info");
 
     // Encode device info to buffer.
     if( encode_device_info(&device, data) == 0 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: encoded failed");
+        dsme_log(LOG_ERR, PFIX "Error: encoded failed");
         return false;
     }
 
     // Set file pointer to last block of aboot partition.
     if( lseek(partition, devinfo_data_offset, SEEK_SET) < 0 )
     {
-        dsme_log(LOG_ERR, PFIX"Error: failed to seek offset");
+        dsme_log(LOG_ERR, PFIX "Error: failed to seek offset");
         return false;
     }
 
@@ -835,14 +834,14 @@ static bool write_device_info_to_disk()
                                                byte_count));
         if( written < 0 )
         {
-            dsme_log(LOG_ERR, PFIX"Error: failed to write: %m");
+            dsme_log(LOG_ERR, PFIX "Error: failed to write: %m");
             return false;
         }
         data_ptr += written;
         byte_count -= written;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"Device info write successful");
+    dsme_log(LOG_DEBUG, PFIX "Device info write successful");
     return true;
 }
 
@@ -854,7 +853,7 @@ static bool get_unlocked_value(int* unlocked)
  {
     bool retOk = false;
 
-    dsme_log(LOG_DEBUG, PFIX"get_unlocked_value");
+    dsme_log(LOG_DEBUG, PFIX "get_unlocked_value");
 
     if( !open_partition(O_RDONLY) )
     {
@@ -869,7 +868,7 @@ static bool get_unlocked_value(int* unlocked)
             *unlocked = (int)device.is_unlocked;
             retOk = true;
 
-            dsme_log(LOG_DEBUG, PFIX" [ is_unlocked = %d ]",
+            dsme_log(LOG_DEBUG, PFIX " [ is_unlocked = %d ]",
                 (int)device.is_unlocked);
         }
     }
@@ -886,7 +885,7 @@ static bool set_unlocked_value(int value)
  {
     bool retOk = false;
 
-    dsme_log(LOG_DEBUG, PFIX"set_unlocked_value");
+    dsme_log(LOG_DEBUG, PFIX "set_unlocked_value");
 
     if( !open_partition(O_RDWR) )
     {
@@ -901,7 +900,7 @@ static bool set_unlocked_value(int value)
         {
             device.is_unlocked = value;
 
-            dsme_log(LOG_DEBUG, PFIX" [ is_unlocked = %d ]",
+            dsme_log(LOG_DEBUG, PFIX " [ is_unlocked = %d ]",
                 (int)device.is_unlocked );
 
             if( write_device_info_to_disk() )

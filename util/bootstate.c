@@ -64,12 +64,12 @@ int main(void)
       FD_ZERO(&rfds);
       FD_SET(dsme_conn->fd, &rfds);
 
-      ret = select(dsme_conn->fd + 1, &rfds, NULL, NULL, &tv); 
+      ret = select(dsme_conn->fd + 1, &rfds, NULL, NULL, &tv);
       if (ret == -1) {
           fprintf(stderr, "error in select()\n");
           printf("MALF");
           return EXIT_FAILURE;
-      } 
+      }
       if (ret == 0) {
           fprintf(stderr, "Timeout!\n");
           printf("MALF");

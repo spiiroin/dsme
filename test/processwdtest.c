@@ -42,7 +42,6 @@
 
 #define CMDLINE DSME " -p libswwd.so"
 
-
 #ifdef STARTDSME
 static pid_t execdsme(void);
 static pid_t execdsme(void)
@@ -59,7 +58,6 @@ static pid_t execdsme(void)
   return pid;
 }
 #endif
-
 
 int dsmeprocesswdtest(int);
 int dsmeprocesswdtest(int testnum)
@@ -88,7 +86,7 @@ int dsmeprocesswdtest(int testnum)
       break;
     }
   }
-	
+
 	if (!conn) {
     tblog(testnum, TBLOG_ERROR, "Cannot connect to DSME\n");
     goto cleanup;
@@ -116,7 +114,7 @@ int dsmeprocesswdtest(int testnum)
 		curtime = time(NULL);
 		while (time(NULL) < curtime + 150) {
 			dsmemsg_generic_t * inmsg;
-			
+
 			inmsg = dsmesock_receive(conn);
 			if (inmsg) {
 				if (phase < 3) {
@@ -141,19 +139,19 @@ int dsmeprocesswdtest(int testnum)
 	/* Main process */
 	curtime = time(NULL);
 	while(waitpid(child, &status, 0) != child) ;
-	
+
 	if (time(NULL) < curtime + 27) {
 		tblog(testnum, TBLOG_ERROR, "Killed too early\n");
 		goto cleanup;
 	}
-	
+
 	if (time(NULL) > curtime + 150) {
 		tblog(testnum, TBLOG_ERROR, "Didn't get killed\n");
 		goto cleanup;
 	}
 
 	retval = 0;
-		
+
  cleanup:
 	if (conn) {
 		dsmesock_close(conn);

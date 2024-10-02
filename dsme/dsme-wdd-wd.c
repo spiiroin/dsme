@@ -43,9 +43,7 @@
 
 #include <linux/watchdog.h>
 
-
 #define DSME_STATIC_STRLEN(s) (sizeof(s) - 1)
-
 
 typedef struct wd_t {
     const char* file;   /* pathname of the watchdog device */

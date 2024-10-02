@@ -45,6 +45,8 @@
 #include "../include/dsme/logging.h"
 #include "../include/dsme/modulebase.h"
 
+#define PFIX "wlanloader: "
+
 #define WLAN_SYSTEMD_UNIT   "wlan-module-load.service"
 
 static module_t *this_module = 0;
@@ -57,11 +59,11 @@ static void reset_wlan_module(void)
     const char      *unit = WLAN_SYSTEMD_UNIT;
     const char      *mode = "ignore-requirements";
 
-    dsme_log(LOG_DEBUG, "wlanloader: Resetting WLAN");
+    dsme_log(LOG_DEBUG, PFIX "wlanloader: Resetting WLAN");
 
     if (!(conn = dsme_dbus_get_connection(&err)))
     {
-	dsme_log(LOG_ERR, "wlanloader: system bus connect: %s: %s",
+	dsme_log(LOG_ERR, PFIX "wlanloader: system bus connect: %s: %s",
 		 err.name, err.message);
         goto cleanup;
     }
@@ -84,7 +86,6 @@ static void reset_wlan_module(void)
         goto cleanup;
 
 cleanup:
-
     if (req) dbus_message_unref(req);
     if (conn) dbus_connection_unref(conn);
     dbus_error_free(&err);
@@ -99,7 +100,7 @@ static void connman_tethering_changed(const DsmeDbusMessage* sig)
                             "/net/connman/technology/wifi") == 0)
     {
         tethering = dsme_dbus_message_get_variant_bool(sig);
-        dsme_log(LOG_DEBUG, "wlanloader: Tethering status changed to %d",
+        dsme_log(LOG_DEBUG, PFIX "wlanloader: Tethering status changed to %d",
                                          tethering);
 
         if (!tethering) {
@@ -126,14 +127,14 @@ static void loader_needed_cb(DBusPendingCall *pending, void *user_data)
         goto cleanup;
 
     if (dbus_set_error_from_message(&err, rsp)) {
-        dsme_log(LOG_DEBUG, "wlanloader: disabled, GetUnit: %s: %s",
+        dsme_log(LOG_DEBUG, PFIX "wlanloader: disabled, GetUnit: %s: %s",
                                                     err.name, err.message);
     } else {
         /* We got the reply without error, so the service exists */
         const module_t *restore = modulebase_enter_module(this_module);
         dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
         modulebase_enter_module(restore);
-        dsme_log(LOG_DEBUG, "wlanloader: activated");
+        dsme_log(LOG_DEBUG, PFIX "wlanloader: activated");
     }
 
 cleanup:
@@ -152,7 +153,7 @@ static void check_loader_needed(void)
 
     if (!(conn = dsme_dbus_get_connection(&err)))
     {
-	dsme_log(LOG_ERR, "wlanloader: system bus connect: %s: %s",
+	dsme_log(LOG_ERR, PFIX "wlanloader: system bus connect: %s: %s",
 		 err.name, err.message);
         goto cleanup;
     }
@@ -174,7 +175,7 @@ static void check_loader_needed(void)
         goto cleanup;
 
     if (!pc) {
-        dsme_log(LOG_WARNING, "wlanloader: null pending call received");
+        dsme_log(LOG_WARNING, PFIX "wlanloader: null pending call received");
         goto cleanup;
     }
 
@@ -182,7 +183,6 @@ static void check_loader_needed(void)
         goto cleanup;
 
 cleanup:
-
     if (pc) dbus_pending_call_unref(pc);
     if (req) dbus_message_unref(req);
     if (conn) dbus_connection_unref(conn);
@@ -191,14 +191,14 @@ cleanup:
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, "wlanloader: DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "wlanloader: DBUS_CONNECTED");
 
     check_loader_needed();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, "wlanloader: DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "wlanloader: DBUS_DISCONNECT");
 }
 
 module_fn_info_t message_handlers[] = {
@@ -211,13 +211,12 @@ void
 module_init(module_t * handle)
 {
     this_module = handle;
-    dsme_log(LOG_DEBUG, "wlanloader.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "wlanloader.so loaded");
 }
 
 void
 module_fini(void)
 {
     dsme_dbus_unbind_signals(&dbus_signals_bound, dbus_signals_array);
-    dsme_log(LOG_DEBUG, "libwlanloader.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "libwlanloader.so unloaded");
 }
-

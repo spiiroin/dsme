@@ -55,6 +55,8 @@
 /* HACK: make sure also unused code gets a compilation attempt */
 //#define DEAD_CODE
 
+#define PFIX "dsme_dbus: "
+
 /* ========================================================================= *
  * TYPES
  * ========================================================================= */
@@ -93,6 +95,7 @@ DsmeDbusMessage          *dsme_dbus_reply_error             (const DsmeDbusMessa
 DsmeDbusMessage          *dsme_dbus_signal_new              (const char *sender, const char *path, const char *interface, const char *name);
 void                      dsme_dbus_signal_emit             (DsmeDbusMessage *sig);
 const char               *dsme_dbus_message_path            (const DsmeDbusMessage *msg);
+const char               *dsme_dbus_message_sender          (const DsmeDbusMessage *msg);
 char                     *dsme_dbus_endpoint_name           (const DsmeDbusMessage *request);
 void                      dsme_dbus_message_append_string   (DsmeDbusMessage *msg, const char *s);
 void                      dsme_dbus_message_append_int      (DsmeDbusMessage *msg, int i);
@@ -205,7 +208,29 @@ static bool              manager_handle_method        (DsmeDbusManager *self, DB
 static void              manager_handle_signal        (DsmeDbusManager *self, DBusMessage *sig);
 
 /* ------------------------------------------------------------------------- *
- * Module
+ * DsmeDbusTracker
+ * ------------------------------------------------------------------------- */
+
+DsmeDbusTracker *dsme_dbus_tracker_create        (DsmeDbusTrackerNofify count_changed,
+                                                  DsmeDbusClientNofify  client_added,
+                                                  DsmeDbusClientNofify  client_removed);
+void             dsme_dbus_tracker_delete        (DsmeDbusTracker *self);
+void             dsme_dbus_tracker_delete_at     (DsmeDbusTracker **pself);
+void             dsme_dbus_tracker_add_client    (DsmeDbusTracker *self, const char *name);
+void             dsme_dbus_tracker_remove_client (DsmeDbusTracker *self, const char *name);
+void             dsme_dbus_tracker_flush_clients (DsmeDbusTracker *self);
+static void      dsme_dbus_tracker_name_dropped  (const char *name);
+static void      dsme_dbus_tracker_disconnected  (void);
+
+/* ------------------------------------------------------------------------- *
+ * DsmeDbusClient
+ * ------------------------------------------------------------------------- */
+
+static void            dsme_dbus_client_delete_cb (void *self);
+static DsmeDbusClient *dsme_dbus_client_create    (DsmeDbusTracker *tracker, const char *name);
+
+/* ------------------------------------------------------------------------- *
+ * DSME_DBUS
  * ------------------------------------------------------------------------- */
 
 static void               dsme_dbus_verify_signal           (DBusConnection *con, DBusMessage *sig);
@@ -397,7 +422,6 @@ dsme_dbus_reply_new(const DsmeDbusMessage *request)
     rsp = message_new(request->connection, msg);
 
 EXIT:
-
     if( msg )
         dbus_message_unref(msg);
 
@@ -419,7 +443,6 @@ dsme_dbus_reply_error(const DsmeDbusMessage *request,
     rsp = message_new(request->connection, msg);
 
 EXIT:
-
     if( msg )
         dbus_message_unref(msg);
 
@@ -440,13 +463,13 @@ dsme_dbus_signal_new(const char *sender,
         goto EXIT;
 
     if( !dsme_dbus_is_enabled() ) {
-        dsme_log(LOG_ERR, "signal %s.%s send attempt from %s while dbus functionality disabled",
+        dsme_log(LOG_ERR, PFIX "signal %s.%s send attempt from %s while dbus functionality disabled",
                  interface, name, dsme_dbus_calling_module_name());
         goto EXIT;
     }
 
     if( !(con = dsme_dbus_get_connection(0)) ) {
-        dsme_log(LOG_ERR, "signal %s.%s send attempt from %s while not connected",
+        dsme_log(LOG_ERR, PFIX "signal %s.%s send attempt from %s while not connected",
                  interface, name, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -456,7 +479,6 @@ dsme_dbus_signal_new(const char *sender,
     sig = message_new(con, msg);
 
 EXIT:
-
     if( msg )
         dbus_message_unref(msg);
 
@@ -483,6 +505,15 @@ dsme_dbus_message_path(const DsmeDbusMessage *self)
         path = dbus_message_get_path(self->msg);
 
     return path ?: "";
+}
+
+const char *
+dsme_dbus_message_sender(const DsmeDbusMessage *self)
+{
+    const char *sender = NULL;
+    if( self && self->msg )
+        sender = dbus_message_get_sender(self->msg);
+    return sender;
 }
 
 char *
@@ -709,7 +740,7 @@ interface_set_members(DsmeDbusInterface *self, const dsme_dbus_binding_t *member
         self->if_members = members;
     }
     else if( self->if_members != members ) {
-        dsme_log(LOG_CRIT, "TODO");
+        dsme_log(LOG_CRIT, PFIX "TODO");
     }
 }
 
@@ -971,19 +1002,18 @@ service_acquire_name(DsmeDbusService *self)
 
     if( rc != DBUS_REQUEST_NAME_REPLY_PRIMARY_OWNER ) {
         if( dbus_error_is_set(&err) )
-            dsme_log(LOG_ERR, "request_name(%s): %s: %s",
+            dsme_log(LOG_ERR, PFIX "request_name(%s): %s: %s",
                      self->se_name, err.name, err.message);
         else
-            dsme_log(LOG_ERR, "request_name(%s): %s",
+            dsme_log(LOG_ERR, PFIX "request_name(%s): %s",
                      self->se_name, dsme_dbus_name_request_reply_repr(rc));
         goto EXIT;
     }
 
-    dsme_log(LOG_DEBUG, "name %s reserved", self->se_name);
+    dsme_log(LOG_DEBUG, PFIX "name %s reserved", self->se_name);
     self->se_acquired = true;
 
 EXIT:
-
     dbus_error_free(&err);
 
     return;
@@ -1006,17 +1036,16 @@ service_release_name(DsmeDbusService *self)
 
     if( rc != DBUS_RELEASE_NAME_REPLY_RELEASED ) {
         if( dbus_error_is_set(&err) )
-            dsme_log(LOG_ERR, "release_name(%s): %s: %s",
+            dsme_log(LOG_ERR, PFIX "release_name(%s): %s: %s",
                      self->se_name, err.name, err.message);
         else
-            dsme_log(LOG_ERR, "release_name(%s): %s",
+            dsme_log(LOG_ERR, PFIX "release_name(%s): %s",
                      self->se_name, dsme_dbus_name_release_reply_repr(rc));
     }
 
-    dsme_log(LOG_DEBUG, "name %s released", self->se_name);
+    dsme_log(LOG_DEBUG, PFIX "name %s released", self->se_name);
 
 EXIT:
-
     self->se_acquired  = false;
     self->se_requested = false;
 
@@ -1116,7 +1145,7 @@ manager_handle_introspect(DsmeDbusManager *self, DBusMessage *req)
     const char *service_name = dbus_message_get_destination(req);
     const char *object_path = dbus_message_get_path(req);
 
-    dsme_log(LOG_WARNING, "Received introspect request: %s %s",
+    dsme_log(LOG_WARNING, PFIX "Received introspect request: %s %s",
              service_name, object_path);
 
     DsmeDbusService *service = manager_get_service(self, service_name);
@@ -1170,7 +1199,7 @@ manager_handle_introspect(DsmeDbusManager *self, DBusMessage *req)
     if( !dbus_message_append_args(rsp,
                                   DBUS_TYPE_STRING, &data,
                                   DBUS_TYPE_INVALID) ) {
-        dsme_log(LOG_ERR, "Failed to append reply argument to D-Bus"
+        dsme_log(LOG_ERR, PFIX "Failed to append reply argument to D-Bus"
                  " message for %s.%s",
                  DBUS_INTERFACE_INTROSPECTABLE,
                  "Introspect");
@@ -1201,7 +1230,6 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
         if( dbus_message_is_method_call(msg,
                                         "org.freedesktop.DBus.Introspectable",
                                         "Introspect") ) {
-
             DBusMessage *rsp = manager_handle_introspect(self, msg);
             if( rsp ) {
                 dbus_connection_send(con, rsp, 0);
@@ -1217,7 +1245,7 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
 
     case DBUS_MESSAGE_TYPE_SIGNAL:
         if( dbus_message_is_signal(msg, DBUS_INTERFACE_LOCAL, "Disconnected") ) {
-            dsme_log(LOG_CRIT, "Disconnected from system bus; rebooting");
+            dsme_log(LOG_CRIT, PFIX "Disconnected from system bus; rebooting");
 
             /* create flag file to mark failure */
             FILE *fh = fopen(DBUS_FAILED_FILE, "w+");
@@ -1240,7 +1268,7 @@ manager_message_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
         {
             DBusError err = DBUS_ERROR_INIT;
             if( dbus_set_error_from_message(&err, msg) ) {
-                dsme_log(LOG_WARNING, "D-Bus: %s: %s",
+                dsme_log(LOG_WARNING, PFIX "D-Bus: %s: %s",
                          err.name, err.message);
             }
             dbus_error_free(&err);
@@ -1313,7 +1341,6 @@ static void
 manager_delete(DsmeDbusManager *self)
 {
     if( self ) {
-
         manager_disconnect(self);
 
         manager_rem_handlers_all(self);
@@ -1349,12 +1376,12 @@ manager_connect(DsmeDbusManager *self)
         goto EXIT;
 
     if( !(con = dbus_bus_get_private(DBUS_BUS_SYSTEM, &err)) ) {
-        dsme_log(LOG_ERR, "system bus connect failed: %s: %s",
+        dsme_log(LOG_ERR, PFIX "system bus connect failed: %s: %s",
                  err.name, err.message);
         goto EXIT;
     }
 
-    dsme_log(LOG_DEBUG, "connected to system bus");
+    dsme_log(LOG_DEBUG, PFIX "connected to system bus");
 
     /* Set up message handler for the connection */
     dbus_connection_add_filter(con, manager_message_filter_cb, self, 0);
@@ -1409,10 +1436,12 @@ manager_disconnect(DsmeDbusManager *self)
     dbus_connection_unref(self->mr_connection),
         self->mr_connection = 0;
 
-    dsme_log(LOG_DEBUG, "disconnected from system bus");
+    /* Flush client tracking data */
+    dsme_dbus_tracker_disconnected();
+
+    dsme_log(LOG_DEBUG, PFIX "disconnected from system bus");
 
 EXIT:
-
     return;
 }
 
@@ -1478,7 +1507,7 @@ manager_add_matches_one(DsmeDbusManager *self, const dsme_dbus_signal_binding_t 
         goto EXIT;
 
     gchar *rule = manager_generate_rule(binding);
-    dsme_log(LOG_DEBUG, "add match: %s", rule);
+    dsme_log(LOG_DEBUG, PFIX "add match: %s", rule);
     dbus_bus_add_match(connection, rule, 0);
     g_hash_table_replace(self->mr_matches, (void*)binding, rule);
 
@@ -1510,7 +1539,7 @@ manager_rem_matches_one(DsmeDbusManager *self, const dsme_dbus_signal_binding_t 
     if( !rule )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, "remove match: %s", rule);
+    dsme_log(LOG_DEBUG, PFIX "remove match: %s", rule);
 
     DBusConnection *connection = manager_connection(self);
     if( !dsme_dbus_connection_is_open(connection) )
@@ -1661,7 +1690,7 @@ manager_verify_signal(DsmeDbusManager *self, DBusConnection *con,
 
 EXIT:
     if( !exists ) {
-        dsme_log(LOG_WARNING, "failed to verify signal: %s %s %s.%s()",
+        dsme_log(LOG_WARNING, PFIX "failed to verify signal: %s %s %s.%s()",
                  service_name, object_path, interface_name, member);
     }
 
@@ -1717,7 +1746,7 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
 
         const module_t *restore = modulebase_current_module();
 
-        dsme_log(LOG_DEBUG, "dispatch method %s.%s @ %s",
+        dsme_log(LOG_DEBUG, PFIX "dispatch method %s.%s @ %s",
                  interface_name, member,
                  module ? module_name(module) : "(current");
 
@@ -1737,7 +1766,7 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
 
         if( !dbus_message_get_no_reply(req) ) {
             if( !reply ) {
-                dsme_log(LOG_WARNING, "dummy reply to %s.%s",
+                dsme_log(LOG_WARNING, PFIX "dummy reply to %s.%s",
                          interface_name, member);
                 reply = dsme_dbus_reply_error(&message,
                                               DBUS_ERROR_FAILED,
@@ -1749,7 +1778,7 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
             }
         }
         else if( reply ) {
-                dsme_log(LOG_WARNING, "discarding reply to %s.%s",
+                dsme_log(LOG_WARNING, PFIX "discarding reply to %s.%s",
                          interface_name, member);
         }
         if( reply != DSME_DBUS_MESSAGE_DUMMY )
@@ -1762,7 +1791,7 @@ manager_handle_method(DsmeDbusManager *self, DBusMessage *req)
 
 EXIT:
     if( !handled ) {
-        dsme_log(LOG_WARNING, "failed to dispatch method: %s %s %s.%s()",
+        dsme_log(LOG_WARNING, PFIX "failed to dispatch method: %s %s %s.%s()",
                  service_name, object_path, interface_name, member);
     }
 
@@ -1784,6 +1813,22 @@ manager_handle_signal(DsmeDbusManager *self, DBusMessage *sig)
     if( !member )
         goto EXIT;
 
+    /* Forward NameOwnerChanged info to client trackers */
+    if( !strcmp(interface, DBUS_INTERFACE_DBUS) &&
+        !strcmp(member, "NameOwnerChanged") ) {
+        const char *name = NULL;
+        const char *prev = NULL;
+        const char *curr = NULL;
+
+        bool parsed = dbus_message_get_args(sig, NULL,
+                                            DBUS_TYPE_STRING, &name,
+                                            DBUS_TYPE_STRING, &prev,
+                                            DBUS_TYPE_STRING, &curr,
+                                            DBUS_TYPE_INVALID);
+        if( parsed && name && curr && !*curr )
+            dsme_dbus_tracker_name_dropped(name);
+    }
+
     for( GSList *item = self->mr_handlers; item; item = item->next ) {
         const dsme_dbus_signal_binding_t *bindings = item->data;
         if( !bindings )
@@ -1803,7 +1848,7 @@ manager_handle_signal(DsmeDbusManager *self, DBusMessage *sig)
 
             const module_t *restore = modulebase_current_module();
 
-            dsme_log(LOG_DEBUG, "dispatch signal %s.%s @ %s",
+            dsme_log(LOG_DEBUG, PFIX "dispatch signal %s.%s @ %s",
                      interface, member,
                      module ? module_name(module) : "(current");
 
@@ -1820,9 +1865,372 @@ EXIT:
     return;
 }
 
-/* ------------------------------------------------------------------------- *
+/* ========================================================================= *
+ * DsmeDbusTracker
+ * ========================================================================= */
+
+struct DsmeDbusTracker
+{
+    guint       ddt_client_cnt;
+    GHashTable *ddt_client_lut; // [name] -> DsmeDbusClient *
+
+    DsmeDbusTrackerNofify ddt_client_count_changed;
+    DsmeDbusClientNofify  ddt_client_added;
+    DsmeDbusClientNofify  ddt_client_removed;
+};
+
+static GSList *dsme_dbus_trackers = NULL;
+
+static inline void
+dsme_dbus_tracker_client_count_changed(DsmeDbusTracker *self)
+{
+    if( self->ddt_client_count_changed )
+        self->ddt_client_count_changed(self);
+}
+
+static inline void
+dsme_dbus_tracker_client_added(DsmeDbusTracker *self, DsmeDbusClient *client)
+{
+    if( self->ddt_client_added )
+        self->ddt_client_added(self, client);
+}
+
+static inline void
+dsme_dbus_tracker_client_removed(DsmeDbusTracker *self, DsmeDbusClient *client)
+{
+    if( self->ddt_client_removed )
+        self->ddt_client_removed(self, client);
+}
+
+static inline void
+dsme_dbus_tracker_ctor(DsmeDbusTracker *self)
+{
+    self->ddt_client_cnt = 0;
+    self->ddt_client_lut = g_hash_table_new_full(g_str_hash,
+                                             g_str_equal,
+                                             g_free,
+                                             dsme_dbus_client_delete_cb);
+
+    self->ddt_client_count_changed = NULL;
+    self->ddt_client_added         = NULL;
+    self->ddt_client_removed       = NULL;
+}
+
+static inline void
+dsme_dbus_tracker_dtor(DsmeDbusTracker *self)
+{
+    if( self->ddt_client_lut ) {
+        g_hash_table_unref(self->ddt_client_lut),
+            self->ddt_client_lut = NULL;
+    }
+}
+
+unsigned
+dsme_dbus_tracker_client_count(DsmeDbusTracker *self)
+{
+    return self->ddt_client_cnt;
+}
+
+static void
+dsme_dbus_tracker_update_client_count(DsmeDbusTracker *self)
+{
+    guint cnt = g_hash_table_size(self->ddt_client_lut);
+    if( self->ddt_client_cnt != cnt ) {
+        dsme_log(LOG_DEBUG, PFIX "number of tracked clients: %u -> %u",
+                 self->ddt_client_cnt, cnt);
+        self->ddt_client_cnt = cnt;
+        dsme_dbus_tracker_client_count_changed(self);
+    }
+}
+
+DsmeDbusTracker *
+dsme_dbus_tracker_create(DsmeDbusTrackerNofify count_changed,
+                         DsmeDbusClientNofify  client_added,
+                         DsmeDbusClientNofify  client_removed)
+{
+    DsmeDbusTracker *self = g_malloc0(sizeof *self);
+
+    dsme_dbus_tracker_ctor(self);
+
+    self->ddt_client_count_changed = count_changed;
+    self->ddt_client_added         = client_added;
+    self->ddt_client_removed       = client_removed;
+
+    dsme_dbus_trackers = g_slist_prepend(dsme_dbus_trackers, self);
+
+    return self;
+}
+
+void
+dsme_dbus_tracker_delete(DsmeDbusTracker *self)
+{
+    if( self ) {
+        dsme_dbus_trackers = g_slist_remove(dsme_dbus_trackers, self);
+        dsme_dbus_tracker_dtor(self);
+        g_free(self);
+    }
+}
+
+void
+dsme_dbus_tracker_delete_at(DsmeDbusTracker **pself)
+{
+    dsme_dbus_tracker_delete(*pself), *pself = NULL;
+}
+
+void
+dsme_dbus_tracker_add_client(DsmeDbusTracker *self, const char *name)
+{
+    DsmeDbusClient *match = NULL;
+
+    if( !name )
+        goto cleanup;
+
+    if( !(match = g_hash_table_lookup(self->ddt_client_lut, name)) ) {
+        match = dsme_dbus_client_create(self, name);
+        g_hash_table_replace(self->ddt_client_lut, g_strdup(name), match);
+        dsme_dbus_tracker_update_client_count(self);
+    }
+
+cleanup:
+    return;
+}
+
+void
+dsme_dbus_tracker_remove_client(DsmeDbusTracker *self, const char *name)
+{
+    if( !name )
+        goto cleanup;
+
+    if( g_hash_table_remove(self->ddt_client_lut, name) )
+        dsme_dbus_tracker_update_client_count(self);
+
+cleanup:
+    return;
+}
+
+void
+dsme_dbus_tracker_flush_clients(DsmeDbusTracker *self)
+{
+    g_hash_table_remove_all(self->ddt_client_lut);
+    dsme_dbus_tracker_update_client_count(self);
+}
+
+static void
+dsme_dbus_tracker_name_dropped(const char *name)
+{
+    if( !name )
+        goto cleanup;
+
+    dsme_log(LOG_DEBUG, PFIX "client %s dropped off SystemBus", name);
+    for( GSList *iter = dsme_dbus_trackers; iter; iter = iter->next ) {
+        DsmeDbusTracker *tracker = iter->data;
+        dsme_dbus_tracker_remove_client(tracker, name);
+    }
+
+cleanup:
+    return;
+}
+
+static void
+dsme_dbus_tracker_disconnected(void)
+{
+    for( GSList *iter = dsme_dbus_trackers; iter; iter = iter->next ) {
+        DsmeDbusTracker *tracker = iter->data;
+        dsme_dbus_tracker_flush_clients(tracker);
+    }
+}
+
+/* ========================================================================= *
+ * DsmeDbusClient
+ * ========================================================================= */
+
+struct DsmeDbusClient
+{
+    DsmeDbusTracker *ddc_tracker;
+    gchar           *ddc_name;
+    gchar           *ddc_rule;
+    DBusConnection  *ddc_conn;
+    DBusPendingCall *ddc_owner_pc;
+};
+
+const char *
+dsme_dbus_client_name(DsmeDbusClient *self)
+{
+    return self ? self->ddc_name : NULL;
+}
+
+static inline void
+dsme_dbus_client_ctor(DsmeDbusClient *self)
+{
+    self->ddc_name     = NULL;
+    self->ddc_rule     = NULL;
+    self->ddc_conn     = NULL;
+    self->ddc_owner_pc = NULL;
+    self->ddc_tracker  = NULL;
+}
+
+static inline void
+dsme_dbus_client_dtor(DsmeDbusClient *self)
+{
+    if( self->ddc_owner_pc ) {
+        dbus_pending_call_cancel(self->ddc_owner_pc);
+        dbus_pending_call_unref(self->ddc_owner_pc),
+            self->ddc_owner_pc = NULL;
+    }
+
+    if( self->ddc_rule && dsme_dbus_connection_is_open(self->ddc_conn) ) {
+        dsme_log(LOG_DEBUG, PFIX "remove client match for: %s", self->ddc_name);
+        dbus_bus_remove_match(self->ddc_conn, self->ddc_rule, NULL);
+    }
+
+    if( self->ddc_conn ) {
+        dbus_connection_unref(self->ddc_conn),
+            self->ddc_conn = NULL;
+    }
+
+    g_free(self->ddc_rule),
+        self->ddc_rule = NULL;
+
+    g_free(self->ddc_name),
+        self->ddc_name = NULL;
+
+    self->ddc_tracker  = NULL;
+}
+
+static void
+dsme_dbus_client_owner_cb(DBusPendingCall *pending, void *aptr)
+{
+    DsmeDbusClient *self = aptr;
+
+    DBusError    err   = DBUS_ERROR_INIT;
+    DBusMessage *rsp   = NULL;
+    const char  *owner = NULL;
+
+    if( self->ddc_owner_pc ) {
+        dbus_pending_call_unref(self->ddc_owner_pc),
+            self->ddc_owner_pc = NULL;
+    }
+
+    if( !(rsp = dbus_pending_call_steal_reply(pending)) )
+        goto cleanup;
+
+    if( dbus_set_error_from_message(&err, rsp) ) {
+        if( strcmp(err.name, DBUS_ERROR_NAME_HAS_NO_OWNER) ) {
+            dsme_log(LOG_WARNING, PFIX "nameowner error reply: %s: %s",
+                     err.name, err.message);
+        }
+        goto cleanup;
+    }
+
+    if( !dbus_message_get_args(rsp, &err,
+                               DBUS_TYPE_STRING, &owner,
+                               DBUS_TYPE_INVALID) ) {
+        dsme_log(LOG_WARNING, PFIX "nameowner reply error: %s: %s",
+                 err.name, err.message);
+        goto cleanup;
+    }
+
+    dsme_log(LOG_DEBUG, PFIX "nameowner reply: %s is owned by %s",
+             self->ddc_name, owner);
+
+cleanup:
+    if( !owner || !*owner ) {
+        dsme_dbus_tracker_remove_client(self->ddc_tracker, self->ddc_name),
+            self = NULL;
+    }
+
+    if( rsp )
+        dbus_message_unref(rsp);
+
+    dbus_error_free(&err);
+}
+
+static void
+dsme_dbus_client_query_owner(DsmeDbusClient *self)
+{
+    DBusMessage     *req  = NULL;
+    DBusPendingCall *pc   = NULL;
+    const char      *name = self->ddc_name;;
+
+    req = dbus_message_new_method_call(DBUS_SERVICE_DBUS,
+                                       DBUS_PATH_DBUS,
+                                       DBUS_INTERFACE_DBUS,
+                                       "GetNameOwner");
+    if( !req )
+        goto cleanup;
+
+    if( !dbus_message_append_args(req,
+                                  DBUS_TYPE_STRING, &name,
+                                  DBUS_TYPE_INVALID) )
+        goto cleanup;
+
+    if( !dbus_connection_send_with_reply(self->ddc_conn, req, &pc, -1) )
+        goto cleanup;
+
+    if( !pc )
+        goto cleanup;
+
+    if( !dbus_pending_call_set_notify(pc, dsme_dbus_client_owner_cb,
+                                      self, NULL) )
+        goto cleanup;
+
+    self->ddc_owner_pc = pc, pc = NULL;
+
+cleanup:
+    if( pc )
+        dbus_pending_call_unref(pc);
+
+    if( req )
+        dbus_message_unref(req);
+}
+
+static DsmeDbusClient *
+dsme_dbus_client_create(DsmeDbusTracker *tracker, const char *name)
+{
+    DsmeDbusClient *self = g_malloc0(sizeof *self);
+
+    dsme_dbus_client_ctor(self);
+
+    self->ddc_tracker = tracker;
+    self->ddc_name    = g_strdup(name);
+    self->ddc_rule    = g_strdup_printf("type='signal'"
+                                       ",sender='"DBUS_SERVICE_DBUS"'"
+                                       ",interface='"DBUS_INTERFACE_DBUS"'"
+                                       ",member='NameOwnerChanged'"
+                                       ",path='"DBUS_PATH_DBUS"'"
+                                       ",arg0='%s'", name);
+    self->ddc_conn    = dsme_dbus_get_connection(NULL);
+
+    if( self->ddc_rule && dsme_dbus_connection_is_open(self->ddc_conn) ) {
+        dsme_log(LOG_DEBUG, PFIX "add client match for: %s", self->ddc_name);
+        dbus_bus_add_match(self->ddc_conn, self->ddc_rule, NULL);
+        dsme_dbus_client_query_owner(self);
+    }
+
+    dsme_dbus_tracker_client_added(self->ddc_tracker, self);
+
+    return self;
+}
+
+static void
+dsme_dbus_client_delete(DsmeDbusClient *self)
+{
+    if( self ) {
+        dsme_dbus_tracker_client_removed(self->ddc_tracker, self);
+        dsme_dbus_client_dtor(self);
+        g_free(self);
+    }
+}
+
+static void
+dsme_dbus_client_delete_cb(void *self)
+{
+    dsme_dbus_client_delete(self);
+}
+
+/* ========================================================================= *
  * DSME_DBUS
- * ------------------------------------------------------------------------- */
+ * ========================================================================= */
 
 static const char *
 dsme_dbus_calling_module_name(void)
@@ -1858,7 +2266,7 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
                                        "org.freedesktop.DBus",
                                        "GetConnectionUnixProcessID");
     if( !req ) {
-        dsme_log(LOG_ERR, "Unable to allocate new message");
+        dsme_log(LOG_ERR, PFIX "Unable to allocate new message");
         goto EXIT;
     }
 
@@ -1867,7 +2275,7 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
                                   &name,
                                   DBUS_TYPE_INVALID) )
     {
-        dsme_log(LOG_ERR, "Unable to append arguments to message");
+        dsme_log(LOG_ERR, PFIX "Unable to append arguments to message");
         goto EXIT;
     }
 
@@ -1875,7 +2283,7 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
 
     rsp = dbus_connection_send_with_reply_and_block(conn, req, -1, &err);
     if( !rsp ) {
-        dsme_log(LOG_ERR, "Sending GetConnectionUnixProcessID failed: %s",
+        dsme_log(LOG_ERR, PFIX "Sending GetConnectionUnixProcessID failed: %s",
                  err.message);
         goto EXIT;
     }
@@ -1884,7 +2292,7 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
                                DBUS_TYPE_UINT32,
                                &dta,
                                DBUS_TYPE_INVALID) ) {
-        dsme_log(LOG_ERR, "Getting GetConnectionUnixProcessID args failed: %s",
+        dsme_log(LOG_ERR, PFIX "Getting GetConnectionUnixProcessID args failed: %s",
                  err.message);
         goto EXIT;
     }
@@ -1892,7 +2300,6 @@ dsme_dbus_bus_get_unix_process_id(DBusConnection *conn,
     ack = true, *pid = dta;
 
 EXIT:
-
     if( req )
         dbus_message_unref(req);
 
@@ -1911,7 +2318,7 @@ dsme_dbus_name_is_privileged(DBusConnection *con, const char *name)
     // FIXME: pid query is blocking dbus call
     pid_t pid = -1;
     if( !dsme_dbus_bus_get_unix_process_id(con, name, &pid) )
-        dsme_log(LOG_WARNING, "could not get pid for name %s", name);
+        dsme_log(LOG_WARNING, PFIX "could not get pid for name %s", name);
     else
         is_privileged = dsme_process_is_privileged(pid);
 
@@ -1954,7 +2361,7 @@ dsme_dbus_check_arg_type(DBusMessageIter *iter, int want_type)
     if( have_type == want_type )
         return true;
 
-    dsme_log(LOG_WARNING, "dbus message parsing failed: expected %s, got %s",
+    dsme_log(LOG_WARNING, PFIX "dbus message parsing failed: expected %s, got %s",
              dsme_dbus_get_type_name(want_type),
              dsme_dbus_get_type_name(have_type));
     return false;
@@ -2007,10 +2414,6 @@ dsme_dbus_name_release_reply_repr(int reply)
     return repr;
 }
 
-/* ========================================================================= *
- * Module
- * ========================================================================= */
-
 /** D-Bus manager singleton */
 static DsmeDbusManager *the_manager = 0;
 
@@ -2041,7 +2444,7 @@ dsme_dbus_bind_methods(bool                      *bound,
                        const dsme_dbus_binding_t *bindings)
 {
     if( !the_manager ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2054,7 +2457,7 @@ dsme_dbus_bind_methods(bool                      *bound,
     if( !bindings )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, "binding interface %s", interface_name);
+    dsme_log(LOG_DEBUG, PFIX "binding interface %s", interface_name);
 
     /* Construct hierarchy as needed
      */
@@ -2084,7 +2487,7 @@ dsme_dbus_unbind_methods(bool                      *bound,
     *bound = false;
 
     if( !the_manager ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2092,7 +2495,7 @@ dsme_dbus_unbind_methods(bool                      *bound,
     if( !bindings )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, "unbinding interface %s", interface_name);
+    dsme_log(LOG_DEBUG, PFIX "unbinding interface %s", interface_name);
 
     /* Check if the given interface is bound
      */
@@ -2146,7 +2549,7 @@ dsme_dbus_bind_signals(bool                             *bound,
                        const dsme_dbus_signal_binding_t *bindings)
 {
     if( !the_manager ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2159,7 +2562,7 @@ dsme_dbus_bind_signals(bool                             *bound,
     if( !bindings )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, "binding handlers for interface:  %s", bindings->interface);
+    dsme_log(LOG_DEBUG, PFIX "binding handlers for interface:  %s", bindings->interface);
 
     manager_set_module(the_manager, bindings, modulebase_current_module());
     manager_add_handlers_array(the_manager, bindings);
@@ -2178,7 +2581,7 @@ dsme_dbus_unbind_signals(bool                             *bound,
     *bound = false;
 
     if( !the_manager ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2186,7 +2589,7 @@ dsme_dbus_unbind_signals(bool                             *bound,
     if( !bindings )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, "unbinding handlers for interface: %s", bindings->interface);
+    dsme_log(LOG_DEBUG, PFIX "unbinding handlers for interface: %s", bindings->interface);
 
     manager_set_module(the_manager, bindings, 0);
     manager_rem_handlers_array(the_manager, bindings);
@@ -2212,7 +2615,7 @@ dsme_dbus_connect(void)
     bool connected = false;
 
     if( !the_manager ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2235,7 +2638,7 @@ void
 dsme_dbus_disconnect(void)
 {
     if( !the_manager ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2262,7 +2665,7 @@ dsme_dbus_get_connection(DBusError *err)
     DBusConnection *con = 0;
 
     if( !the_manager ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2295,7 +2698,7 @@ void
 dsme_dbus_startup(void)
 {
     if( dsme_dbus_terminated ) {
-        dsme_log(LOG_ERR, "unallowable %s() call from %s",
+        dsme_log(LOG_ERR, PFIX "unallowable %s() call from %s",
                  __FUNCTION__, dsme_dbus_calling_module_name());
         goto EXIT;
     }
@@ -2304,7 +2707,7 @@ dsme_dbus_startup(void)
         goto EXIT;
 
     dsme_dbus_initialized = true;
-    dsme_log(LOG_DEBUG, "dbus functionality enabled");
+    dsme_log(LOG_DEBUG, PFIX "dbus functionality enabled");
 
     /* Create D-Bus manager singleton */
     if( !the_manager )
@@ -2325,7 +2728,7 @@ dsme_dbus_shutdown(void)
         goto EXIT;
 
     dsme_dbus_terminated = true;
-    dsme_log(LOG_DEBUG, "dbus functionality disabled");
+    dsme_log(LOG_DEBUG, PFIX "dbus functionality disabled");
 
     /* Delete D-Bus manager singleton */
     manager_delete(the_manager), the_manager = 0;

@@ -41,7 +41,7 @@
 #define OOM_PROTECT_VALUE_NEW   (-1000)
 #define OOM_UNPROTECT_VALUE     0
 typedef enum {oom_protected, oom_unprotected} oom_mode;
-  
+
 static bool set_oom_protection_mode(oom_mode mode)
 {
   FILE* file = 0;
@@ -54,7 +54,7 @@ static bool set_oom_protection_mode(oom_mode mode)
   if (stat(OOM_ADJ_PATH_NEW, &st) == 0) {
     oom_path = (char*)new_path;
   } else {
-    oom_path = (char*)old_path; 
+    oom_path = (char*)old_path;
   }
 
   if (mode == oom_protected) {
@@ -97,7 +97,7 @@ bool unprotect_from_oom(void)
 
 bool adjust_oom(int oom_adj)
 {
-  /* This function is not used anywhere, but we keep it anyhow 
+  /* This function is not used anywhere, but we keep it anyhow
    * Actual value can not be set anymore but only protected/unprotected
    */
   if (oom_adj < 0) {

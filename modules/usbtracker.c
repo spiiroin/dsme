@@ -191,13 +191,12 @@ send_usb_status(bool mounted_to_pc)
 
     prev = msg.mounted_to_pc = mounted_to_pc;
 
-    dsme_log(LOG_DEBUG, PFIX"broadcasting usb state:%s mounted to PC",
+    dsme_log(LOG_DEBUG, PFIX "broadcasting usb state:%s mounted to PC",
              msg.mounted_to_pc ? "" : " not");
 
     modules_broadcast_internally(&msg);
 
 cleanup:
-
     return;
 }
 
@@ -233,14 +232,13 @@ evaluate_status(const char *mode, bool *is_charging, bool *is_mounted)
      * is included in the lookup table -> any unknown mode name is assumed
      * to mean that charging should be possible. */
 
-    dsme_log(LOG_INFO, "unknown usb mode '%s'; assuming charger-connected",
+    dsme_log(LOG_INFO, PFIX "unknown usb mode '%s'; assuming charger-connected",
              mode);
 
     charging = true;
     mounted  = false;
 
 cleanup:
-
     *is_charging = charging;
     *is_mounted  = mounted;
 
@@ -252,7 +250,7 @@ cleanup:
 static void
 update_status(const char *mode)
 {
-    dsme_log(LOG_DEBUG, PFIX"mode = '%s'", mode ?: "unknown");
+    dsme_log(LOG_DEBUG, PFIX "mode = '%s'", mode ?: "unknown");
 
     /* Cancel waiting if we have status update for any reason */
     wait_for_usb_moded_cancel();
@@ -287,11 +285,10 @@ wait_for_usb_moded_cb(gpointer aptr)
      * act-dead, this can cause/allow the device to shutdown
      */
 
-    dsme_log(LOG_WARNING, PFIX"usb state unknown; assume: no charger");
+    dsme_log(LOG_WARNING, PFIX "usb state unknown; assume: no charger");
     update_status(0);
 
 cleanup:
-
     return FALSE;
 }
 
@@ -300,7 +297,7 @@ static void
 wait_for_usb_moded_cancel(void)
 {
     if( wait_for_usb_moded_id ) {
-        dsme_log(LOG_DEBUG, PFIX"stop waiting for usb_moded");
+        dsme_log(LOG_DEBUG, PFIX "stop waiting for usb_moded");
         dsme_destroy_timer(wait_for_usb_moded_id),
             wait_for_usb_moded_id = 0;
     }
@@ -311,7 +308,7 @@ static void
 wait_for_usb_moded_start(void)
 {
     if( !wait_for_usb_moded_id ) {
-        dsme_log(LOG_DEBUG, PFIX"start waiting for usb_moded");
+        dsme_log(LOG_DEBUG, PFIX "start waiting for usb_moded");
         wait_for_usb_moded_id = dsme_create_timer(WAIT_FOR_USB_MODED_MS,
                                                   wait_for_usb_moded_cb, 0);
     }
@@ -353,13 +350,12 @@ xusbmoded_query_mode_cb(DBusPendingCall *pending, void *aptr)
                                DBUS_TYPE_STRING, &dta,
                                DBUS_TYPE_INVALID) )
     {
-        dsme_log(LOG_ERR, PFIX"mode_request reply: %s: %s",
+        dsme_log(LOG_ERR, PFIX "mode_request reply: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
 
 cleanup:
-
     /* Update state; any errors above yield not-connected, not-mounted */
     update_status(dta);
 
@@ -403,12 +399,11 @@ xusbmoded_query_mode_async(void)
 
     res = true;
 
-    dsme_log(LOG_DEBUG, PFIX"mode_request sent");
+    dsme_log(LOG_DEBUG, PFIX "mode_request sent");
 
 cleanup:
-
     if( !res ) {
-        dsme_log(LOG_ERR, PFIX"mode_request failed; "
+        dsme_log(LOG_ERR, PFIX "mode_request failed; "
                  "waiting for signal / usb_moded restart");
 
         /* Wait a while before assuming charger is not connected */
@@ -435,7 +430,7 @@ xusbmoded_set_runstate(bool running)
 
     prev = running;
 
-    dsme_log(LOG_DEBUG, PFIX"usb_moded %s",  running ? "running" : "stopped");
+    dsme_log(LOG_DEBUG, PFIX "usb_moded %s",  running ? "running" : "stopped");
 
     if( running ) {
         /* Stop wait for service timer and query initial state */
@@ -449,7 +444,6 @@ xusbmoded_set_runstate(bool running)
     }
 
 cleanup:
-
     return;
 }
 
@@ -463,7 +457,7 @@ xusbmoded_query_owner_cb(DBusPendingCall *pending, void *aptr)
 {
     (void) aptr; // not used
 
-    dsme_log(LOG_DEBUG, PFIX"usb_moded runstate reply");
+    dsme_log(LOG_DEBUG, PFIX "usb_moded runstate reply");
 
     const module_t *caller = modulebase_enter_module(this_module);
 
@@ -479,14 +473,13 @@ xusbmoded_query_owner_cb(DBusPendingCall *pending, void *aptr)
                                DBUS_TYPE_STRING, &dta,
                                DBUS_TYPE_INVALID) ) {
         if( strcmp(err.name, DBUS_ERROR_NAME_HAS_NO_OWNER) ) {
-            dsme_log(LOG_WARNING, PFIX"usb_moded name owner reply: %s: %s",
+            dsme_log(LOG_WARNING, PFIX "usb_moded name owner reply: %s: %s",
                      err.name, err.message);
         }
         goto cleanup;
     }
 
 cleanup:
-
     xusbmoded_set_runstate(dta && *dta);
 
     if( rsp ) dbus_message_unref(rsp);
@@ -502,7 +495,7 @@ cleanup:
 static bool
 xusbmoded_query_owner(void)
 {
-    dsme_log(LOG_DEBUG, PFIX"usb_moded runstate query");
+    dsme_log(LOG_DEBUG, PFIX "usb_moded runstate query");
 
     bool             res  = false;
     DBusMessage     *req  = 0;
@@ -536,7 +529,6 @@ xusbmoded_query_owner(void)
     res = true;
 
 cleanup:
-
     if( pc  ) dbus_pending_call_unref(pc);
     if( req ) dbus_message_unref(req);
 
@@ -588,18 +580,17 @@ xusbmoded_dbus_filter_cb(DBusConnection *con, DBusMessage *msg, void *aptr)
                                DBUS_TYPE_STRING, &prev,
                                DBUS_TYPE_STRING, &curr,
                                DBUS_TYPE_INVALID) ) {
-        dsme_log(LOG_WARNING, PFIX"usb_moded name owner signal: %s: %s",
+        dsme_log(LOG_WARNING, PFIX "usb_moded name owner signal: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
 
     if( !strcmp(name, USB_MODED_DBUS_SERVICE) ) {
-        dsme_log(LOG_DEBUG, PFIX"usb_moded runstate changed");
+        dsme_log(LOG_DEBUG, PFIX "usb_moded runstate changed");
         xusbmoded_set_runstate(*curr != 0);
     }
 
 cleanup:
-
     dbus_error_free(&err);
 
     modulebase_enter_module(caller);
@@ -633,7 +624,6 @@ xusbmoded_init_tracking(void)
     xusbmoded_query_owner();
 
 cleanup:
-
     return;
 }
 
@@ -652,7 +642,6 @@ xusbmoded_quit_tracking(void)
     dbus_connection_remove_filter(systembus, xusbmoded_dbus_filter_cb, 0);
 
 cleanup:
-
     return;
 }
 
@@ -670,7 +659,7 @@ systembus_connect(void)
     DBusError err = DBUS_ERROR_INIT;
 
     if( !(systembus = dsme_dbus_get_connection(&err)) ) {
-        dsme_log(LOG_WARNING, PFIX"can't connect to systembus: %s: %s",
+        dsme_log(LOG_WARNING, PFIX "can't connect to systembus: %s: %s",
                  err.name, err.message);
         goto cleanup;
     }
@@ -678,7 +667,6 @@ systembus_connect(void)
     xusbmoded_init_tracking();
 
 cleanup:
-
     dbus_error_free(&err);
 }
 
@@ -710,15 +698,14 @@ static bool dbus_signals_bound = false;
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
     dsme_dbus_bind_signals(&dbus_signals_bound, dbus_signals_array);
     systembus_connect();
-
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
     systembus_disconnect();
 }
 
@@ -740,7 +727,7 @@ void module_init(module_t* handle)
      * time, assume that charger is not connected */
     wait_for_usb_moded_start();
 
-    dsme_log(LOG_DEBUG, "usbtracker.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "usbtracker.so loaded");
 }
 
 void module_fini(void)
@@ -750,5 +737,5 @@ void module_fini(void)
     /* Remove timers */
     wait_for_usb_moded_cancel();
 
-    dsme_log(LOG_DEBUG, "usbtracker.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "usbtracker.so unloaded");
 }

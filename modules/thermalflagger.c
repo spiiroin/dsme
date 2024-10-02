@@ -36,16 +36,15 @@
 #include <unistd.h>
 #include <string.h>
 
+#define PFIX "thermalflagger: "
 
 #define DSME_THERMAL_FLAG_FILE "/var/lib/dsme/force_shutdown"
-
 
 static void write_thermal_flag(void)
 {
     int i = open(DSME_THERMAL_FLAG_FILE, O_WRONLY | O_CREAT, 0644);
     if (i == -1 || fsync(i) == -1 || close(i) == -1) {
-        dsme_log(LOG_ERR,
-                 "Error creating %s: %s",
+        dsme_log(LOG_ERR, PFIX "Error creating %s: %s",
                  DSME_THERMAL_FLAG_FILE,
                  strerror(errno));
     }
@@ -54,8 +53,7 @@ static void write_thermal_flag(void)
 static void remove_thermal_flag(void)
 {
     if (unlink(DSME_THERMAL_FLAG_FILE) == -1 && errno != ENOENT) {
-        dsme_log(LOG_WARNING,
-                 "Error removing %s: %s",
+        dsme_log(LOG_WARNING, PFIX "Error removing %s: %s",
                  DSME_THERMAL_FLAG_FILE,
                  strerror(errno));
     }
@@ -77,12 +75,12 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t* handle)
 {
-  dsme_log(LOG_DEBUG, "thermalflagger.so loaded");
+  dsme_log(LOG_DEBUG, PFIX "thermalflagger.so loaded");
 
   remove_thermal_flag();
 }
 
 void module_fini(void)
 {
-  dsme_log(LOG_DEBUG, "thermalflagger.so unloaded");
+  dsme_log(LOG_DEBUG, PFIX "thermalflagger.so unloaded");
 }

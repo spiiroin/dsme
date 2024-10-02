@@ -54,6 +54,8 @@
 #include <libgen.h>
 #include <limits.h>
 
+#define PFIX "startup: "
+
 #define STRINGIFY(x)  STRINGIFY2(x)
 #define STRINGIFY2(x) #x
 
@@ -128,7 +130,7 @@ DSME_HANDLER(DSM_MSGTYPE_GET_VERSION, client, ind)
 	DSM_MSGTYPE_DSME_VERSION msg     =
           DSME_MSG_INIT(DSM_MSGTYPE_DSME_VERSION);
 
-        dsme_log(LOG_DEBUG, "version requested, sending '%s'", version);
+        dsme_log(LOG_DEBUG, PFIX "version requested, sending '%s'", version);
 	endpoint_send_with_extra(client, &msg, strlen(version) + 1, version);
 }
 
@@ -139,7 +141,7 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t *handle)
 {
-	dsme_log(LOG_DEBUG, "DSME %s starting up", STRINGIFY(PRG_VERSION));
+	dsme_log(LOG_DEBUG, PFIX "DSME %s starting up", STRINGIFY(PRG_VERSION));
 
 	FILE       *conffile   = 0;
 	char       *modulename = 0;
@@ -147,13 +149,13 @@ void module_init(module_t *handle)
 	char        modulepath[PATH_MAX];
 
 	if( !(modulename = strdup(module_name(handle))) ) {
-		dsme_log(LOG_CRIT, "strdup failed");
+		dsme_log(LOG_CRIT, PFIX "strdup failed");
 		exit(EXIT_FAILURE);
 	}
 	moduledir = dirname(modulename);
 
 	if( !(conffile = fopen(MODULES_CONF, "r")) ) {
-		dsme_log(LOG_DEBUG, "Unable to read conffile (%s), using compiled-in startup list", MODULES_CONF);
+		dsme_log(LOG_DEBUG, PFIX "Unable to read conffile (%s), using compiled-in startup list", MODULES_CONF);
 
 		for( size_t i = 0; modules[i]; ++i ) {
 			int rc = snprintf(modulepath, sizeof modulepath, "%s/%s", moduledir, modules[i]);
@@ -162,12 +164,12 @@ void module_init(module_t *handle)
 				continue;
 			}
 			if( !modulebase_load_module(modulepath, 0) ) {
-				dsme_log(LOG_ERR, "error loading module %s", modulepath);
+				dsme_log(LOG_ERR, PFIX "error loading module %s", modulepath);
 			}
 		}
 	}
 	else {
-		dsme_log(LOG_DEBUG, "Conf file exists, reading modulenames from %s", MODULES_CONF);
+		dsme_log(LOG_DEBUG, PFIX "Conf file exists, reading modulenames from %s", MODULES_CONF);
 		size_t size = 0;
 		char  *line = NULL;
 		while( getline(&line, &size, conffile) > 0 ) {
@@ -178,7 +180,7 @@ void module_init(module_t *handle)
 				continue;
 			}
 			if (!modulebase_load_module(modulepath, 0) ) {
-				dsme_log(LOG_ERR, "error loading module %s", modulepath);
+				dsme_log(LOG_ERR, PFIX "error loading module %s", modulepath);
 			}
 		}
 		free(line);
@@ -186,5 +188,5 @@ void module_init(module_t *handle)
 	}
 
 	free(modulename);
-	dsme_log(LOG_DEBUG, "Module loading finished.");
+	dsme_log(LOG_DEBUG, PFIX "Module loading finished.");
 }

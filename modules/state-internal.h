@@ -28,14 +28,14 @@
 #include <dsme/messages.h>
 #include <stdbool.h>
 
-
 typedef struct {
     DSMEMSG_PRIVATE_FIELDS
     bool mounted_to_pc;
 } DSM_MSGTYPE_SET_USB_STATE;
 
 typedef dsmemsg_generic_t DSM_MSGTYPE_TELINIT;
-
+typedef dsmemsg_generic_t DSM_MSGTYPE_BLOCK_SHUTDOWN;
+typedef dsmemsg_generic_t DSM_MSGTYPE_ALLOW_SHUTDOWN;
 
 enum {
     /* NOTE: dsme message types are defined in:
@@ -50,8 +50,10 @@ enum {
      *    must be made aware of the new message type
      */
 
-    DSME_MSG_ENUM(DSM_MSGTYPE_SET_USB_STATE, 0x00000317),
-    DSME_MSG_ENUM(DSM_MSGTYPE_TELINIT,       0x00000318),
+    DSME_MSG_ENUM(DSM_MSGTYPE_SET_USB_STATE,  0x00000317),
+    DSME_MSG_ENUM(DSM_MSGTYPE_TELINIT,        0x00000318),
+    DSME_MSG_ENUM(DSM_MSGTYPE_BLOCK_SHUTDOWN, 0x0000031b),
+    DSME_MSG_ENUM(DSM_MSGTYPE_ALLOW_SHUTDOWN, 0x0000031c),
 };
 
 #endif

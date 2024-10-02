@@ -65,7 +65,6 @@
 #include "stub_dbus.h"
 #include "stub_dsme_dbus.h"
 
-
 /* TIME_STUB */
 #include <time.h>
 #include <dlfcn.h>
@@ -144,7 +143,6 @@ static inline void* queued_dsmesock_(unsigned type, const char* name)
 
 void dsmesock_broadcast(const void* msg)
 {
-
   queued_msg_t*      newmsg;
   dsmemsg_generic_t* genmsg = (dsmemsg_generic_t*)msg;
 
@@ -163,12 +161,10 @@ void dsmesock_broadcast(const void* msg)
       free(newmsg);
       newmsg = NULL;
   }
-
 }
 
 /* TEST DRIVER */
 #include "testdriver.h"
-
 
 #define ALARM_STATE_DIR      "/var/lib/dsme"
 #define ALARM_STATE_FILE     ALARM_STATE_DIR "/alarm_queue_status"
@@ -227,7 +223,6 @@ static void initialize(void)
   initialize_dbus_stub();
   initialize_dsmesock_stub();
   initialize_time_stub();
-
 }
 
 static void finalize(void)
@@ -396,7 +391,6 @@ static void test_init_set_alarm_in5min(void)
       TEST_MSG_INIT(DSM_MSGTYPE_WAKEUP);
   send_message(alarmtracker_module, &wakeupmsg);
 
-
   /* INTERNAL MSGs */
   DSM_MSGTYPE_SET_ALARM_STATE *msg;
   assert(message_queue_is_empty());
@@ -428,8 +422,6 @@ static void test_init_set_alarm_in5min(void)
   unload_alarmtracker();
 }
 
-
-
 /* MAIN */
 
 int main(int argc, char** argv)
@@ -460,7 +452,6 @@ int main(int argc, char** argv)
       }
   }
 
-
   run(test_init_noqueuefile);
   run(test_init_noalarm);
   run(test_init_activealarm);
@@ -474,4 +465,3 @@ int main(int argc, char** argv)
 
   return EXIT_SUCCESS;
 }
-

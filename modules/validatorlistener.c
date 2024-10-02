@@ -50,7 +50,6 @@
 
 #define DSME_STATIC_STRLEN(s) (sizeof(s) - 1)
 
-
 // TODO: try to find a header that #defines NETLINK_VALIDATOR
 //       and possibly the right group mask to use
 #ifndef NETLINK_VALIDATOR
@@ -63,12 +62,10 @@
 #define DSME_CONFIG_VALIDATED_PATH   "/etc/init.conf"
 #define DSME_CONFIG_VALIDATED_PREFIX "mandatorybinary "
 
-
 static void stop_listening_to_validator(void);
 static bool read_mandatory_file_list(const char* config_path, GSList** files);
 static bool is_in_list(const char* file, GSList* list);
 static bool is_basename_in_list(const char* file, GSList* list);
-
 
 /** Cached module handle for this plugin */
 static const module_t *this_module = 0;
@@ -89,7 +86,6 @@ static void go_to_malf(const char* component, const char* details)
 
     modules_broadcast_internally_with_extra(&malf, strlen(details) + 1, details);
 }
-
 
 // parse a line of format "<key>: <text>"
 static bool parse_validator_line(const char** msg, char** key, char** text)
@@ -180,7 +176,6 @@ static bool check_security_malf(int vreason, char* component, char* details)
     // a list of mandatory files exists; check against it
     if (is_in_list(details, mandatory_files) ||
         is_basename_in_list(component, mandatory_files)) {
-
         // this file was on the list => MALF if the validation failed
         // because of anything else than a missing reference hash
         if (vreason != VREASON_HLIST) {
@@ -198,12 +193,11 @@ static gboolean handle_validator_message(GIOChannel*  source,
 {
     const module_t *caller = modulebase_enter_module(this_module);
 
-    dsme_log(LOG_DEBUG, "Activity on Validator socket");
+    dsme_log(LOG_DEBUG, PFIX "Activity on Validator socket");
 
     bool keep_listening = true;
 
     if (condition & G_IO_IN) {
-
         struct sockaddr_nl addr;
         memset(&addr, 0, sizeof(addr));
 
@@ -226,16 +220,14 @@ static gboolean handle_validator_message(GIOChannel*  source,
         msg.msg_iov     = &iov;
         msg.msg_iovlen  = 1;
 
-
         int fd = g_io_channel_unix_get_fd(source);
         int r = TEMP_FAILURE_RETRY(recvmsg(fd, &msg, 0));
 
         if (r == 0 || r == -1) {
-            dsme_log(LOG_ERR, "Error receiving Validator message");
+            dsme_log(LOG_ERR, PFIX "Error receiving Validator message");
             keep_listening = false;
         } else {
-            dsme_log(LOG_CRIT,
-                     "Got Validator message [%s]",
+            dsme_log(LOG_CRIT, PFIX "Got Validator message [%s]",
                      (char*)NLMSG_DATA(nlh));
 
             // TODO: check that the message is from the kernel
@@ -246,8 +238,7 @@ static gboolean handle_validator_message(GIOChannel*  source,
             parse_validator_message(NLMSG_DATA(nlh), &vreason, &component, &details);
 
             if (!check_security_malf(vreason, component, details)) {
-                dsme_log(LOG_CRIT,
-                         "Security MALF: %i %s %s",
+                dsme_log(LOG_CRIT, PFIX "Security MALF: %i %s %s",
                          vreason,
                          component,
                          details);
@@ -257,14 +248,14 @@ static gboolean handle_validator_message(GIOChannel*  source,
                 // it is OK because we are entering MALF anyway
             } else {
                 // the file was not on the list => no MALF
-                dsme_log(LOG_INFO, "OK, not a mandatory file: %s", details);
+                dsme_log(LOG_INFO, PFIX "OK, not a mandatory file: %s", details);
                 free(component);
                 free(details);
             }
         }
     }
     if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
-        dsme_log(LOG_ERR, "ERR, HUP or NVAL on Validator socket");
+        dsme_log(LOG_ERR, PFIX "ERR, HUP or NVAL on Validator socket");
         keep_listening = false;
     }
 
@@ -277,7 +268,6 @@ static gboolean handle_validator_message(GIOChannel*  source,
     return keep_listening;
 }
 
-
 static bool start_listening_to_validator(void)
 {
     int         fd  = -1;
@@ -287,7 +277,7 @@ static bool start_listening_to_validator(void)
         goto cleanup;
 
     if( (fd = socket(PF_NETLINK, SOCK_RAW, NETLINK_VALIDATOR)) == -1 ) {
-        dsme_log(LOG_ERR, "Validator socket: %m");
+        dsme_log(LOG_ERR, PFIX "Validator socket: %m");
         goto cleanup;
     }
 
@@ -298,7 +288,7 @@ static bool start_listening_to_validator(void)
     addr.nl_groups = 1; // TODO: magic number: group mask for Validator
 
     if( bind(fd, (struct sockaddr*)&addr, sizeof addr) == -1) {
-        dsme_log(LOG_ERR, "Validator socket bind: %m");
+        dsme_log(LOG_ERR, PFIX "Validator socket bind: %m");
         goto cleanup;
     }
 
@@ -312,6 +302,7 @@ static bool start_listening_to_validator(void)
     validator_id = g_io_add_watch(chn,
                                   G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
                                   handle_validator_message, 0);
+
 cleanup:
     if( chn )
         g_io_channel_unref(chn);
@@ -352,8 +343,7 @@ static bool read_mandatory_file_list(const char* config_path, GSList** files)
 
     if ((config = fopen(config_path, "r")) == 0) {
         // could not open list of files to validate; MALF
-        dsme_log(LOG_WARNING,
-                 "Could not open mandatory file list '%s': %m",
+        dsme_log(LOG_WARNING, PFIX "Could not open mandatory file list '%s': %m",
                  config_path);
         goto done;
     }
@@ -416,18 +406,18 @@ static bool is_basename_in_list(const char* file, GSList* list)
 
 void module_init(module_t* handle)
 {
-    dsme_log(LOG_DEBUG, "validatorlistener.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "validatorlistener.so loaded");
 
     this_module = handle;
 
     if (!read_mandatory_file_list(DSME_CONFIG_VALIDATED_PATH, &mandatory_files))
     {
-        dsme_log(LOG_WARNING, "failed to load the list of mandatory files");
+        dsme_log(LOG_WARNING, PFIX "failed to load the list of mandatory files");
     } else {
         got_mandatory_files = true;
 
         if (!start_listening_to_validator()) {
-            dsme_log(LOG_CRIT, "failed to start listening to Validator");
+            dsme_log(LOG_CRIT, PFIX "failed to start listening to Validator");
             go_to_malf("dsme", "failed to start listening to Validator");
         }
     }
@@ -438,5 +428,5 @@ void module_fini(void)
     stop_listening_to_validator();
     g_slist_free(mandatory_files);
 
-    dsme_log(LOG_DEBUG, "validatorlistener.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "validatorlistener.so unloaded");
 }

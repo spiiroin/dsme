@@ -52,7 +52,6 @@ struct module_t {
     void* handle;
 };
 
-
 /**
    Registered handler information.
 */
@@ -63,7 +62,6 @@ typedef struct {
     handler_fn_t*   callback;
 } msg_handler_info_t;
 
-
 /**
     Sender of a queued message.
 */
@@ -73,7 +71,6 @@ struct endpoint_t {
     struct ucred           ucred; // only valid when conn != 0
 };
 
-
 /**
    Queued message.
 */
@@ -82,7 +79,6 @@ typedef struct {
     const module_t*    to;
     dsmemsg_generic_t* data;
 } queued_msg_t;
-
 
 /**
    Adds a message to list of handlers
@@ -101,7 +97,7 @@ static int add_msghandlers(module_t* module);
 
 static void remove_msghandlers(module_t* module);
 
-/** 
+/**
    Comparison function; matches messages with handlers by message type.
 
    This is callback function of GCompareFunc type.
@@ -112,7 +108,6 @@ static void remove_msghandlers(module_t* module);
    @return negative/zero/positive if a is smaller/equal/larger than b.
 */
 static gint msg_comparator(gconstpointer a, gconstpointer b);
-
 
 /**
    Comparison function; used to sort message handlers.
@@ -138,7 +133,6 @@ static gint sort_comparator(gconstpointer a, gconstpointer b);
  */
 #define compare(v1,v2) (((v1)>(v2))-((v1)<(v2)))
 
-
 /**
    Passes a message to all matching message handlers.
 
@@ -149,7 +143,6 @@ static gint sort_comparator(gconstpointer a, gconstpointer b);
 static int handle_message(endpoint_t*              from,
                           const module_t*          to,
                           const dsmemsg_generic_t* msg);
-
 
 static GSList*     modules       = 0;
 static GSList*     callbacks     = 0;
@@ -169,7 +162,6 @@ static int msg_comparator(gconstpointer a, gconstpointer b)
   return compare(handler->msg_type, msg_type);
 }
 
-
 static gint sort_comparator(gconstpointer a, gconstpointer b)
 {
     const msg_handler_info_t *add = a;
@@ -182,7 +174,6 @@ static gint sort_comparator(gconstpointer a, gconstpointer b)
     return compare(add->msg_type,        old->msg_type) ?:
            compare(add->owner->priority, old->owner->priority) ?: 1;
 }
-
 
 #ifdef OBSOLETE
 /**
@@ -198,7 +189,6 @@ static int name_comparator(const module_t* node, const char* name)
 }
 #endif
 
-
 static int modulebase_add_single_handler(uint32_t        msg_type,
                                          size_t          msg_size,
                                          handler_fn_t*   callback,
@@ -210,12 +200,12 @@ static int modulebase_add_single_handler(uint32_t        msg_type,
     if (!handler) {
         return -1;
     }
-  
+
     handler->msg_type = msg_type;
     handler->msg_size = msg_size;
     handler->callback = callback;
     handler->owner    = owner;
-  
+
     /* Insert into sorted list. */
     callbacks = g_slist_insert_sorted(callbacks,
 				      handler,
@@ -223,7 +213,6 @@ static int modulebase_add_single_handler(uint32_t        msg_type,
 
     return 0;
 }
-
 
 /**
    Locates message handler table from module and adds all message handlers
@@ -236,10 +225,10 @@ static int modulebase_add_single_handler(uint32_t        msg_type,
 static int add_msghandlers(module_t* module)
 {
     module_fn_info_t* msg_handler_ptr;
-  
+
     if (!module)
         return -1;
-  
+
     for (msg_handler_ptr = (module_fn_info_t*)dlsym(module->handle,
                                                     "message_handlers");
 	 msg_handler_ptr && msg_handler_ptr->callback;
@@ -254,7 +243,6 @@ static int add_msghandlers(module_t* module)
 
     return 0;
 }
-
 
 /**
    This function is called when some module is unloaded.
@@ -279,7 +267,6 @@ static void remove_msghandlers(module_t* module)
         }
     }
 }
-
 
 static const module_t* currently_handling_module = 0;
 
@@ -421,7 +408,6 @@ void endpoint_send(endpoint_t* recipient, const void* msg)
   endpoint_send_with_extra(recipient, msg, 0, 0);
 }
 
-
 const struct ucred* endpoint_ucred(const endpoint_t* sender)
 {
   const struct ucred* u = 0;
@@ -551,7 +537,6 @@ void endpoint_free(endpoint_t* endpoint)
   free(endpoint);
 }
 
-
 void modulebase_process_message_queue(void)
 {
     while (message_queue) {
@@ -573,7 +558,6 @@ void modulebase_process_message_queue(void)
     DSM_MSGTYPE_IDLE idle = DSME_MSG_INIT(DSM_MSGTYPE_IDLE);
     handle_message(&from, 0, &idle);
 }
-
 
 static int handle_message(endpoint_t*              from,
                           const module_t*          to,
@@ -608,7 +592,6 @@ static int handle_message(endpoint_t*              from,
 
   return 0;
 }
-
 
 bool modulebase_unload_module(module_t* module)
 {
@@ -657,7 +640,6 @@ bool modulebase_unload_module(module_t* module)
 
     return unloaded;
 }
-
 
 module_t* modulebase_load_module(const char* filename, int priority)
 {
@@ -730,10 +712,9 @@ error:
     }
 
     if (dlhandle) dlclose(dlhandle);
-  
+
   return 0;
 }
-
 
 bool modulebase_init(const struct _GSList* module_names)
 {
@@ -750,7 +731,6 @@ bool modulebase_init(const struct _GSList* module_names)
 
     return true;
 }
-
 
 const char* module_name(const module_t* module)
 {

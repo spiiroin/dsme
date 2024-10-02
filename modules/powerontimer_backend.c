@@ -43,7 +43,7 @@
  * ========================================================================= */
 
 // prefix for log messages from this module
-#define LOGPFIX "poweron-timer: "
+#define PFIX "poweron-timer: "
 
 /* ========================================================================= *
  * CAL block contents
@@ -62,7 +62,6 @@ typedef struct
                     * Initialize to zero.
                     * Actual value set by pot_import_cal_data().
                     */
-
 } pot_cal_data_v0;
 
 // cal block v1 -> data contained in v1
@@ -76,7 +75,6 @@ typedef struct
   int32_t reboots; // number of reboots detected via uptime drops
 
   int32_t updates; // number of times the cal block has been written
-
 } pot_cal_data_v1;
 
 // cal block version currently expected by the logic
@@ -95,7 +93,7 @@ static void monotime_get(struct timeval *tv)
   struct timespec ts = { 0, 0 };
   if( clock_gettime(CLOCK_MONOTONIC, &ts) == -1 )
   {
-    dsme_log(LOG_WARNING, LOGPFIX"%s: %s", "CLOCK_MONOTONIC", strerror(errno));
+    dsme_log(LOG_WARNING, PFIX "%s: %s", "CLOCK_MONOTONIC", strerror(errno));
   }
   TIMESPEC_TO_TIMEVAL(tv, &ts);
 }
@@ -115,23 +113,22 @@ static void uptime_read(struct timeval *tv)
 
   if( (file = fopen(path, "r")) == 0 )
   {
-    dsme_log(LOG_WARNING, LOGPFIX"%s: %s", path, strerror(errno));
+    dsme_log(LOG_WARNING, PFIX "%s: %s", path, strerror(errno));
     goto cleanup;
   }
 
   if( fgets(data, sizeof data, file ) == 0 )
   {
-    dsme_log(LOG_WARNING, LOGPFIX"%s: %s", path, "unexpected EOF");
+    dsme_log(LOG_WARNING, PFIX "%s: %s", path, "unexpected EOF");
     goto cleanup;
   }
 
   if( (secs = strtod(data, 0)) <= 0.0 )
   {
-    dsme_log(LOG_WARNING, LOGPFIX"%s: %s", path, "parsed non-positive uptime");
+    dsme_log(LOG_WARNING, PFIX "%s: %s", path, "parsed non-positive uptime");
   }
 
 cleanup:
-
   if( file != 0 ) fclose(file);
 
   tv->tv_sec  = (time_t)secs;
@@ -195,7 +192,7 @@ static int pot_import_cal_data(pot_cal_data *pot,
   // import based on block version
   if( size < sizeof *v0 )
   {
-    dsme_log(LOG_ERR, LOGPFIX"data block too small");
+    dsme_log(LOG_ERR, PFIX "data block too small");
     goto cleanup;
   }
 
@@ -204,7 +201,7 @@ static int pot_import_cal_data(pot_cal_data *pot,
   case 1:
     if( size < sizeof *v1 )
     {
-      dsme_log(LOG_ERR, LOGPFIX"data block (v%"PRId32") %s",
+      dsme_log(LOG_ERR, PFIX "data block (v%"PRId32") %s",
                v0->version, "too small");
       goto cleanup;
     }
@@ -216,7 +213,7 @@ static int pot_import_cal_data(pot_cal_data *pot,
     break;
 
   default:
-    dsme_log(LOG_ERR, LOGPFIX"data block (v%"PRId32") %s",
+    dsme_log(LOG_ERR, PFIX "data block (v%"PRId32") %s",
              v0->version, "unkown");
     goto cleanup;
   }
@@ -224,12 +221,11 @@ static int pot_import_cal_data(pot_cal_data *pot,
   // no errors
   err = 0;
 
-  /* dsme_log(LOG_INFO, LOGPFIX"data block (v%"PRId32") %s",
+  /* dsme_log(LOG_INFO, PFIX "data block (v%"PRId32") %s",
    *        v0->version, "imported");
    */
 
 cleanup:
-
   // mark current version
   pot->version = 1;
 
@@ -249,21 +245,20 @@ static int pot_read_cal(pot_cal_data *pot)
 
   if( cal_init(&cal) < 0 )
   {
-    dsme_log(LOG_ERR, LOGPFIX"cal %s failed", "init");
+    dsme_log(LOG_ERR, PFIX "cal %s failed", "init");
     goto cleanup;
   }
 
   if( cal_read_block(cal, pot_cal_name, &data, &size, pot_cal_flags) < 0 )
   {
     // just a warning as it will be missing on the first boot
-    dsme_log(LOG_WARNING, LOGPFIX"cal %s failed", "read");
+    dsme_log(LOG_WARNING, PFIX "cal %s failed", "read");
     goto cleanup;
   }
 
   err = pot_import_cal_data(pot, data, size);
 
 cleanup:
-
   if( cal != 0 ) cal_finish(cal);
   free(data);
   return err;
@@ -280,20 +275,19 @@ static int pot_write_cal(const pot_cal_data *pot)
 
   if( cal_init(&cal) < 0 )
   {
-    dsme_log(LOG_ERR, LOGPFIX"cal %s failed", "init");
+    dsme_log(LOG_ERR, PFIX "cal %s failed", "init");
     goto cleanup;
   }
 
   if( cal_write_block(cal, pot_cal_name, pot, sizeof *pot, pot_cal_flags) < 0 )
   {
-    dsme_log(LOG_ERR, LOGPFIX"cal %s failed", "write");
+    dsme_log(LOG_ERR, PFIX "cal %s failed", "write");
     goto cleanup;
   }
 
   err = 0;
 
 cleanup:
-
   if( cal != 0 ) cal_finish(cal);
 
   return err;

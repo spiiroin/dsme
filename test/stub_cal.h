@@ -22,7 +22,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef DSME_TEST_STUB_CAL_H
 #define DSME_TEST_STUB_CAL_H
 

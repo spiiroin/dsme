@@ -404,11 +404,11 @@ thermal_manager_schedule_object_poll(thermal_object_t *thermal_object)
     }
 
     if( mintime == maxtime ) {
-        dsme_log(LOG_DEBUG, PFIX"%s: check again in %d sec global slot",
+        dsme_log(LOG_DEBUG, PFIX "%s: check again in %d sec global slot",
                  thermal_object_get_name(thermal_object), mintime);
     }
     else {
-        dsme_log(LOG_DEBUG, PFIX"%s: check again in %d to %d seconds",
+        dsme_log(LOG_DEBUG, PFIX "%s: check again in %d to %d seconds",
                  thermal_object_get_name(thermal_object), mintime, maxtime);
     }
 
@@ -459,7 +459,7 @@ thermal_manager_register_object(thermal_object_t *thermal_object)
     if( thermal_manager_object_is_registered(thermal_object) )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, PFIX"%s: registered",
+    dsme_log(LOG_DEBUG, PFIX "%s: registered",
              thermal_object_get_name(thermal_object));
 
     // add the thermal object to the list of know thermal objects
@@ -503,7 +503,7 @@ thermal_manager_unregister_object(thermal_object_t *thermal_object)
     // remove the thermal object from the list of know thermal objects
     thermal_objects = g_slist_remove(thermal_objects, thermal_object);
 
-    dsme_log(LOG_DEBUG, PFIX"%s: unregistered",
+    dsme_log(LOG_DEBUG, PFIX "%s: unregistered",
              thermal_object_get_name(thermal_object));
 
 EXIT:
@@ -623,7 +623,6 @@ thermal_manager_get_sensor_status(const char *sensor_name,
     ack = true;
 
 EXIT:
-
     --recursing;
 
     return ack;
@@ -778,18 +777,18 @@ thermal_manager_broadcast_status_dsme(THERMAL_STATUS status,
     /* Log state change */
     switch( curr ) {
     case DSM_THERMAL_STATUS_LOWTEMP:
-        dsme_log(LOG_WARNING, PFIX"policy: low temperature (%s %dC)",
+        dsme_log(LOG_WARNING, PFIX "policy: low temperature (%s %dC)",
                  sensor_name, temperature);
         break;
 
     default:
     case DSM_THERMAL_STATUS_NORMAL:
-        dsme_log(LOG_NOTICE, PFIX"policy: acceptable temperature (%s %dC)",
+        dsme_log(LOG_NOTICE, PFIX "policy: acceptable temperature (%s %dC)",
                  sensor_name, temperature);
         break;
 
     case DSM_THERMAL_STATUS_OVERHEATED:
-        dsme_log(LOG_CRIT, PFIX"policy: overheated (%s %dC)", sensor_name,
+        dsme_log(LOG_CRIT, PFIX "policy: overheated (%s %dC)", sensor_name,
                  temperature);
         break;
     }
@@ -827,7 +826,7 @@ thermal_manager_broadcast_status_dbus(THERMAL_STATUS status)
 
     const char *arg = thermal_status_name(status);
 
-    dsme_log(LOG_NOTICE, PFIX"send dbus signal %s.%s(%s)",
+    dsme_log(LOG_NOTICE, PFIX "send dbus signal %s.%s(%s)",
              thermalmanager_interface,
              thermalmanager_state_change_ind, arg);
 
@@ -1129,7 +1128,7 @@ EXIT:
  */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
 
     /* Add dbus method call handlers */
     dsme_dbus_bind_methods(&dbus_methods_bound,
@@ -1143,7 +1142,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
  */
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, PFIX"DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
 }
 
 /** Array of DSME event handlers implemented by this plugin */
@@ -1166,7 +1165,7 @@ module_fn_info_t message_handlers[] =
 void
 module_init(module_t *handle)
 {
-    dsme_log(LOG_DEBUG, PFIX"loaded");
+    dsme_log(LOG_DEBUG, PFIX "loaded");
 
     this_module = handle;
 }
@@ -1178,7 +1177,7 @@ module_fini(void)
 {
     /* Clear remaining thermal objects from the registered list */
     if( thermal_objects ) {
-        dsme_log(LOG_ERR, PFIX"registered thermal objects remain "
+        dsme_log(LOG_ERR, PFIX "registered thermal objects remain "
                  "at unload time");
 
         do
@@ -1193,5 +1192,5 @@ module_fini(void)
                              thermalmanager_interface,
                              dbus_methods_array);
 
-    dsme_log(LOG_DEBUG, PFIX"unloaded");
+    dsme_log(LOG_DEBUG, PFIX "unloaded");
 }

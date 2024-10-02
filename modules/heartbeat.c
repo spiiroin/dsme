@@ -39,6 +39,8 @@
 
 #include <glib.h>
 
+#define PFIX "heartbeat: "
+
 /** Cached module handle for this plugin */
 static const module_t *this_module = 0;
 
@@ -54,7 +56,7 @@ static gboolean emit_heartbeat_message(GIOChannel*  source,
     // handle errors
     if (condition & (G_IO_ERR | G_IO_HUP | G_IO_NVAL)) {
         // the wd process has probably died; remove the watch & quit
-        dsme_log(LOG_CRIT, "heartbeat: I/O error or HUP, terminating");
+        dsme_log(LOG_CRIT, PFIX "heartbeat: I/O error or HUP, terminating");
         goto cleanup;
     }
 
@@ -62,7 +64,7 @@ static gboolean emit_heartbeat_message(GIOChannel*  source,
     ssize_t n = read(STDIN_FILENO, &c, 1);
 
     if( n == 0 ) {
-        dsme_log(LOG_CRIT, "heartbeat: unexpected EOF, terminating");
+        dsme_log(LOG_CRIT, PFIX "heartbeat: unexpected EOF, terminating");
         goto cleanup;
     }
 
@@ -70,7 +72,7 @@ static gboolean emit_heartbeat_message(GIOChannel*  source,
         if( errno == EINTR || errno == EAGAIN )
             keep_going = true;
         else
-            dsme_log(LOG_CRIT, "heartbeat: read error: %m, terminating");
+            dsme_log(LOG_CRIT, PFIX "heartbeat: read error: %m, terminating");
         goto cleanup;
     }
 
@@ -86,7 +88,6 @@ static gboolean emit_heartbeat_message(GIOChannel*  source,
     keep_going = true;
 
 cleanup:
-
     if( !keep_going ) {
         watch_id = 0;
         dsme_main_loop_quit(EXIT_FAILURE);
@@ -111,8 +112,8 @@ static bool start_heartbeat(void)
                               G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
                               emit_heartbeat_message,
                               0);
-cleanup:
 
+cleanup:
     if( chn )
         g_io_channel_unref(chn);
 
@@ -128,7 +129,7 @@ static void stop_heatbeat(void)
 
 void module_init(module_t* handle)
 {
-    dsme_log(LOG_DEBUG, "heartbeat.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "heartbeat.so loaded");
 
     this_module = handle;
 
@@ -137,7 +138,7 @@ void module_init(module_t* handle)
 
 void module_fini(void)
 {
-    dsme_log(LOG_DEBUG, "heartbeat.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "heartbeat.so unloaded");
 
     stop_heatbeat();
 }

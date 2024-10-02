@@ -119,7 +119,6 @@ struct thermal_sensor_vtab_t
 
     /** Hook required by thermal_object_read_sensor() */
     bool        (*tsv_read_sensor_cb)(thermal_object_t *);
-
 };
 
 /* ------------------------------------------------------------------------- *

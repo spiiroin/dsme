@@ -97,14 +97,14 @@ pwrkey_trigger(void *data)
     /* No shutdown via powerkey while in update mode */
     if( pwrkey_update_mode_is_active() )
     {
-        dsme_log(LOG_WARNING, PFIX"ongoing os update; ignoring power key");
+        dsme_log(LOG_WARNING, PFIX "ongoing os update; ignoring power key");
         // TODO: send a dbus signal (TBD) so that ui side can warn the
         //       user before some hw specific immediate power off gets
         //       triggered if power key is kept pressed any longer
         return FALSE;
     }
 
-    dsme_log(LOG_CRIT, PFIX"Timer triggered, initiating shutdown");
+    dsme_log(LOG_CRIT, PFIX "Timer triggered, initiating shutdown");
 
 #ifdef PWRKEY_SHUTDOWN_MSG_TELINIT
     /* Use telinit message */
@@ -134,17 +134,17 @@ start_pwrkey_timer(void)
 {
     if( pwrkey_timer )
     {
-        dsme_log(LOG_DEBUG, PFIX"Timer already running");
+        dsme_log(LOG_DEBUG, PFIX "Timer already running");
     }
     else if( !(pwrkey_timer = dsme_create_timer_seconds(PWRKEY_TIMER_SECONDS,
                                                         pwrkey_trigger,
                                                         NULL)) )
     {
-        dsme_log(LOG_CRIT, PFIX"Timer creation failed!");
+        dsme_log(LOG_CRIT, PFIX "Timer creation failed!");
     }
     else
     {
-        dsme_log(LOG_DEBUG, PFIX"Timer started (%d sec to shutdown)",
+        dsme_log(LOG_DEBUG, PFIX "Timer started (%d sec to shutdown)",
                  PWRKEY_TIMER_SECONDS);
     }
 }
@@ -158,7 +158,7 @@ stop_pwrkey_timer(void)
     {
         dsme_destroy_timer(pwrkey_timer);
         pwrkey_timer = 0;
-        dsme_log(LOG_DEBUG, PFIX"Timer stopped");
+        dsme_log(LOG_DEBUG, PFIX "Timer stopped");
     }
 }
 
@@ -194,20 +194,20 @@ emits_powerkey_events(int fd)
     /* Get bitmask of supported event types */
     if( ioctl(fd, EVIOCGBIT(0, EV_CNT), mask_eve) == -1 )
     {
-        dsme_log(LOG_DEBUG, PFIX"EVIOCGBIT(%d): %m", fd);
+        dsme_log(LOG_DEBUG, PFIX "EVIOCGBIT(%d): %m", fd);
         goto EXIT;
     }
 
     /* Get bitmask of supported key event codes */
     if( mask_eve[EVDEVBITS_OFFS(EV_KEY)] & EVDEVBITS_MASK(EV_KEY) ) {
         if( ioctl(fd, EVIOCGBIT(EV_KEY, KEY_CNT), mask_key) == -1 )
-            dsme_log(LOG_DEBUG, PFIX"EVIOCGBIT(%d): %m", fd);
+            dsme_log(LOG_DEBUG, PFIX "EVIOCGBIT(%d): %m", fd);
     }
 
     /* Get bitmask of supported abs event codes */
     if( mask_eve[EVDEVBITS_OFFS(EV_ABS)] & EVDEVBITS_MASK(EV_ABS) ) {
         if( ioctl(fd, EVIOCGBIT(EV_ABS, ABS_CNT), mask_abs) == -1 )
-            dsme_log(LOG_DEBUG, PFIX"EVIOCGBIT(%d): %m", fd);
+            dsme_log(LOG_DEBUG, PFIX "EVIOCGBIT(%d): %m", fd);
     }
 
     /* Require: KEY_POWER events are emitted */
@@ -230,7 +230,6 @@ typedef struct
 {
     GIOChannel *chan;
     guint       watch;
-
 } channel_watch_t;
 
 /** Allocate and initialize an io channel watch structure
@@ -353,7 +352,7 @@ process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
     /* Abandon watch if we get abnorman conditions from glib */
     if (condition & ~(G_IO_IN | G_IO_PRI))
     {
-        dsme_log(LOG_ERR, PFIX"I/O error");
+        dsme_log(LOG_ERR, PFIX "I/O error");
         keep_going = FALSE;
     }
 
@@ -369,27 +368,27 @@ process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
         case EAGAIN:
             break;
         default:
-            dsme_log(LOG_ERR, PFIX"read: %m");
+            dsme_log(LOG_ERR, PFIX "read: %m");
             keep_going = FALSE;
             break;
         }
     }
     else if( rc == 0 )
     {
-        dsme_log(LOG_ERR, PFIX"read: EOF");
+        dsme_log(LOG_ERR, PFIX "read: EOF");
         keep_going = FALSE;
     }
     else
     {
         int n = rc / sizeof *buf;
 
-        dsme_log(LOG_DEBUG, PFIX"Processing %d events", n);
+        dsme_log(LOG_DEBUG, PFIX "Processing %d events", n);
 
         for( int i = 0; i < n; ++i )
         {
             const struct input_event *eve = buf + i;
 
-            dsme_log(LOG_DEBUG, PFIX"Got event, type: %d code: %d value: %d",
+            dsme_log(LOG_DEBUG, PFIX "Got event, type: %d code: %d value: %d",
                      eve->type, eve->code, eve->value);
 
             if( eve->type == EV_KEY && eve->code == KEY_POWER )
@@ -411,7 +410,7 @@ process_kbevent(GIOChannel* chan, GIOCondition condition, gpointer data)
 
     if( !keep_going )
     {
-        dsme_log(LOG_WARNING, PFIX"disabling io watch");
+        dsme_log(LOG_WARNING, PFIX "disabling io watch");
 
         /* the watch gets removed as we return FALSE, but
          * the channel must be removed from tracking list */
@@ -443,19 +442,19 @@ probe_evdev_device(const char *path)
 
     if( (file = open(path, O_RDONLY)) == -1 )
     {
-        dsme_log(LOG_ERR, PFIX"%s: open: %m", path);
+        dsme_log(LOG_ERR, PFIX "%s: open: %m", path);
         goto EXIT;
     }
 
     if( !emits_powerkey_events(file) )
     {
-        dsme_log(LOG_DEBUG, PFIX"%s: not a powerkey device", path);
+        dsme_log(LOG_DEBUG, PFIX "%s: not a powerkey device", path);
         goto EXIT;
     }
 
     if( !(chan = g_io_channel_unix_new(file)) )
     {
-        dsme_log(LOG_ERR, PFIX"%s: io channel setup failed", path);
+        dsme_log(LOG_ERR, PFIX "%s: io channel setup failed", path);
         goto EXIT;
     }
 
@@ -465,11 +464,11 @@ probe_evdev_device(const char *path)
     /* Set to NULL encoding so that we can turn off the buffering */
     if( g_io_channel_set_encoding(chan, NULL, &err) != G_IO_STATUS_NORMAL )
     {
-        dsme_log(LOG_WARNING, PFIX"%s: unable to set io channel encoding",
+        dsme_log(LOG_WARNING, PFIX "%s: unable to set io channel encoding",
                  path);
         if( err )
         {
-             dsme_log(LOG_WARNING, PFIX"%s", err->message);
+             dsme_log(LOG_WARNING, PFIX "%s", err->message);
         }
         // continue anyway
     }
@@ -479,11 +478,11 @@ probe_evdev_device(const char *path)
 				 G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
 				 process_kbevent, 0)) )
     {
-        dsme_log(LOG_ERR, PFIX"%s: unable to add io channel watch", path);
+        dsme_log(LOG_ERR, PFIX "%s: unable to add io channel watch", path);
         goto EXIT;
     }
 
-    dsme_log(LOG_DEBUG, PFIX"%s: channel=%p, watch=%u", path, chan, watch);
+    dsme_log(LOG_DEBUG, PFIX "%s: channel=%p, watch=%u", path, chan, watch);
 
     /* watchlist owns the channel and watch */
     watchlist_add(chan, watch), chan = 0, watch = 0;
@@ -515,7 +514,7 @@ start_pwrkey_monitor(void)
 
     if( !(dir = opendir(base)) )
     {
-        dsme_log(LOG_ERR, PFIX"opendir(%s): %m", base);
+        dsme_log(LOG_ERR, PFIX "opendir(%s): %m", base);
         goto EXIT;
     }
 
@@ -540,12 +539,11 @@ start_pwrkey_monitor(void)
     }
 
 EXIT:
-
     if( dir ) closedir(dir);
 
     if( cnt < 1 )
     {
-        dsme_log(LOG_WARNING, PFIX"could not find any powerkey input devices");
+        dsme_log(LOG_WARNING, PFIX "could not find any powerkey input devices");
     }
 
     return cnt > 0;
@@ -567,12 +565,12 @@ module_init(module_t * handle)
 
     start_pwrkey_monitor();
 
-    dsme_log(LOG_DEBUG, "libpwrkeymonitor.so loaded");
+    dsme_log(LOG_DEBUG, PFIX "libpwrkeymonitor.so loaded");
 }
 
 void
 module_fini(void)
 {
     stop_pwrkey_monitor();
-    dsme_log(LOG_DEBUG, "libpwrkeymonitor.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "libpwrkeymonitor.so unloaded");
 }

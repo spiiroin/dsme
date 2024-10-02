@@ -35,6 +35,7 @@
 
 #include <dsme/state.h>
 #include <dsme/protocol.h>
+#include <dsme/dsme_dbus_if.h>
 
 #include <linux/rtc.h>
 
@@ -50,6 +51,9 @@
 #include <time.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <errno.h>
+
+#include <dbus/dbus.h>
 
 #define STRINGIFY(x)  STRINGIFY2(x)
 #define STRINGIFY2(x) #x
@@ -223,7 +227,6 @@ static void dsmeipc_send_full(const void *msg_, const void *data, size_t size)
         log_error("dsmesock_send: %m");
         exit(EXIT_FAILURE);
     }
-
 }
 
 static void dsmeipc_send(const void *msg)
@@ -275,6 +278,56 @@ static dsmemsg_generic_t *dsmeipc_read(void)
     log_debug("recv: %s", dsmemsg_id_name(msg->type_));
 
     return msg;
+}
+
+/* ========================================================================= *
+ * DBUSIPC
+ * ========================================================================= */
+
+static DBusConnection *dbusipc_connection(void)
+{
+    static DBusConnection *conn = NULL;
+    if( !conn ) {
+        DBusError err = DBUS_ERROR_INIT;
+        if( !(conn = dbus_bus_get(DBUS_BUS_SYSTEM, &err)) ) {
+            log_error("SystemBus connect failed: %s: %s",
+                      err.name, err.message);
+            exit(EXIT_FAILURE);
+        }
+        dbus_error_free(&err);
+    }
+    return conn;
+}
+
+static void dbusipc_simple_request_bool_arg(const char *method, bool arg)
+{
+    DBusError    err = DBUS_ERROR_INIT;
+    DBusMessage *req = NULL;
+    DBusMessage *rsp = NULL;
+    dbus_bool_t  dta = arg;
+
+    req = dbus_message_new_method_call(dsme_service, dsme_req_path,
+                                       dsme_req_interface, method);
+    if( !req )
+        goto EXIT;
+
+    if( !dbus_message_append_args(req, DBUS_TYPE_BOOLEAN, &dta, DBUS_TYPE_INVALID) )
+        goto EXIT;
+
+    rsp = dbus_connection_send_with_reply_and_block(dbusipc_connection(),
+                                                    req, -1, &err);
+    if( !rsp ) {
+        log_error("%s.%s() failed: %s: %s", dsme_req_interface,
+                  method, err.name, err.message);
+        goto EXIT;
+    }
+
+EXIT:
+    if( rsp )
+        dbus_message_unref(rsp);
+    if( req )
+        dbus_message_unref(req);
+    dbus_error_free(&err);
 }
 
 /* ========================================================================= *
@@ -416,6 +469,32 @@ static void xdsme_request_log_defaults(void)
     dsmeipc_send(&req);
 }
 
+static void xdsme_block_shutdown(void)
+{
+    dbusipc_simple_request_bool_arg(dsme_inhibit_shutdown, true);
+}
+
+static void xdsme_allow_shutdown(void)
+{
+    dbusipc_simple_request_bool_arg(dsme_inhibit_shutdown, false);
+}
+
+static void xdsme_block(const char *arg)
+{
+    /* Default to: sleep "forever" / in practice 1 year */
+    struct timespec ts = { .tv_sec  = 365 * 24 * 60 * 60, };
+
+    if( arg ) {
+        int64_t ms = (int64_t)(strtod(arg, NULL) * 1000);
+        if( ms > 0 ) {
+            ts.tv_sec  = (time_t)(ms / 1000);
+            ts.tv_nsec = (long)((ms % 1000) * 1000000);
+        }
+    }
+
+    while( nanosleep(&ts, &ts) == -1 && errno == EINTR ) { }
+}
+
 /* ========================================================================= *
  * RTC_OPTIONS
  * ========================================================================= */
@@ -518,7 +597,6 @@ static const char *parse_runlevel(char *str)
     };
 
     for( size_t i = 0;  ; ++i ) {
-
         if( lut[i] == 0 ) {
             log_error("%s: not a valid run level", str);
             exit(EXIT_FAILURE);
@@ -556,6 +634,13 @@ static void output_usage(const char *name)
 "  -d --start-dbus                 Start DSME's D-Bus services\n"
 "  -s --stop-dbus                  Stop DSME's D-Bus services\n"
 "\n"
+"  -B --block[=<seconds>]          Sleep for specified time / forever\n"
+"                                  Useful for pacing option handling or\n"
+"                                  keeping D-Bus connection alive after\n"
+"                                  other options have been handled.\n"
+"     --block-shutdown             Start shutdown blocking\n"
+"     --allow-shutdown             Stop shutdown blocking\n"
+"\n"
           );
 }
 
@@ -567,23 +652,26 @@ int main(int argc, char *argv[])
 {
     const char *program_name  = argv[0];
     int         retval        = EXIT_FAILURE;
-    const char *short_options = "hdsbvact:l:guoVi:e:L";
+    const char *short_options = "hdsbvact:l:guoVi:e:LB::";
     const struct option long_options[] = {
-        {"help",         no_argument,       NULL, 'h'},
-        {"start-dbus",   no_argument,       NULL, 'd'},
-        {"stop-dbus",    no_argument,       NULL, 's'},
-        {"reboot",       no_argument,       NULL, 'b'},
-        {"version",      no_argument,       NULL, 'v'},
-        {"clear-rtc",    no_argument,       NULL, 'c'},
-        {"get-state",    no_argument,       NULL, 'g'},
-        {"powerup",      no_argument,       NULL, 'u'},
-        {"shutdown",     no_argument,       NULL, 'o'},
-        {"telinit",      required_argument, NULL, 't'},
-        {"loglevel",     required_argument, NULL, 'l'},
-        {"log-include",  required_argument, NULL, 'i'},
-        {"log-exclude",  required_argument, NULL, 'e'},
-        {"log-defaults", no_argument,       NULL, 'L'},
-        {"verbose",      no_argument,       NULL, 'V'},
+        {"help",           no_argument,       NULL, 'h'},
+        {"start-dbus",     no_argument,       NULL, 'd'},
+        {"stop-dbus",      no_argument,       NULL, 's'},
+        {"reboot",         no_argument,       NULL, 'b'},
+        {"version",        no_argument,       NULL, 'v'},
+        {"clear-rtc",      no_argument,       NULL, 'c'},
+        {"get-state",      no_argument,       NULL, 'g'},
+        {"powerup",        no_argument,       NULL, 'u'},
+        {"shutdown",       no_argument,       NULL, 'o'},
+        {"telinit",        required_argument, NULL, 't'},
+        {"loglevel",       required_argument, NULL, 'l'},
+        {"log-include",    required_argument, NULL, 'i'},
+        {"log-exclude",    required_argument, NULL, 'e'},
+        {"log-defaults",   no_argument,       NULL, 'L'},
+        {"verbose",        no_argument,       NULL, 'V'},
+        {"block",          optional_argument, NULL, 'B'},
+        {"block-shutdown", no_argument,       NULL, 900},
+        {"allow-shutdown", no_argument,       NULL, 901},
         {0, 0, 0, 0}
     };
 
@@ -662,6 +750,18 @@ int main(int argc, char *argv[])
             output_usage(program_name);
             goto DONE;
 
+        case 900:
+            xdsme_block_shutdown();
+            break;
+
+        case 901:
+            xdsme_allow_shutdown();
+            break;
+
+        case 'B':
+            xdsme_block(optarg);
+            break;
+
         case '?':
             fprintf(stderr, "(use --help for instructions)\n");
             goto EXIT;
@@ -679,7 +779,6 @@ DONE:
     retval = EXIT_SUCCESS;
 
 EXIT:
-
     dsmeipc_disconnect();
 
     return retval;

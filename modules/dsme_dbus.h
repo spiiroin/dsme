@@ -37,6 +37,11 @@
 #include <dbus/dbus.h>
 
 typedef struct DsmeDbusMessage DsmeDbusMessage;
+typedef struct DsmeDbusTracker DsmeDbusTracker;
+typedef struct DsmeDbusClient DsmeDbusClient;
+
+typedef void (*DsmeDbusTrackerNofify)(DsmeDbusTracker *tracker);
+typedef void (*DsmeDbusClientNofify)(DsmeDbusTracker *tracker, DsmeDbusClient *client);
 
 #define DSME_DBUS_MESSAGE_DUMMY ((DsmeDbusMessage *)(0xaffe0000))
 
@@ -79,6 +84,7 @@ const char* dsme_dbus_message_get_string(const DsmeDbusMessage* msg);
 bool        dsme_dbus_message_get_bool(const DsmeDbusMessage* msg);
 bool        dsme_dbus_message_get_variant_bool(const DsmeDbusMessage* msg);
 const char* dsme_dbus_message_path(const DsmeDbusMessage* msg);
+const char* dsme_dbus_message_sender(const DsmeDbusMessage *msg);
 
 // NOTE: frees the signal; hence not const
 void dsme_dbus_signal_emit(DsmeDbusMessage* sig);
@@ -94,4 +100,13 @@ void dsme_dbus_disconnect(void);
 
 void dsme_dbus_startup(void);
 void dsme_dbus_shutdown(void);
+
+DsmeDbusTracker *dsme_dbus_tracker_create(DsmeDbusTrackerNofify count_changed, DsmeDbusClientNofify  client_added, DsmeDbusClientNofify  client_removed);
+void dsme_dbus_tracker_delete(DsmeDbusTracker *self);
+void dsme_dbus_tracker_delete_at(DsmeDbusTracker **pself);
+void dsme_dbus_tracker_add_client(DsmeDbusTracker *self, const char *name);
+void dsme_dbus_tracker_remove_client(DsmeDbusTracker *self, const char *name);
+unsigned dsme_dbus_tracker_client_count(DsmeDbusTracker *self);
+
+const char *dsme_dbus_client_name(DsmeDbusClient *self);
 #endif

@@ -66,7 +66,6 @@ int modulebase_shutdown(void);
 */
 module_t* modulebase_load_module(const char* filename, int priority);
 
-
 /**
    Unloads module.
 
@@ -86,7 +85,6 @@ void modulebase_process_message_queue(void);
 
 const module_t* modulebase_current_module(void);
 const module_t* modulebase_enter_module(const module_t* module);
-
 
 enum {
     /* NOTE: dsme message types are defined in:

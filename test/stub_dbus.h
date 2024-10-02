@@ -22,7 +22,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef DSME_TEST_STUB_DBUS_H
 #define DSME_TEST_STUB_DBUS_H
 
@@ -34,7 +33,9 @@ GPtrArray *actual_registrations = NULL;
 GPtrArray *dbusmsgq_blocking = NULL;
 GPtrArray *dbusmsgq_async = NULL;
 
-void dbus_connection_flush(DBusConnection *connection __attribute__ ((unused))){}
+void dbus_connection_flush(DBusConnection *connection __attribute__ ((unused)))
+{
+}
 
 dbus_bool_t dbus_connection_send(DBusConnection *connection __attribute__ ((unused)),
                                  DBusMessage    *message,
@@ -53,7 +54,6 @@ void dbus_bus_add_match (DBusConnection *connection __attribute__ ((unused)),
 {
   if (actual_registrations)
         g_ptr_array_add(actual_registrations, g_strdup(rule));
-
 }
 
 static inline void initialize_dbus_stub(void)

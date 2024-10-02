@@ -104,8 +104,8 @@ mainloop_wakeup_init(void)
     mainloop_wakeup_id = g_io_add_watch(chn,
                                         G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
                                         mainloop_wakeup_cb, 0);
-cleanup:
 
+cleanup:
     if( chn )
         g_io_channel_unref(chn);
 
@@ -171,4 +171,3 @@ dsme_main_loop_exit_code(void)
 {
     return mainloop_exit_code;
 }
-

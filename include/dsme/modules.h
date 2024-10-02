@@ -57,7 +57,6 @@ extern "C" {
 #define DSME_HANDLER_BINDING(T) \
   { DSME_MSG_ID_(T), T ## _HANDLER1_, sizeof(T) }
 
-
 typedef struct endpoint_t endpoint_t;
 
 struct dsmesock_connection_t; // TODO: remove
@@ -67,7 +66,6 @@ struct dsmesock_connection_t; // TODO: remove
 */
 typedef void (handler_fn_t)(endpoint_t* sender, const dsmemsg_generic_t* msg);
 
-
 /**
    Handler information entry in module.
 */
@@ -76,7 +74,6 @@ typedef struct {
     handler_fn_t* callback;
     size_t        msg_size;
 } module_fn_info_t;
-
 
 /**
    Module initialization function type.
@@ -129,7 +126,6 @@ bool endpoint_same(const endpoint_t* a, const endpoint_t* b);
 bool endpoint_is_dsme(const endpoint_t* endpoint);
 endpoint_t* endpoint_copy(const endpoint_t* endpoint);
 void endpoint_free(endpoint_t* endpoint);
-
 
 #ifdef __cplusplus
 }

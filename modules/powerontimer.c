@@ -52,7 +52,7 @@
 #include "powerontimer_backend.h"
 
 // prefix for log messages from this module
-#define LOGPFIX "poweron-timer: "
+#define PFIX "poweron-timer: "
 
 static bool      in_user_mode = false;
 

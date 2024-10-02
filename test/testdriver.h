@@ -22,7 +22,6 @@
    License along with Dsme.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-
 #ifndef DSME_TESTDIVER_H
 #define DSME_TESTDRIVER_H
 

@@ -38,7 +38,6 @@ typedef struct
     guint                  tg_interval;
     dsme_timer_callback_t  tg_callback;
     void                  *tg_data;
-
 } timergate_t;
 
 static void

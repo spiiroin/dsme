@@ -45,7 +45,6 @@
 
 #define OOM_ADJ_VALUE -17
 
-
 typedef struct wd_t {
     const char* file;   /* pathname of the watchdog device */
     int         period; /* watchdog timeout; 0 for keeping the default */
@@ -59,8 +58,6 @@ static const wd_t wd[] = {
 static int wd_fd[WD_COUNT];
 
 static bool wd_enabled = true;
-
-
 
 static int protect_from_oom(void)
 {
@@ -195,19 +192,17 @@ int main(void)
               FD_SET(dsme_conn->fd, &rfds);
               dsmemsg_generic_t *msg;
 
-              ret = select(dsme_conn->fd + 1, &rfds, NULL, NULL, NULL); 
+              ret = select(dsme_conn->fd + 1, &rfds, NULL, NULL, NULL);
               if (ret == -1) {
                   fprintf(stderr, "error in select()\n");
               } else if (ret == 0) {
                   /* should not happen */
                   fprintf(stderr, "Timeout!\n");
               } else {
-
                   msg = (dsmemsg_generic_t*)dsmesock_receive(dsme_conn);
 
                   if (DSMEMSG_CAST(DSM_MSGTYPE_HWWD_KICK, msg))
                     {
-
                         if (wd_enabled) {
                             int i;
                             for (i = 0; i < WD_COUNT; ++i) {
@@ -222,9 +217,7 @@ int main(void)
                             }
                         }
                     }
-
                     free(msg);
-
                 }
     }
 

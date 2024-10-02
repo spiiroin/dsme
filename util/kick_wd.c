@@ -43,8 +43,8 @@ void usage(const char *name)
 	printf("	-h --help			Print usage\n");
 }
 
-int send_kick_wd(void) {
-
+int send_kick_wd(void)
+{
 	int ret = 0;
 	DSM_MSGTYPE_HWWD_KICK msg =
           DSME_MSG_INIT(DSM_MSGTYPE_HWWD_KICK);

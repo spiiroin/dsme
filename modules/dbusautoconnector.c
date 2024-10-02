@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define ME "dbusautoconnector: "
+#define PFIX "dbusautoconnector: "
 
 #define DSME_SYSTEM_BUS_DIR   "/var/run/dbus"
 #define DSME_SYSTEM_BUS_FILE  "system_bus_socket"
@@ -113,7 +113,7 @@ connect_request(void)
 static int
 connect_timer_cb(void* dummy)
 {
-    dsme_log(LOG_DEBUG, ME"Connect timer: triggered");
+    dsme_log(LOG_DEBUG, PFIX "Connect timer: triggered");
 
     connect_request();
 
@@ -127,7 +127,7 @@ connect_timer_start(void)
     if( connect_timer_id )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, ME"Connect timer: start");
+    dsme_log(LOG_DEBUG, PFIX "Connect timer: start");
 
     connect_timer_id = dsme_create_timer_seconds(1, connect_timer_cb, 0);
 
@@ -141,7 +141,7 @@ static void
 connect_timer_stop(void)
 {
     if( connect_timer_id ) {
-        dsme_log(LOG_DEBUG, ME"Connect timer: stop");
+        dsme_log(LOG_DEBUG, PFIX "Connect timer: stop");
 
         dsme_destroy_timer(connect_timer_id), connect_timer_id = 0;
     }
@@ -164,7 +164,7 @@ systembus_state_update(void)
     if( prev == systembus_state )
         goto EXIT;
 
-    dsme_log(LOG_DEBUG, ME"SystemBus socket exists: %d -> %d",
+    dsme_log(LOG_DEBUG, PFIX "SystemBus socket exists: %d -> %d",
              prev, systembus_state);
 
     if( systembus_state == BUS_STATE_PRESENT )
@@ -195,7 +195,7 @@ systembus_watcher_cb(GIOChannel *src, GIOCondition cnd, gpointer dta)
     char buf[4096] __attribute__ ((aligned(__alignof__(struct inotify_event))));
 
     if( cnd & (G_IO_ERR | G_IO_HUP | G_IO_NVAL) ) {
-        dsme_log(LOG_ERR, ME"SystemBus watch: ERR, HUP or NVAL condition");
+        dsme_log(LOG_ERR, PFIX "SystemBus watch: ERR, HUP or NVAL condition");
         goto EXIT;
     }
 
@@ -206,7 +206,7 @@ systembus_watcher_cb(GIOChannel *src, GIOCondition cnd, gpointer dta)
             if( errno == EAGAIN || errno == EINTR )
                 keep_watching = true;
             else
-                dsme_log(LOG_ERR, ME"SystemBus watch: read error: %m");
+                dsme_log(LOG_ERR, PFIX "SystemBus watch: read error: %m");
             goto EXIT;
         }
 
@@ -214,14 +214,14 @@ systembus_watcher_cb(GIOChannel *src, GIOCondition cnd, gpointer dta)
 
         while( todo > 0 ) {
             if( todo < sizeof *eve ) {
-                dsme_log(LOG_ERR, ME"SystemBus watch: truncated event");
+                dsme_log(LOG_ERR, PFIX "SystemBus watch: truncated event");
                 goto EXIT;
             }
 
             int size = sizeof *eve + eve->len;
 
             if( todo < size ) {
-                dsme_log(LOG_ERR, ME"SystemBus watch: oversized event");
+                dsme_log(LOG_ERR, PFIX "SystemBus watch: oversized event");
                 goto EXIT;
             }
 
@@ -255,10 +255,10 @@ systembus_watcher_start(void)
     if( systembus_watcher_id )
         goto cleanup;
 
-    dsme_log(LOG_DEBUG, ME"SystemBus watch: starting");
+    dsme_log(LOG_DEBUG, PFIX "SystemBus watch: starting");
 
     if( (systembus_watcher_fd = inotify_init()) == -1 ) {
-        dsme_log(LOG_ERR, ME"SystemBus watch: inotify init: %m");
+        dsme_log(LOG_ERR, PFIX "SystemBus watch: inotify init: %m");
         goto cleanup;
     }
 
@@ -268,12 +268,12 @@ systembus_watcher_start(void)
                                              DSME_SYSTEM_BUS_DIR, mask);
 
     if( systembus_watcher_wd == -1 ) {
-        dsme_log(LOG_ERR, ME"SystemBus watch: add inotify watch: %m");
+        dsme_log(LOG_ERR, PFIX "SystemBus watch: add inotify watch: %m");
         goto cleanup;
     }
 
     if( !(chn = g_io_channel_unix_new(systembus_watcher_fd)) ) {
-        dsme_log(LOG_ERR, ME"SystemBus watch: creating io channel failed");
+        dsme_log(LOG_ERR, PFIX "SystemBus watch: creating io channel failed");
         goto cleanup;
     }
 
@@ -281,10 +281,9 @@ systembus_watcher_start(void)
                                           G_IO_IN | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
                                           systembus_watcher_cb, 0);
     if( !systembus_watcher_id )
-        dsme_log(LOG_ERR, ME"SystemBus watch: adding io watch failed");
+        dsme_log(LOG_ERR, PFIX "SystemBus watch: adding io watch failed");
 
 cleanup:
-
     if( !systembus_watcher_id )
         systembus_watcher_stop();
 
@@ -295,7 +294,7 @@ static void
 systembus_watcher_stop(void)
 {
     if( systembus_watcher_id ) {
-        dsme_log(LOG_DEBUG, ME"SystemBus watch: stopping");
+        dsme_log(LOG_DEBUG, PFIX "SystemBus watch: stopping");
         g_source_remove(systembus_watcher_id), systembus_watcher_id = 0;
     }
 
@@ -315,13 +314,13 @@ systembus_watcher_stop(void)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, ME"DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
     connect_timer_stop();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, ME"DBUS_DISCONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
     connect_timer_stop();
 }
 
@@ -333,7 +332,7 @@ module_fn_info_t message_handlers[] = {
 
 void module_init(module_t* handle)
 {
-    dsme_log(LOG_DEBUG, ME"loaded");
+    dsme_log(LOG_DEBUG, PFIX "loaded");
 
     this_module = handle;
 
@@ -347,5 +346,5 @@ void module_fini(void)
 
     connect_timer_stop();
 
-    dsme_log(LOG_DEBUG, ME"unloaded");
+    dsme_log(LOG_DEBUG, PFIX "unloaded");
 }

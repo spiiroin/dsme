@@ -35,6 +35,7 @@
  */
 #include "dbusproxy.h"
 #include "dsme_dbus.h"
+#include "state-internal.h"
 
 #include "../include/dsme/modules.h"
 #include "../include/dsme/logging.h"
@@ -44,6 +45,8 @@
 
 #include <glib.h>
 #include <stdlib.h>
+
+#define PFIX "dbusproxy: "
 
 /* ========================================================================= *
  * PROTOTYPES
@@ -74,6 +77,9 @@ static int dsme_state = DSME_STATE_NOT_SET;
 /** Cached dbus connection state */
 static bool dbus_connected = false;
 
+/** Clients that have requested blocking of shutdown */
+static DsmeDbusTracker *dbus_shutdown_blockers = NULL;
+
 /* ========================================================================= *
  * FUNCTIONS
  * ========================================================================= */
@@ -94,8 +100,7 @@ static void get_state(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 {
   char* sender = dsme_dbus_endpoint_name(request);
-  dsme_log(LOG_NOTICE,
-           "powerup request received over D-Bus from %s",
+  dsme_log(LOG_NOTICE, PFIX "powerup request received over D-Bus from %s",
            sender ? sender : "(unknown)");
   free(sender);
 
@@ -107,8 +112,7 @@ static void req_powerup(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 static void req_reboot(const DsmeDbusMessage* request, DsmeDbusMessage** reply)
 {
   char* sender = dsme_dbus_endpoint_name(request);
-  dsme_log(LOG_NOTICE,
-           "reboot request received over D-Bus from %s",
+  dsme_log(LOG_NOTICE, PFIX "reboot request received over D-Bus from %s",
            sender ? sender : "(unknown)");
   free(sender);
 
@@ -121,8 +125,7 @@ static void req_shutdown(const DsmeDbusMessage* request,
                          DsmeDbusMessage**      reply)
 {
   char* sender = dsme_dbus_endpoint_name(request);
-  dsme_log(LOG_NOTICE,
-           "shutdown request received over D-Bus from %s",
+  dsme_log(LOG_NOTICE, PFIX "shutdown request received over D-Bus from %s",
            sender ? sender : "(unknown)");
   free(sender);
 
@@ -130,6 +133,58 @@ static void req_shutdown(const DsmeDbusMessage* request,
 
   modules_broadcast_internally(&req);
   *reply = dsme_dbus_reply_new(request);
+}
+
+static void shutdown_blocker_count_changed(DsmeDbusTracker *tracker)
+{
+    switch( dsme_dbus_tracker_client_count(tracker) ) {
+    case 1:
+        dsme_log(LOG_DEBUG, PFIX "shutdown blocking started");
+        {
+            DSM_MSGTYPE_BLOCK_SHUTDOWN msg = DSME_MSG_INIT(DSM_MSGTYPE_BLOCK_SHUTDOWN);
+            modules_broadcast_internally(&msg);
+        }
+        break;
+    case 0:
+        dsme_log(LOG_DEBUG, PFIX "shutdown blocking ended");
+        {
+            DSM_MSGTYPE_ALLOW_SHUTDOWN msg = DSME_MSG_INIT(DSM_MSGTYPE_ALLOW_SHUTDOWN);
+            modules_broadcast_internally(&msg);
+        }
+        break;
+    }
+}
+
+static void shutdown_blocker_added(DsmeDbusTracker *tracker, DsmeDbusClient *client)
+{
+    dsme_log(LOG_DEBUG, PFIX "shutdown blocker added: client %s",
+             dsme_dbus_client_name(client));
+}
+
+static void shutdown_blocker_removed(DsmeDbusTracker *tracker, DsmeDbusClient *client)
+{
+    dsme_log(LOG_DEBUG, PFIX "shutdown blocker removed: client %s",
+             dsme_dbus_client_name(client));
+}
+
+static void block_shutdown(const DsmeDbusMessage *request, DsmeDbusMessage **reply)
+{
+    bool inhibit = dsme_dbus_message_get_bool(request);
+
+    if( dsme_log_p(LOG_NOTICE) ) {
+        char *sender = dsme_dbus_endpoint_name(request);
+        dsme_log(LOG_NOTICE, PFIX "inhibit_shutdown(%s) received over D-Bus from %s",
+                 inhibit ? "true" : "false",
+                 sender ?: "(unknown)");
+        free(sender);
+    }
+
+    const char *name = dsme_dbus_message_sender(request);
+    if( inhibit )
+        dsme_dbus_tracker_add_client(dbus_shutdown_blockers, name);
+    else
+        dsme_dbus_tracker_remove_client(dbus_shutdown_blockers, name);
+    *reply = dsme_dbus_reply_new(request);
 }
 
 /** Flag for: dbus broadcast info has been installed */
@@ -203,6 +258,12 @@ static const dsme_dbus_binding_t dbus_methods_array[] =
     {
         .method = req_shutdown,
         .name   = dsme_req_shutdown,
+        .priv   = true,
+        .args   = ""
+    },
+    {
+        .method = block_shutdown,
+        .name   = dsme_inhibit_shutdown,
         .priv   = true,
         .args   = ""
     },
@@ -312,8 +373,7 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_REQ_DENIED_IND, server, msg)
 {
     const char* denied_request = shutdown_action_name(msg->state);
 
-    dsme_log(LOG_WARNING,
-             "proxying %s request denial due to %s to D-Bus",
+    dsme_log(LOG_WARNING, PFIX "proxying %s request denial due to %s to D-Bus",
              denied_request,
              (const char*)DSMEMSG_EXTRA(msg));
 
@@ -328,14 +388,14 @@ DSME_HANDLER(DSM_MSGTYPE_STATE_REQ_DENIED_IND, server, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECT, client, msg)
 {
-    dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECT");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECT");
 
     dsme_dbus_connect();
 }
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 {
-    dsme_log(LOG_DEBUG, "dbusproxy: DBUS_CONNECTED");
+    dsme_log(LOG_DEBUG, PFIX "DBUS_CONNECTED");
 
     dsme_dbus_bind_methods(&dbus_broadcast_bound,
                            dsme_service,
@@ -355,7 +415,7 @@ DSME_HANDLER(DSM_MSGTYPE_DBUS_CONNECTED, client, msg)
 
 DSME_HANDLER(DSM_MSGTYPE_DBUS_DISCONNECT, client, msg)
 {
-  dsme_log(LOG_DEBUG, "dbusproxy: DBUS_DISCONNECT");
+  dsme_log(LOG_DEBUG, PFIX "DBUS_DISCONNECT");
   dsme_dbus_disconnect();
   dbus_connected = false;
 }
@@ -393,15 +453,22 @@ void module_init(module_t* handle)
   /* Enable dbus functionality */
   dsme_dbus_startup();
 
+  dbus_shutdown_blockers =
+    dsme_dbus_tracker_create(shutdown_blocker_count_changed,
+                             shutdown_blocker_added,
+                             shutdown_blocker_removed);
+
   /* Do not connect to D-Bus; it is probably not started yet.
    * Instead, wait for DSM_MSGTYPE_DBUS_CONNECTED.
    */
 
-  dsme_log(LOG_DEBUG, "dbusproxy.so loaded");
+  dsme_log(LOG_DEBUG, PFIX "dbusproxy.so loaded");
 }
 
 void module_fini(void)
 {
+    dsme_dbus_tracker_delete_at(&dbus_shutdown_blockers);
+
     dsme_dbus_unbind_methods(&dbus_broadcast_bound,
                              dsme_service,
                              dsme_sig_path,
@@ -419,5 +486,5 @@ void module_fini(void)
     g_free(dsme_version);
     dsme_version = 0;
 
-    dsme_log(LOG_DEBUG, "dbusproxy.so unloaded");
+    dsme_log(LOG_DEBUG, PFIX "dbusproxy.so unloaded");
 }

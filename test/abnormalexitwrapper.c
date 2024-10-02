@@ -49,7 +49,6 @@ void __attribute__ ((constructor)) my_init(void)
   signal(SIGUSR2, usr2_handler);
 }
 
-
 pid_t fork(void)
 {
   pid_t return_code = -1;
@@ -89,4 +88,3 @@ DBusConnection* dbus_connection_open_private(
 
   return conn;
 }
-

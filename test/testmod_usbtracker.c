@@ -166,7 +166,6 @@ static void test_send_invalid_usb_status(void)
   unload_usbtracker();
 }
 
-
 /* MAIN */
 
 int main(int argc, char** argv)
@@ -196,7 +195,6 @@ int main(int argc, char** argv)
           return EXIT_SUCCESS;
       }
   }
-
 
   run(test_mounted_to_pc_with_mass_storage);
   run(test_mounted_to_pc_data_in_use);
