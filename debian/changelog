@@ -1,3 +1,12 @@
+dsme (0.84.3) precise; urgency=low
+
+  * [dsme] Remove excess empty lines / spaces at end of lines
+  * [dsme] Add enablers for blocking shutdown via D-Bus. JB#62532
+  * [dsme] Normalize diagnostic logging from modules
+  * [packaging] Cleanup rpm spec
+
+ -- Simo Piiroinen <simo.piiroinen@jolla.com>  Wed, 02 Oct 2024 12:05:53 +0300
+
 dsme (0.84.2) precise; urgency=low
 
   * [dsme] Avoid undefined behaviour. JB#49555
